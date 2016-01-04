@@ -15,14 +15,12 @@
 
   <properties>
     <addon.repository>${project.build.directory}/addon-repository</addon.repository>
-    <camel.addon.release.version>${fabric8.release.version}</camel.addon.release.version>
     <docker.assemblyDescriptor>${basedir}/src/main/fabric8/assembly.xml</docker.assemblyDescriptor>
     <docker.assemblyDescriptorRef>artifact-with-dependencies</docker.assemblyDescriptorRef>
     <docker.env.FORGE_ADDON_DIRECTORY>/forge-addon-repo</docker.env.FORGE_ADDON_DIRECTORY>
     <docker.from>docker.io/fabric8/jetty-9:1.0.0</docker.from>
     <docker.image>fabric8/${project.artifactId}:${project.version}</docker.image>
     <docker.port.container.jolokia>8778</docker.port.container.jolokia>
-    <fabric8.addon.release.version>${fabric8.release.version}</fabric8.addon.release.version>
     <fabric8.env.FABRIC8_ARCHETYPES_VERSION>${fabric8.archetypes.release.version}</fabric8.env.FABRIC8_ARCHETYPES_VERSION>
     <fabric8.iconRef>icons/java</fabric8.iconRef>
     <fabric8.label.project>fabric8-forge</fabric8.label.project>
@@ -184,8 +182,8 @@
             <configuration>
               <addonRepository>${addon.repository}</addonRepository>
               <addonIds>
-                <addonId>io.fabric8.forge:camel,${camel.addon.release.version}</addonId>
-                <addonId>io.fabric8.forge:devops,${fabric8.addon.release.version}</addonId>
+                <addonId>io.fabric8.forge:camel,${project.version}</addonId>
+                <addonId>io.fabric8.forge:devops,${project.version}</addonId>
                 <addonId>org.jboss.forge.addon:git,${jboss.forge.version}</addonId>
               </addonIds>
             </configuration>

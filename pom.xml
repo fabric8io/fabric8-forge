@@ -92,7 +92,6 @@
 
 
     <fabric8.devops.version>2.2.95</fabric8.devops.version>
-    <fabric8.release.version>${fabric8.version}</fabric8.release.version>
 
     <!-- maven plugins -->
     <docker.maven.plugin.version>0.13.6</docker.maven.plugin.version>
@@ -215,18 +214,13 @@
   </build>
 
   <profiles>
-<!--
       <profile>
         <id>fabric8-snapshot</id>
         <properties>
           <fabric8.version>2.2.83-SNAPSHOT</fabric8.version>
-
-          &lt;!&ndash; this must be the last released version - cannot be a snapshot &ndash;&gt;
-          <fabric8.release.version>2.2.81</fabric8.release.version>
           <fabric8.dockerPrefix />
         </properties>
       </profile>
--->
       <profile>
           <id>release</id>
           <build>
