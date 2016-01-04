@@ -5,7 +5,7 @@
   <parent>
     <groupId>io.fabric8.forge</groupId>
     <artifactId>forge-parent</artifactId>
-    <version>2.2.83-SNAPSHOT</version>
+    <version>2.2.100-SNAPSHOT</version>
   </parent>
 
   <artifactId>fabric8-forge</artifactId>
@@ -36,19 +36,16 @@
     <furnace.version>2.22.0.Final</furnace.version>
     <guava.version>15.0</guava.version>
     <jboss.forge.version>2.19.2.Final</jboss.forge.version>
-    <version.maven-surefire-plugin>2.15</version.maven-surefire-plugin>
   </properties>
   <dependencyManagement>
     <dependencies>
-      <!--
       <dependency>
         <groupId>io.fabric8</groupId>
         <artifactId>fabric8-project</artifactId>
-        <version>2.2.81</version>
+        <version>${fabric8.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
-    -->
       <dependency>
         <groupId>org.jboss.arquillian.junit</groupId>
         <artifactId>arquillian-junit-container</artifactId>
@@ -195,7 +192,7 @@
       </plugin>
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>${version.maven-surefire-plugin}</version>
+        <version>${maven.surefire.plugin.version}</version>
         <configuration>
           <forkMode>perTest</forkMode>
           <systemPropertyVariables>
@@ -233,7 +230,7 @@
       <plugin>
         <groupId>io.fabric8</groupId>
         <artifactId>fabric8-maven-plugin</artifactId>
-        <version>2.2.81</version>
+        <version>${fabric8.version}</version>
         <executions>
           <execution>
             <id>json</id>

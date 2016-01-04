@@ -16,24 +16,131 @@
      permissions and limitations under the License.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <parent>
-    <groupId>io.fabric8</groupId>
-    <artifactId>fabric8-parent</artifactId>
-    <version>2.2.82</version>
-  </parent>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.sonatype.oss</groupId>
+    <artifactId>oss-parent</artifactId>
+    <version>9</version>
+  </parent>
 
   <groupId>io.fabric8.forge</groupId>
   <artifactId>forge-parent</artifactId>
-  <version>2.2.83-SNAPSHOT</version>
+  <version>2.2.100-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Fabric8 :: Forge Parent</name>
 
+  <url>http://fabric8.io/</url>
+  <inceptionYear>2016</inceptionYear>
+
+  <organization>
+    <name>Red Hat</name>
+    <url>http://redhat.com</url>
+  </organization>
+
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <prerequisites>
+    <maven>3.2.1</maven>
+  </prerequisites>
+
+  <!-- including A developer as it's required by the maven poms going into central -->
+  <developers>
+    <developer>
+      <id>geeks</id>
+      <name>Fabric8 Development Team</name>
+      <email>fabric8@googlegroups.com</email>
+      <organization>fabric8</organization>
+      <organizationUrl>http://fabric8.io/</organizationUrl>
+    </developer>
+  </developers>
+
+  <scm>
+    <connection>scm:git:git@github.com:fabric8io/fabric8-forge.git</connection>
+    <developerConnection>scm:git:git@github.com:fabric8io/fabric8-forge.git</developerConnection>
+    <url>http://github.com/fabric8io/fabric8-forge</url>
+    <tag>fabric8-forge-2.0.1</tag>
+  </scm>
+
   <properties>
+    <maven.compiler.source>1.7</maven.compiler.source>
+    <maven.compiler.target>1.7</maven.compiler.target>
+
     <fabric8.version>2.2.82</fabric8.version>
     <fabric8.archetypes.release.version>2.2.83</fabric8.archetypes.release.version>
+    <jboss.forge.version>2.20.1.Final</jboss.forge.version>
+    <jboss.roaster.version>2.17.4.Final</jboss.roaster.version>
+
+    <!--
+          <arquillian.version>1.1.8.Final</arquillian.version>
+          <commons.beanutils.version>1.9.2</commons.beanutils.version>
+          <docker.assembly.exportBaseDir>false</docker.assembly.exportBaseDir>
+          &lt;!&ndash; TODO this can be removed once we upgrade the docker maven plugin &ndash;&gt;
+          <docker.assembly.exportBase>false</docker.assembly.exportBase>
+          <fabric8.dockerUser>fabric8/</fabric8.dockerUser>
+          <jube.version>2.2.0</jube.version>
+          <junit.version>4.12</junit.version>
+    -->
+
+    <fabric8.devops.release.version>2.2.95</fabric8.devops.release.version>
+    <fabric8.release.version>${fabric8.version}</fabric8.release.version>
+
+    <!-- maven plugins -->
+    <docker.maven.plugin.version>0.13.6</docker.maven.plugin.version>
+    <exec-maven-plugin.version>1.2.1</exec-maven-plugin.version>
+    <maven.require.version>3.1.1</maven.require.version>
+    <maven.enforcer.plugin.version>1.4</maven.enforcer.plugin.version>
+    <maven.javadoc.plugin.version>2.10.3</maven.javadoc.plugin.version>
+    <maven.surefire.plugin.version>2.17</maven.surefire.plugin.version>
   </properties>
+
+  <distributionManagement>
+    <repository>
+      <id>oss-sonatype-staging</id>
+      <name>Sonatype Staging Repository</name>
+      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
+    </repository>
+    <snapshotRepository>
+      <id>oss-sonatype-snapshots</id>
+      <name>OSS Sonatype Nexus Snapshots</name>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    </snapshotRepository>
+  </distributionManagement>
+
+  <repositories>
+    <repository>
+      <id>oss-sonatype-snapshots</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+      <name>OSS Sonatype Nexus Snapshots</name>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+  <pluginRepositories>
+    <pluginRepository>
+      <id>oss-sonatype-snapshots</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+      <name>OSS Sonatype Nexus Snapshots</name>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </pluginRepository>
+  </pluginRepositories>
+
 
   <modules>
     <module>addons</module>
