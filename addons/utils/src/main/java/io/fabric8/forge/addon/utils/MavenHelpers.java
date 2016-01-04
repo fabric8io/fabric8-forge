@@ -1,27 +1,19 @@
 /**
- *  Copyright 2005-2015 Red Hat, Inc.
- *
- *  Red Hat licenses this file to you under the Apache License, version
- *  2.0 (the "License"); you may not use this file except in compliance
- *  with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
- *  implied.  See the License for the specific language governing
- *  permissions and limitations under the License.
+ * Copyright 2005-2015 Red Hat, Inc.
+ * <p/>
+ * Red Hat licenses this file to you under the Apache License, version
+ * 2.0 (the "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+ * implied.  See the License for the specific language governing
+ * permissions and limitations under the License.
  */
 package io.fabric8.forge.addon.utils;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
 
 import io.fabric8.utils.Objects;
 import io.fabric8.utils.Strings;
@@ -44,6 +36,14 @@ import org.jboss.forge.addon.projects.facets.DependencyFacet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+
 /**
  */
 public class MavenHelpers {
@@ -52,7 +52,7 @@ public class MavenHelpers {
     public static final String failsafeArtifactId = "maven-failsafe-plugin";
     public static final String surefireArtifactId = "maven-surefire-plugin";
 
-    private static final transient Logger LOG = LoggerFactory.getLogger(MavenHelpers.class);
+    private static transient Logger LOG;
 
     private static Map<String, String> groupArtifactVersionMap;
 
@@ -120,7 +120,7 @@ public class MavenHelpers {
         List<Dependency> dependencies = project.getFacet(DependencyFacet.class).getEffectiveDependencies();
         for (Dependency d : dependencies) {
             if (groupId.equals(d.getCoordinate().getGroupId()) && artifactId.equals(d.getCoordinate().getArtifactId())) {
-                LOG.debug("Project already includes:  " + groupId + ":" + artifactId + " for version: " + d.getCoordinate().getVersion());
+                getLOG().debug("Project already includes:  " + groupId + ":" + artifactId + " for version: " + d.getCoordinate().getVersion());
                 return false;
             }
         }
@@ -133,9 +133,9 @@ public class MavenHelpers {
         String version = MavenHelpers.getVersion(groupId, artifactId);
         if (Strings.isNotBlank(version)) {
             component = component.setVersion(version);
-            LOG.debug("Adding pom.xml dependency:  " + groupId + ":" + artifactId + " version: " + version + " scope: " + scope);
+            getLOG().debug("Adding pom.xml dependency:  " + groupId + ":" + artifactId + " version: " + version + " scope: " + scope);
         } else {
-            LOG.debug("No version could be found for:  " + groupId + ":" + artifactId);
+            getLOG().debug("No version could be found for:  " + groupId + ":" + artifactId);
         }
         dependencyInstaller.install(project, component);
         return true;
@@ -149,7 +149,7 @@ public class MavenHelpers {
         Map<String, String> map = getGroupArtifactVersionMap();
         String version = map.get(key);
         if (version == null) {
-            LOG.warn("Could not find the version for groupId: " + groupId + " artifactId: " + artifactId + " in: " + map);
+            getLOG().warn("Could not find the version for groupId: " + groupId + " artifactId: " + artifactId + " in: " + map);
         }
         return version;
     }
@@ -160,7 +160,7 @@ public class MavenHelpers {
 
             InputStream in = MavenHelpers.class.getResourceAsStream("versions.properties");
             if (in == null) {
-                LOG.warn("Could not find versions.properties on the classpath!");
+                getLOG().warn("Could not find versions.properties on the classpath!");
             } else {
                 Properties properties = new Properties();
                 try {
@@ -246,7 +246,7 @@ public class MavenHelpers {
         if (value != null) {
             Object oldValue = properties.get(name);
             if (!Objects.equal(oldValue, value)) {
-                LOG.info("Updating pom.xml property: " + name + " to " + value);
+                getLOG().info("Updating pom.xml property: " + name + " to " + value);
                 properties.put(name, value);
                 return true;
             }
@@ -294,7 +294,7 @@ public class MavenHelpers {
         try {
             return element.getChildByName(name);
         } catch (Exception e) {
-           return null;
+            return null;
         }
     }
 
@@ -302,7 +302,7 @@ public class MavenHelpers {
         try {
             return config.getConfigurationElement(name);
         } catch (Exception e) {
-           return null;
+            return null;
         }
     }
 
@@ -338,5 +338,12 @@ public class MavenHelpers {
 
     public static ConfigurationElementBuilder getOrCreateElementBuilder(ConfigurationElement element, String... names) {
         return asConfigurationElementBuilder(getOrCreateElement(element, names));
+    }
+
+    private static Logger getLOG() {
+        if (LOG == null) {
+            LOG = LoggerFactory.getLogger(MavenHelpers.class);
+        }
+        return LOG;
     }
 }

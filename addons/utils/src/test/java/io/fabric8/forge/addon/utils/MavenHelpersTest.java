@@ -18,6 +18,7 @@ package io.fabric8.forge.addon.utils;
 import io.fabric8.utils.Strings;
 import org.junit.Test;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -27,12 +28,17 @@ public class MavenHelpersTest {
     public void testVersions() throws Exception {
         assertVersionFound("junit", "junit");
         assertVersionFound("org.apache.maven.plugins", "maven-surefire-plugin");
+        assertVersionFound("io.fabric8", "fabric8-maven-plugin");
+        assertVersionFound("io.fabric8.archetypes", "archetypes-catalog");
+        assertVersionFound("io.hawt", "hawtio-maven-plugin");
+        assertVersionFound("org.jolokia", "docker-maven-plugin");
     }
 
     public static void assertVersionFound(String groupId, String artifactId) {
         String version = MavenHelpers.getVersion(groupId, artifactId);
         System.out.println("Found " + groupId + ":" + artifactId + " = version: " + version);
         assertTrue("No version found for " + groupId + ":" + artifactId, Strings.isNotBlank(version));
+        assertFalse("Version includes '$' for " + groupId + ":" + artifactId, version.contains("$"));
     }
 
 }

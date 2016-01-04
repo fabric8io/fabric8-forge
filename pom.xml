@@ -79,26 +79,33 @@
     <jboss.forge.version>2.20.1.Final</jboss.forge.version>
     <jboss.roaster.version>2.17.4.Final</jboss.roaster.version>
 
+
     <!--
-          <arquillian.version>1.1.8.Final</arquillian.version>
           <commons.beanutils.version>1.9.2</commons.beanutils.version>
           <docker.assembly.exportBaseDir>false</docker.assembly.exportBaseDir>
           &lt;!&ndash; TODO this can be removed once we upgrade the docker maven plugin &ndash;&gt;
           <docker.assembly.exportBase>false</docker.assembly.exportBase>
           <fabric8.dockerUser>fabric8/</fabric8.dockerUser>
           <jube.version>2.2.0</jube.version>
-          <junit.version>4.12</junit.version>
     -->
 
 
     <fabric8.devops.version>2.2.95</fabric8.devops.version>
 
+    <!-- NOTE these properties are used to generate the addons/utils/src/main/resources/io/fabric8/forge/addon/utils/versions.properties file -->
+    <arquillian.version>1.1.8.Final</arquillian.version>
+    <hawtio.version>1.4.59</hawtio.version>
+    <junit.version>4.12</junit.version>
+    <shrinkwrap-resolver.version>2.2.1</shrinkwrap-resolver.version>
+
+
     <!-- maven plugins -->
     <docker.maven.plugin.version>0.13.6</docker.maven.plugin.version>
     <exec-maven-plugin.version>1.2.1</exec-maven-plugin.version>
-    <maven.require.version>3.1.1</maven.require.version>
     <maven.enforcer.plugin.version>1.4</maven.enforcer.plugin.version>
     <maven.javadoc.plugin.version>2.10.3</maven.javadoc.plugin.version>
+    <maven.failsafe.plugin.version>2.19</maven.failsafe.plugin.version>
+    <maven.require.version>3.1.1</maven.require.version>
     <maven.surefire.plugin.version>2.17</maven.surefire.plugin.version>
   </properties>
 

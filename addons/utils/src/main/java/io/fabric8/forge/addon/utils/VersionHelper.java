@@ -29,33 +29,7 @@ public final class VersionHelper {
      * Retrieves the version of fabric8 to use
      */
     public static String fabric8Version() {
-        String version = null;
-
-        InputStream is = null;
-        try {
-            // try to load from maven properties first as they have the version
-            is = Thread.currentThread().getContextClassLoader().getResourceAsStream("/META-INF/maven/io.fabric8.forge/utils/pom.properties");
-            if (is == null) {
-                is = VersionHelper.class.getClassLoader().getResourceAsStream("/META-INF/maven/io.fabric8.forge/utils/pom.properties");
-            }
-            if (is != null) {
-                Properties prop = new Properties();
-                prop.load(is);
-                version = prop.getProperty("version");
-            }
-        } catch (Exception e) {
-            // ignore
-        } finally {
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (Exception e) {
-                    // ignore
-                }
-            }
-        }
-
-        return version;
+        return MavenHelpers.getVersion("io.fabric8", "fabric8-maven-plugin");
     }
 
     /**
@@ -66,65 +40,21 @@ public final class VersionHelper {
         if (Strings.isNotBlank(version)) {
             return version;
         }
-        return fabric8Version();
+        return MavenHelpers.getVersion("io.fabric8.archetypes", "archetypes-catalog");
     }
 
     /**
      * Retrieves the version of hawtio to use
      */
     public static String hawtioVersion() {
-        String version = null;
-
-        InputStream is = null;
-        try {
-            // try to load from maven properties first as they have the version
-            is = Thread.currentThread().getContextClassLoader().getResourceAsStream("/META-INF/maven/io.fabric8.forge/utils/pom.xml");
-            if (is != null) {
-                String text = loadText(is);
-                version = between(text, "<hawtio.version>", "</hawtio.version>");
-            }
-        } catch (Exception e) {
-            // ignore
-        } finally {
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (Exception e) {
-                    // ignore
-                }
-            }
-        }
-
-        return version;
+        return MavenHelpers.getVersion("io.hawt", "hawtio-maven-plugin");
     }
 
     /**
      * Retrieves the version of docker to use
      */
     public static String dockerVersion() {
-        String version = null;
-
-        InputStream is = null;
-        try {
-            // try to load from maven properties first as they have the version
-            is = Thread.currentThread().getContextClassLoader().getResourceAsStream("/META-INF/maven/io.fabric8.forge/utils/pom.xml");
-            if (is != null) {
-                String text = loadText(is);
-                version = between(text, "<docker.version>", "</docker.version>");
-            }
-        } catch (Exception e) {
-            // ignore
-        } finally {
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (Exception e) {
-                    // ignore
-                }
-            }
-        }
-
-        return version;
+        return MavenHelpers.getVersion("org.jolokia", "docker-maven-plugin");
     }
 
     public static String after(String text, String after) {
