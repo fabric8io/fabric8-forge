@@ -1,2 +1,6 @@
-# fabric8-forge
-Supports JBoss Forge plugins for the Fabric8 iPaaS along with using Forge as a REST service inside Fabric8 DevOps
+## JBoss Forge
+
+This folder contains projects for working with [JBoss Forge](http://forge.jboss.org/)
+
+* addons are various addons for working inside the Forge tool
+* rest provides a REST service for working with JBoss Forge
