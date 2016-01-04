@@ -89,7 +89,8 @@
           <junit.version>4.12</junit.version>
     -->
 
-    <fabric8.devops.release.version>2.2.95</fabric8.devops.release.version>
+
+    <fabric8.devops.version>2.2.95</fabric8.devops.version>
     <fabric8.release.version>${fabric8.version}</fabric8.release.version>
 
     <!-- maven plugins -->
@@ -147,6 +148,7 @@
     <module>fabric8-forge-core</module>
     <module>fabric8-forge-web</module>
     <module>fabric8-forge</module>
+    <module>packages</module>
   </modules>
 
 </project>
