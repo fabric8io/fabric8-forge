@@ -28,7 +28,7 @@
   <artifactId>distro</artifactId>
   <packaging>pom</packaging>
 
-  <name>Fabric8 Forge :: Packages :: Distro</name>
+  <name>Fabric8 :: Forge :: Packages :: Distro</name>
 
   <dependencies>
     <dependency>

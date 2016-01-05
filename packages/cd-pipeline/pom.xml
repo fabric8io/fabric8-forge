@@ -27,7 +27,7 @@
   <artifactId>cd-pipeline</artifactId>
   <packaging>pom</packaging>
 
-  <name>Fabric8 Forge :: Packages :: Continuous Delivery Pipeline</name>
+  <name>Fabric8 :: Forge :: Packages :: Continuous Delivery Pipeline</name>
   <description>Creates the Continuous Delivery Pipeline via: gogs, jenkins, nexus, gerrit and sonaqube</description>
 
   <properties>
