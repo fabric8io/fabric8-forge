@@ -203,6 +203,7 @@ public class CamelJavaParserHelper {
             if (uri != null) {
                 int position = ((Expression) arg).getStartPosition();
                 uris.add(new ParserResult(position, uri));
+                return;
             }
         }
         if (fields && arg instanceof SimpleName) {
