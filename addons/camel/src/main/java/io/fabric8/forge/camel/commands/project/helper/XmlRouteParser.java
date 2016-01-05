@@ -41,34 +41,36 @@ public class XmlRouteParser {
             for (Node node : nodes) {
                 String uri = getSafeAttribute(node, "uri");
                 // trim and remove whitespace noise
-                uri = trimEndpointUri(uri);
-                String id = getSafeAttribute(node, "id");
-                String lineNumber = (String) node.getUserData(XmlLineNumberParser.LINE_NUMBER);
+                if (uri != null) {
+                    uri = trimEndpointUri(uri);
+                    String id = getSafeAttribute(node, "id");
+                    String lineNumber = (String) node.getUserData(XmlLineNumberParser.LINE_NUMBER);
 
-                // we only want the relative dir name from the resource directory, eg META-INF/spring/foo.xml
-                String fileName = fullyQualifiedFileName;
-                if (fileName.startsWith(baseDir)) {
-                    fileName = fileName.substring(baseDir.length() + 1);
+                    // we only want the relative dir name from the resource directory, eg META-INF/spring/foo.xml
+                    String fileName = fullyQualifiedFileName;
+                    if (fileName.startsWith(baseDir)) {
+                        fileName = fileName.substring(baseDir.length() + 1);
+                    }
+
+                    boolean consumerOnly = false;
+                    boolean producerOnly = false;
+                    String nodeName = node.getNodeName();
+                    if ("from".equals(nodeName) || "pollEnrich".equals(nodeName)) {
+                        consumerOnly = true;
+                    } else if ("to".equals(nodeName) || "enrich".equals(nodeName) || "wireTap".equals(nodeName)) {
+                        producerOnly = true;
+                    }
+
+                    CamelEndpointDetails detail = new CamelEndpointDetails();
+                    detail.setFileName(fileName);
+                    detail.setLineNumber(lineNumber);
+                    detail.setEndpointInstance(id);
+                    detail.setEndpointUri(uri);
+                    detail.setEndpointComponentName(endpointComponentName(uri));
+                    detail.setConsumerOnly(consumerOnly);
+                    detail.setProducerOnly(producerOnly);
+                    endpoints.add(detail);
                 }
-
-                boolean consumerOnly = false;
-                boolean producerOnly = false;
-                String nodeName = node.getNodeName();
-                if ("from".equals(nodeName) || "pollEnrich".equals(nodeName)) {
-                    consumerOnly = true;
-                } else if ("to".equals(nodeName) || "enrich".equals(nodeName) || "wireTap".equals(nodeName)) {
-                    producerOnly = true;
-                }
-
-                CamelEndpointDetails detail = new CamelEndpointDetails();
-                detail.setFileName(fileName);
-                detail.setLineNumber(lineNumber);
-                detail.setEndpointInstance(id);
-                detail.setEndpointUri(uri);
-                detail.setEndpointComponentName(endpointComponentName(uri));
-                detail.setConsumerOnly(consumerOnly);
-                detail.setProducerOnly(producerOnly);
-                endpoints.add(detail);
             }
         }
     }

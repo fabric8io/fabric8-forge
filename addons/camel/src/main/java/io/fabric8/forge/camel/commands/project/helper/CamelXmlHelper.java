@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.w3c.dom.Document;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
@@ -46,7 +47,21 @@ public final class CamelXmlHelper {
         for (int i = 0; i < list.getLength(); i++) {
             Node child = list.item(i);
             if ("endpoint".equals(child.getNodeName())) {
-                nodes.add(child);
+                // it may not be a camel namespace, so skip those
+                String ns = child.getNamespaceURI();
+                if (ns == null) {
+                    NamedNodeMap attrs = child.getAttributes();
+                    if (attrs != null) {
+                        Node node = attrs.getNamedItem("xmlns");
+                        if (node != null) {
+                            ns = node.getNodeValue();
+                        }
+                    }
+                }
+                // assume no namespace its for camel
+                if (ns == null || ns.contains("camel")) {
+                    nodes.add(child);
+                }
             }
         }
         list = dom.getElementsByTagName("route");
