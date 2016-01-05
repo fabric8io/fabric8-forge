@@ -15,11 +15,7 @@
  */
 package io.fabric8.forge.camel;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileReader;
-import java.io.InputStream;
 import java.util.List;
 
 import io.fabric8.forge.camel.commands.project.helper.CamelJavaParserHelper;
@@ -30,39 +26,26 @@ import org.jboss.forge.roaster.model.source.MethodSource;
 import org.junit.Ignore;
 
 @Ignore
-public class RoasterSimpleRouteBuilderConfigureTest {
+public class RoasterFieldRouteBuilderConfigureTest {
 
     public static void main(String[] args) throws Exception {
-        RoasterSimpleRouteBuilderConfigureTest me = new RoasterSimpleRouteBuilderConfigureTest();
+        RoasterFieldRouteBuilderConfigureTest me = new RoasterFieldRouteBuilderConfigureTest();
         me.parse();
     }
 
     public void parse() throws Exception {
-        JavaClassSource clazz = (JavaClassSource) Roaster.parse(new File("src/test/java/io/fabric8/forge/camel/MySimpleRouteBuilder.java"));
+        JavaClassSource clazz = (JavaClassSource) Roaster.parse(new File("src/test/java/io/fabric8/forge/camel/MyFieldRouteBuilder.java"));
         MethodSource<JavaClassSource> method = clazz.getMethod("configure");
 
-        List<ParserResult> list = CamelJavaParserHelper.parseCamelSimpleExpressions(method);
-        for (ParserResult simple : list) {
-            System.out.println("Simple: " + simple.getElement());
-            System.out.println("  Line: " + findLineNumber(simple.getPosition()));
+        List<ParserResult> list = CamelJavaParserHelper.parseCamelConsumerUris(method, true, true);
+        for (ParserResult result : list) {
+            System.out.println("Consumer: " + result.getElement());
         }
-    }
 
-    public static int findLineNumber(int pos) throws Exception {
-        int lines = 0;
-        int current = 0;
-        File file = new File("src/test/java/io/fabric8/forge/camel/MySimpleRouteBuilder.java");
-        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                lines++;
-                current += line.length();
-                if (current > pos) {
-                    return lines;
-                }
-            }
+        list = CamelJavaParserHelper.parseCamelProducerUris(method, true, true);
+        for (ParserResult result : list) {
+            System.out.println("Producer: " + result.getElement());
         }
-        return -1;
     }
 
 }

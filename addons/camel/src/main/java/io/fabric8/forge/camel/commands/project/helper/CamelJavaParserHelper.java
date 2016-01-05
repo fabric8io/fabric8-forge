@@ -1,17 +1,17 @@
 /**
- *  Copyright 2005-2015 Red Hat, Inc.
- *
- *  Red Hat licenses this file to you under the Apache License, version
- *  2.0 (the "License"); you may not use this file except in compliance
- *  with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
- *  implied.  See the License for the specific language governing
- *  permissions and limitations under the License.
+ * Copyright 2005-2015 Red Hat, Inc.
+ * <p/>
+ * Red Hat licenses this file to you under the Apache License, version
+ * 2.0 (the "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+ * implied.  See the License for the specific language governing
+ * permissions and limitations under the License.
  */
 package io.fabric8.forge.camel.commands.project.helper;
 
@@ -37,7 +37,10 @@ import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.SimpleType;
 import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.SingleMemberAnnotation;
 import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.Statement;
 import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.StringLiteral;
+import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.Type;
 import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.VariableDeclaration;
+import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.VariableDeclarationFragment;
+import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.jboss.forge.roaster.model.source.AnnotationSource;
 import org.jboss.forge.roaster.model.source.FieldSource;
 import org.jboss.forge.roaster.model.source.JavaClassSource;
@@ -108,11 +111,12 @@ public class CamelJavaParserHelper {
     }
 
     private static List<ParserResult> doParseCamelUris(MethodSource<JavaClassSource> method, boolean consumers, boolean producers,
-                                                 boolean strings, boolean fields) {
+                                                       boolean strings, boolean fields) {
         List<ParserResult> answer = new ArrayList<ParserResult>();
 
         MethodDeclaration md = (MethodDeclaration) method.getInternal();
-        if (md.getBody() != null) {
+        Block block = md.getBody();
+        if (block != null) {
             for (Object statement : md.getBody().statements()) {
                 // must be a method call expression
                 if (statement instanceof ExpressionStatement) {
@@ -120,7 +124,7 @@ public class CamelJavaParserHelper {
                     Expression exp = es.getExpression();
 
                     List<ParserResult> uris = new ArrayList<ParserResult>();
-                    parseExpression(method.getOrigin(), exp, uris, consumers, producers, strings, fields);
+                    parseExpression(method.getOrigin(), block, exp, uris, consumers, producers, strings, fields);
                     if (!uris.isEmpty()) {
                         // reverse the order as we will grab them from last->first
                         Collections.reverse(uris);
@@ -134,21 +138,21 @@ public class CamelJavaParserHelper {
     }
 
 
-    private static void parseExpression(JavaClassSource clazz, Expression exp, List<ParserResult> uris,
+    private static void parseExpression(JavaClassSource clazz, Block block, Expression exp, List<ParserResult> uris,
                                         boolean consumers, boolean producers, boolean strings, boolean fields) {
         if (exp == null) {
             return;
         }
         if (exp instanceof MethodInvocation) {
             MethodInvocation mi = (MethodInvocation) exp;
-            doParseCamelUris(clazz, mi, uris, consumers, producers, strings, fields);
+            doParseCamelUris(clazz, block, mi, uris, consumers, producers, strings, fields);
             // if the method was called on another method, then recursive
             exp = mi.getExpression();
-            parseExpression(clazz, exp, uris, consumers, producers, strings, fields);
+            parseExpression(clazz, block, exp, uris, consumers, producers, strings, fields);
         }
     }
 
-    private static void doParseCamelUris(JavaClassSource clazz, MethodInvocation mi, List<ParserResult> uris,
+    private static void doParseCamelUris(JavaClassSource clazz, Block block, MethodInvocation mi, List<ParserResult> uris,
                                          boolean consumers, boolean producers, boolean strings, boolean fields) {
         String name = mi.getName().getIdentifier();
 
@@ -157,7 +161,7 @@ public class CamelJavaParserHelper {
                 List args = mi.arguments();
                 if (args != null) {
                     for (Object arg : args) {
-                        extractEndpointUriFromArgument(clazz, uris, arg, strings, fields);
+                        extractEndpointUriFromArgument(clazz, block, uris, arg, strings, fields);
                     }
                 }
             }
@@ -167,7 +171,7 @@ public class CamelJavaParserHelper {
                 if (args != null && args.size() >= 1) {
                     // it is a String type
                     Object arg = args.get(0);
-                    extractEndpointUriFromArgument(clazz, uris, arg, strings, fields);
+                    extractEndpointUriFromArgument(clazz, block, uris, arg, strings, fields);
                 }
             }
         }
@@ -177,7 +181,7 @@ public class CamelJavaParserHelper {
                 List args = mi.arguments();
                 if (args != null) {
                     for (Object arg : args) {
-                        extractEndpointUriFromArgument(clazz, uris, arg, strings, fields);
+                        extractEndpointUriFromArgument(clazz, block, uris, arg, strings, fields);
                     }
                 }
             }
@@ -187,22 +191,22 @@ public class CamelJavaParserHelper {
                 if (args != null && args.size() >= 1) {
                     // it is a String type
                     Object arg = args.get(0);
-                    extractEndpointUriFromArgument(clazz, uris, arg, strings, fields);
+                    extractEndpointUriFromArgument(clazz, block, uris, arg, strings, fields);
                 }
             }
         }
     }
 
-    private static void extractEndpointUriFromArgument(JavaClassSource clazz, List<ParserResult> uris, Object arg, boolean strings, boolean fields) {
+    private static void extractEndpointUriFromArgument(JavaClassSource clazz, Block block, List<ParserResult> uris, Object arg, boolean strings, boolean fields) {
         if (strings) {
-            String uri = getLiteralValue(clazz, (Expression) arg, true);
+            String uri = getLiteralValue(clazz, block, (Expression) arg);
             if (uri != null) {
                 int position = ((Expression) arg).getStartPosition();
                 uris.add(new ParserResult(position, uri));
             }
         }
         if (fields && arg instanceof SimpleName) {
-            FieldSource field = getField(clazz, (SimpleName) arg);
+            FieldSource field = getField(clazz, block, (SimpleName) arg);
             if (field != null) {
                 // find the endpoint uri from the annotation
                 AnnotationSource annotation = field.getAnnotation("org.apache.camel.cdi.Uri");
@@ -223,7 +227,7 @@ public class CamelJavaParserHelper {
                             }
                         }
                     }
-                    String uri = CamelJavaParserHelper.getLiteralValue(clazz, exp, false);
+                    String uri = CamelJavaParserHelper.getLiteralValue(clazz, block, exp);
                     if (uri != null) {
                         int position = ((SimpleName) arg).getStartPosition();
                         uris.add(new ParserResult(position, uri));
@@ -233,7 +237,7 @@ public class CamelJavaParserHelper {
                     Object fi = field.getInternal();
                     if (fi instanceof VariableDeclaration) {
                         Expression exp = ((VariableDeclaration) fi).getInitializer();
-                        String uri = CamelJavaParserHelper.getLiteralValue(clazz, exp, false);
+                        String uri = CamelJavaParserHelper.getLiteralValue(clazz, block, exp);
                         if (uri != null) {
                             // we want the position of the field, and not in the route
                             int position = ((VariableDeclaration) fi).getStartPosition();
@@ -249,15 +253,16 @@ public class CamelJavaParserHelper {
         List<ParserResult> answer = new ArrayList<ParserResult>();
 
         MethodDeclaration md = (MethodDeclaration) method.getInternal();
-        if (md.getBody() != null) {
-            for (Object statement : md.getBody().statements()) {
+        Block block = md.getBody();
+        if (block != null) {
+            for (Object statement : block.statements()) {
                 // must be a method call expression
                 if (statement instanceof ExpressionStatement) {
                     ExpressionStatement es = (ExpressionStatement) statement;
                     Expression exp = es.getExpression();
 
                     List<ParserResult> expressions = new ArrayList<ParserResult>();
-                    parseExpression(method.getOrigin(), exp, expressions);
+                    parseExpression(method.getOrigin(), block, exp, expressions);
                     if (!expressions.isEmpty()) {
                         // reverse the order as we will grab them from last->first
                         Collections.reverse(expressions);
@@ -270,20 +275,20 @@ public class CamelJavaParserHelper {
         return answer;
     }
 
-    private static void parseExpression(JavaClassSource clazz, Expression exp, List<ParserResult> expressions) {
+    private static void parseExpression(JavaClassSource clazz, Block block, Expression exp, List<ParserResult> expressions) {
         if (exp == null) {
             return;
         }
         if (exp instanceof MethodInvocation) {
             MethodInvocation mi = (MethodInvocation) exp;
-            doParseCamelSimple(clazz, mi, expressions);
+            doParseCamelSimple(clazz, block, mi, expressions);
             // if the method was called on another method, then recursive
             exp = mi.getExpression();
-            parseExpression(clazz, exp, expressions);
+            parseExpression(clazz, block, exp, expressions);
         }
     }
 
-    private static void doParseCamelSimple(JavaClassSource clazz, MethodInvocation mi, List<ParserResult> expressions) {
+    private static void doParseCamelSimple(JavaClassSource clazz, Block block, MethodInvocation mi, List<ParserResult> expressions) {
         String name = mi.getName().getIdentifier();
 
         if ("simple".equals(name)) {
@@ -292,7 +297,7 @@ public class CamelJavaParserHelper {
             if (args != null && args.size() >= 1) {
                 // it is a String type
                 Object arg = args.get(0);
-                String simple = getLiteralValue(clazz, (Expression) arg, false);
+                String simple = getLiteralValue(clazz, block, (Expression) arg);
                 if (simple != null && !simple.isEmpty()) {
                     int position = ((Expression) arg).getStartPosition();
                     expressions.add(new ParserResult(position, simple));
@@ -306,24 +311,43 @@ public class CamelJavaParserHelper {
             for (Object arg : args) {
                 if (arg instanceof MethodInvocation) {
                     MethodInvocation ami = (MethodInvocation) arg;
-                    doParseCamelSimple(clazz, ami, expressions);
+                    doParseCamelSimple(clazz, block, ami, expressions);
                 }
             }
         }
     }
 
-    private static FieldSource getField(JavaClassSource clazz, SimpleName ref) {
+    private static FieldSource getField(JavaClassSource clazz, Block block, SimpleName ref) {
         String fieldName = ref.getIdentifier();
         if (fieldName != null) {
-            // find field
+            // find field in class
             FieldSource field = clazz != null ? clazz.getField(fieldName) : null;
-            return field;
+            if (field == null) {
+                // maybe the field is in the block
+                for (Object statement : block.statements()) {
+                    if (statement instanceof VariableDeclarationStatement) {
+                        final Type type = ((VariableDeclarationStatement) statement).getType();
+                        for (Object obj : ((VariableDeclarationStatement) statement).fragments()) {
+                            if (obj instanceof VariableDeclarationFragment) {
+                                VariableDeclarationFragment fragment = (VariableDeclarationFragment) obj;
+                                SimpleName name = fragment.getName();
+                                if (name != null && fieldName.equals(name.getIdentifier())) {
+                                    field = new StatementFieldSource(clazz, fragment, type);
+                                    return field;
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                return field;
+            }
         }
         return null;
     }
 
-    public static String getLiteralValue(JavaClassSource clazz, Expression expression, boolean literalOnly) {
-        // unwrap paranthesis
+    public static String getLiteralValue(JavaClassSource clazz, Block block, Expression expression) {
+        // unwrap parenthesis
         if (expression instanceof ParenthesizedExpression) {
             expression = ((ParenthesizedExpression) expression).getExpression();
         }
@@ -336,19 +360,18 @@ public class CamelJavaParserHelper {
             return ((NumberLiteral) expression).getToken();
         }
 
-        // store hee we only do literals
-        if (literalOnly) {
-            return null;
+        // if it a method invocation then add a dummy value assuming the method invocation will return a valid response
+        if (expression instanceof MethodInvocation) {
+            String name = ((MethodInvocation) expression).getName().getIdentifier();
+            return "#" + name + "()";
         }
 
         if (expression instanceof SimpleName) {
-            FieldSource field = getField(clazz, (SimpleName) expression);
+            FieldSource field = getField(clazz, block, (SimpleName) expression);
             if (field != null) {
-                Object fi = field.getInternal();
-                if (fi instanceof VariableDeclaration) {
-                    Expression exp = ((VariableDeclaration) fi).getInitializer();
-                    return getLiteralValue(clazz, exp, literalOnly);
-                }
+                VariableDeclarationFragment vdf = (VariableDeclarationFragment) field.getInternal();
+                expression = vdf.getInitializer();
+                return getLiteralValue(clazz, block, expression);
             }
         } else if (expression instanceof InfixExpression) {
             String answer = null;
@@ -356,11 +379,11 @@ public class CamelJavaParserHelper {
             InfixExpression ie = (InfixExpression) expression;
             if (InfixExpression.Operator.PLUS.equals(ie.getOperator())) {
 
-                String val1 = getLiteralValue(clazz, ie.getLeftOperand(), literalOnly);
-                String val2 = getLiteralValue(clazz, ie.getRightOperand(), literalOnly);
+                String val1 = getLiteralValue(clazz, block, ie.getLeftOperand());
+                String val2 = getLiteralValue(clazz, block, ie.getRightOperand());
 
                 // if numeric then we plus the values, otherwise we string concat
-                boolean numeric = isNumericOperator(clazz, ie.getLeftOperand()) && isNumericOperator(clazz, ie.getRightOperand());
+                boolean numeric = isNumericOperator(clazz, block, ie.getLeftOperand()) && isNumericOperator(clazz, block, ie.getRightOperand());
                 if (numeric) {
                     Long num1 = (val1 != null ? Long.valueOf(val1) : 0);
                     Long num2 = (val2 != null ? Long.valueOf(val2) : 0);
@@ -374,7 +397,7 @@ public class CamelJavaParserHelper {
                     List extended = ie.extendedOperands();
                     if (extended != null) {
                         for (Object ext : extended) {
-                            String val3 = getLiteralValue(clazz, (Expression) ext, literalOnly);
+                            String val3 = getLiteralValue(clazz, block, (Expression) ext);
                             if (numeric) {
                                 Long num3 = (val3 != null ? Long.valueOf(val3) : 0);
                                 Long num = Long.valueOf(answer);
@@ -392,11 +415,11 @@ public class CamelJavaParserHelper {
         return null;
     }
 
-    private static boolean isNumericOperator(JavaClassSource clazz, Expression expression) {
+    private static boolean isNumericOperator(JavaClassSource clazz, Block block, Expression expression) {
         if (expression instanceof NumberLiteral) {
             return true;
         } else if (expression instanceof SimpleName) {
-            FieldSource field = getField(clazz, (SimpleName) expression);
+            FieldSource field = getField(clazz, block, (SimpleName) expression);
             if (field != null) {
                 return field.getType().isType("int") || field.getType().isType("long")
                         || field.getType().isType("Integer") || field.getType().isType("Long");

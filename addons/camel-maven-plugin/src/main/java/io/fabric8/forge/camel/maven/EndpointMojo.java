@@ -99,6 +99,14 @@ public class EndpointMojo extends AbstractMojo {
     @Parameter(property = "camel.ignoreUnknownComponent", defaultValue = "true", readonly = true, required = false)
     private boolean ignoreUnknownComponent;
 
+    /**
+     * Whether to ignore components that uses lenient properties. When this is true, then the uri validation is stricter
+     * but would fail on properties that are not part of the component but in the uri because of using lenient properties.
+     * For example using the HTTP components to provide query parameters in the endpoint uri.
+     */
+    @Parameter(property = "camel.ignoreLenientProperties", defaultValue = "true", readonly = true, required = false)
+    private boolean ignoreLenientProperties;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         CamelCatalog catalog = new DefaultCamelCatalog();
@@ -174,7 +182,7 @@ public class EndpointMojo extends AbstractMojo {
         int endpointErrors = 0;
         int unknownComponents = 0;
         for (CamelEndpointDetails detail : endpoints) {
-            EndpointValidationResult result = catalog.validateEndpointProperties(detail.getEndpointUri());
+            EndpointValidationResult result = catalog.validateEndpointProperties(detail.getEndpointUri(), ignoreLenientProperties);
 
             boolean ok = result.isSuccess();
             if (!ok && ignoreUnknownComponent && result.getUnknownComponent() != null) {

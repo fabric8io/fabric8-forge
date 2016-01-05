@@ -64,7 +64,7 @@ public class RouteBuilderParser {
                             }
                         }
                     }
-                    uri = CamelJavaParserHelper.getLiteralValue(clazz, exp, false);
+                    uri = CamelJavaParserHelper.getLiteralValue(clazz, null, exp);
                 }
             }
 
