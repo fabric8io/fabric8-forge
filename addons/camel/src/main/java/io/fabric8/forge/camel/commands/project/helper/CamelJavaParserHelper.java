@@ -360,6 +360,12 @@ public class CamelJavaParserHelper {
             return ((NumberLiteral) expression).getToken();
         }
 
+        // if it a method invocation then add a dummy value assuming the method invocation will return a valid response
+        if (expression instanceof MethodInvocation) {
+            String name = ((MethodInvocation) expression).getName().getIdentifier();
+            return "#" + name + "()";
+        }
+
         if (expression instanceof SimpleName) {
             FieldSource field = getField(clazz, block, (SimpleName) expression);
             if (field != null) {
