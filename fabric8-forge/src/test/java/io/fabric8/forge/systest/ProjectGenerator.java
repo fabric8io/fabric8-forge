@@ -19,6 +19,12 @@ package io.fabric8.forge.systest;
 import io.fabric8.forge.systest.support.RestUIContext;
 import io.fabric8.forge.systest.support.RestUIRuntime;
 import io.fabric8.utils.Strings;
+import org.apache.maven.shared.invoker.DefaultInvocationRequest;
+import org.apache.maven.shared.invoker.DefaultInvoker;
+import org.apache.maven.shared.invoker.InvocationRequest;
+import org.apache.maven.shared.invoker.InvocationResult;
+import org.apache.maven.shared.invoker.Invoker;
+import org.apache.maven.shared.invoker.MavenInvocationException;
 import org.jboss.forge.addon.resource.Resource;
 import org.jboss.forge.addon.resource.ResourceFactory;
 import org.jboss.forge.addon.ui.command.CommandFactory;
@@ -38,30 +44,34 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
 
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.fail;
+import static org.junit.Assert.assertEquals;
 
 /**
  */
 public class ProjectGenerator {
+    public final static String FABRIC8_ARCHETYPE_VERSION = System.getProperty("fabric8ArchetypeVersion", "2.2.81");
     private static final transient Logger LOG = LoggerFactory.getLogger(ProjectGenerator.class);
-
     private final CommandControllerFactory commandControllerFactory;
     private final CommandFactory commandFactory;
     private final RestUIRuntime runtime = new RestUIRuntime();
     private final Furnace furnace;
     private final File projectsOutputFolder;
+    private final File localMavenRepo;
     private final AddonRegistry addonRegistry;
     private final ResourceFactory resourceFactory;
-    private final String fabric8ArchetypeVersion = System.getProperty("fabric8ArchetypeVersion", "2.2.81");
 
-    public ProjectGenerator(Furnace furnace, File projectsOutputFolder) throws Exception {
+    public ProjectGenerator(Furnace furnace, File projectsOutputFolder, File localMavenRepo) throws Exception {
         this.furnace = furnace;
         this.projectsOutputFolder = projectsOutputFolder;
+        this.localMavenRepo = localMavenRepo;
         addonRegistry = furnace.getAddonRegistry();
 
         resourceFactory = addonRegistry.getServices(ResourceFactory.class).get();
@@ -70,8 +80,43 @@ public class ProjectGenerator {
 
     }
 
+    protected static WizardCommandController assertWizardController(CommandController controller) {
+        if (controller instanceof WizardCommandController) {
+            return (WizardCommandController) controller;
+        } else {
+            fail("controller is not a wizard! " + controller.getClass());
+            return null;
+        }
+    }
+
+    public File getArtifactJar(String groupId, String artifactId, String version) {
+        Properties properties = new Properties();
+        properties.put("groupId", groupId);
+        properties.put("artifactId", artifactId);
+        properties.put("version", version);
+
+        InvocationRequest request = new DefaultInvocationRequest();
+        request.setLocalRepositoryDirectory(localMavenRepo);
+        request.setInteractive(false);
+        List<String> goalList = Arrays.asList("org.apache.maven.plugins:maven-dependency-plugin:2.10:get");
+        request.setGoals(goalList);
+        request.setProperties(properties);
+
+        try {
+            Invoker invoker = new DefaultInvoker();
+            InvocationResult result = invoker.execute(request);
+            int exitCode = result.getExitCode();
+            LOG.info("maven result " + exitCode + " exception: " + result.getExecutionException());
+            assertEquals("Failed to invoke maven goals: " + goalList + " with properties: " + properties + ". Exit Code: ", 0, exitCode);
+        } catch (MavenInvocationException e) {
+            fail("Failed to invoke maven goals: " + goalList + " with properties: " + properties + ". Exception " + e, e);
+        }
+        String path = groupId.replace('.', '/') + "/" + artifactId + "/" + version + "/" + artifactId + "-" + version + ".jar";
+        return new File(localMavenRepo, path);
+    }
+
     public void createProject(String archetype) throws Exception {
-        String archetypeUri = "io.fabric8.archetypes:" + archetype + ":" + fabric8ArchetypeVersion;
+        String archetypeUri = "io.fabric8.archetypes:" + archetype + ":" + FABRIC8_ARCHETYPE_VERSION;
 
         LOG.info("Creating archetype: " + archetypeUri);
 
@@ -97,6 +142,11 @@ public class ProjectGenerator {
         wizardCommandController = wizardCommandController.next();
         LOG.info("Next result: " + wizardCommandController);
 
+/*
+        InputComponent<?, ?> archetypeInput = wizardCommandController.getInputs().get("archetype");
+        archetypeInput.get
+*/
+
         wizardCommandController.setValueFor("catalog", "fabric8");
         wizardCommandController.setValueFor("archetype", archetypeUri);
 
@@ -104,19 +154,10 @@ public class ProjectGenerator {
         Result result = wizardCommandController.execute();
         printResult(result);
 
-        useProject(archetype, outputDir);
+        useProject(archetype, outputDir, name);
     }
 
-    protected static WizardCommandController assertWizardController(CommandController controller) {
-        if (controller instanceof WizardCommandController) {
-            return (WizardCommandController) controller;
-        } else {
-            fail("controller is not a wizard! " + controller.getClass());
-            return null;
-        }
-    }
-
-    protected void useProject(String archetype, File outputDir) {
+    protected void useProject(String archetype, File outputDir, String projectName) throws MavenInvocationException {
         LOG.info("Now using project: " + archetype + " at folder: " + outputDir);
 
         RestUIContext context = createUIContextForFolder(outputDir);
@@ -138,6 +179,27 @@ public class ProjectGenerator {
 
         useCommand(context, "fabric8-setup", true);
         useCommand(context, "fabric8-pipeline", false);
+
+        runMavenGoals(archetype, new File(outputDir, projectName), "package");
+    }
+
+    protected void runMavenGoals(String archetype, File outputDir, String... goals) throws MavenInvocationException {
+        List<String> goalList = Arrays.asList(goals);
+        LOG.info("Invoking maven with goals: " + goalList + " in folder: " + outputDir);
+        File pomFile = new File(outputDir, "pom.xml");
+
+
+        InvocationRequest request = new DefaultInvocationRequest();
+        request.setLocalRepositoryDirectory(localMavenRepo);
+        request.setInteractive(false);
+        request.setPomFile(pomFile);
+        request.setGoals(goalList);
+
+        Invoker invoker = new DefaultInvoker();
+        InvocationResult result = invoker.execute(request);
+        int exitCode = result.getExitCode();
+        LOG.info("maven result " + exitCode + " exception: " + result.getExecutionException());
+        assertEquals("Failed to invoke maven goals: " + goalList + " in folder: " + outputDir + ". Exit Code: ", 0, exitCode);
     }
 
     protected void useCommand(RestUIContext context, String commandName, boolean shouldExecute) {

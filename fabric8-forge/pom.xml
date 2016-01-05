@@ -80,6 +80,8 @@
       <classifier>forge-addon</classifier>
       <scope>provided</scope>
     </dependency>
+
+    <!-- testing -->
     <dependency>
       <groupId>io.fabric8.archetypes</groupId>
       <artifactId>archetypes-catalog</artifactId>
@@ -154,6 +156,17 @@
     <dependency>
       <groupId>org.jboss.arquillian.junit</groupId>
       <artifactId>arquillian-junit-container</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven.shared</groupId>
+      <artifactId>maven-invoker</artifactId>
+      <version>2.2</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>

@@ -22,7 +22,6 @@ import java.util.Deque;
 import java.util.LinkedList;
 
 /**
- *
  * @author <a href="ggastald@redhat.com">George Gastaldi</a>
  */
 public class RestUIPrompt implements UIPrompt {
