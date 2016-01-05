@@ -44,10 +44,8 @@ public class RoasterSimpleRouteBuilderConfigureTest {
         List<ParserResult> list = CamelJavaParserHelper.parseCamelSimpleExpressions(method);
         for (ParserResult simple : list) {
             System.out.println("Simple: " + simple.getElement());
+            System.out.println("  Line: " + findLineNumber(simple.getPosition()));
         }
-
-        int line = findLineNumber(987);
-        System.out.println(line);
     }
 
     public static int findLineNumber(int pos) throws Exception {
