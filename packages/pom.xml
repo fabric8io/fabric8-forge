@@ -28,7 +28,7 @@
   <artifactId>packages</artifactId>
   <packaging>pom</packaging>
 
-  <name>Fabric8 Forge :: Packages</name>
+  <name>Fabric8 :: Forge :: Packages</name>
 
   <properties>
   </properties>
