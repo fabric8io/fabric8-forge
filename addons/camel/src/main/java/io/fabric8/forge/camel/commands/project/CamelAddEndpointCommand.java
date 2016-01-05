@@ -19,8 +19,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.inject.Inject;
 
+import com.google.common.collect.Collections2;
 import io.fabric8.forge.camel.commands.project.completer.RouteBuilderCompleter;
 import io.fabric8.forge.camel.commands.project.dto.ComponentDto;
 import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
@@ -54,6 +56,7 @@ import org.jboss.forge.addon.ui.wizard.UIWizard;
 
 import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.createComponentDto;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.createUIInputsForCamelComponent;
+import static io.fabric8.forge.camel.commands.project.helper.CollectionHelper.first;
 
 @FacetConstraint({JavaSourceFacet.class, ResourcesFacet.class, ClassLoaderFacet.class})
 public class CamelAddEndpointCommand extends AbstractCamelProjectCommand implements UIWizard {
@@ -156,8 +159,14 @@ public class CamelAddEndpointCommand extends AbstractCamelProjectCommand impleme
         endpointType.setValueChoices(Arrays.asList(types));
         endpointType.setDefaultValue("<any>");
 
+        Set<String> routeBuilders = new RouteBuilderCompleter(facet).getRouteBuilders();
+
         // use value choices instead of completer as that works better in web console
-        routeBuilder.setValueChoices(new RouteBuilderCompleter(facet).getRouteBuilders());
+        routeBuilder.setValueChoices(routeBuilders);
+        if (routeBuilders.size() == 1) {
+            // lets default the value if there's only one choice
+            routeBuilder.setDefaultValue(first(routeBuilders));
+        }
         builder.add(componentNameFilter).add(componentName).add(endpointType).add(instanceName).add(routeBuilder);
     }
 

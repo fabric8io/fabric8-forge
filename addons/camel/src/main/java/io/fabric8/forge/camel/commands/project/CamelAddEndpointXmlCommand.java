@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.inject.Inject;
 
 import io.fabric8.forge.camel.commands.project.completer.XmlFileCompleter;
@@ -53,6 +54,7 @@ import org.jboss.forge.addon.ui.wizard.UIWizard;
 
 import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.createComponentDto;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.createUIInputsForCamelComponent;
+import static io.fabric8.forge.camel.commands.project.helper.CollectionHelper.first;
 
 public class CamelAddEndpointXmlCommand extends AbstractCamelProjectCommand implements UIWizard {
 
@@ -176,8 +178,14 @@ public class CamelAddEndpointXmlCommand extends AbstractCamelProjectCommand impl
         endpointType.setValueChoices(Arrays.asList(types));
         endpointType.setDefaultValue("<any>");
 
+        Set<String> files = new XmlFileCompleter(resourcesFacet, webResourcesFacet).getFiles();
+
         // use value choices instead of completer as that works better in web console
-        xml.setValueChoices(new XmlFileCompleter(resourcesFacet, webResourcesFacet).getFiles());
+        xml.setValueChoices(files);
+        if (files.size() == 1) {
+            // lets default the value if there's only one choice
+            xml.setDefaultValue(first(files));
+        }
         builder.add(componentNameFilter).add(componentName).add(endpointType).add(instanceName).add(xml);
     }
 
