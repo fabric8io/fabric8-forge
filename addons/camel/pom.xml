@@ -34,7 +34,8 @@
     <hawtio.version>1.4.59</hawtio.version>
     <!-- docker maven plugin -->
     <docker.version>0.13.6</docker.version>
-    <camel.version>2.17-SNAPSHOT</camel.version>
+    <!-- TODO: until Camel 2.16.2
+    <camel.version>2.17-SNAPSHOT</camel.version> -->
   </properties>
 
   <dependencyManagement>
@@ -151,12 +152,12 @@
     <dependency>
       <groupId>org.apache.camel</groupId>
       <artifactId>camel-core</artifactId>
-      <version>${camel.version}</version>
+      <!--<version>${camel.version}</version>-->
     </dependency>
     <dependency>
       <groupId>org.apache.camel</groupId>
       <artifactId>camel-catalog</artifactId>
-      <version>${camel.version}</version>
+      <!--<version>${camel.version}</version>-->
     </dependency>
     <!-- TODO: Requires Camel 2.16.2+
     <dependency>
@@ -193,13 +194,11 @@
     <dependency>
       <groupId>org.apache.camel</groupId>
       <artifactId>camel-test</artifactId>
-      <version>${camel.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.camel</groupId>
       <artifactId>camel-cdi</artifactId>
-      <version>${camel.version}</version>
       <scope>test</scope>
     </dependency>
 
