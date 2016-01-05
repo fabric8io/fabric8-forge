@@ -199,7 +199,7 @@ public class CamelJavaParserHelper {
 
     private static void extractEndpointUriFromArgument(JavaClassSource clazz, Block block, List<ParserResult> uris, Object arg, boolean strings, boolean fields) {
         if (strings) {
-            String uri = getLiteralValue(clazz, block, (Expression) arg, true);
+            String uri = getLiteralValue(clazz, block, (Expression) arg);
             if (uri != null) {
                 int position = ((Expression) arg).getStartPosition();
                 uris.add(new ParserResult(position, uri));
@@ -227,7 +227,7 @@ public class CamelJavaParserHelper {
                             }
                         }
                     }
-                    String uri = CamelJavaParserHelper.getLiteralValue(clazz, block, exp, false);
+                    String uri = CamelJavaParserHelper.getLiteralValue(clazz, block, exp);
                     if (uri != null) {
                         int position = ((SimpleName) arg).getStartPosition();
                         uris.add(new ParserResult(position, uri));
@@ -237,7 +237,7 @@ public class CamelJavaParserHelper {
                     Object fi = field.getInternal();
                     if (fi instanceof VariableDeclaration) {
                         Expression exp = ((VariableDeclaration) fi).getInitializer();
-                        String uri = CamelJavaParserHelper.getLiteralValue(clazz, block, exp, false);
+                        String uri = CamelJavaParserHelper.getLiteralValue(clazz, block, exp);
                         if (uri != null) {
                             // we want the position of the field, and not in the route
                             int position = ((VariableDeclaration) fi).getStartPosition();
@@ -297,7 +297,7 @@ public class CamelJavaParserHelper {
             if (args != null && args.size() >= 1) {
                 // it is a String type
                 Object arg = args.get(0);
-                String simple = getLiteralValue(clazz, block, (Expression) arg, false);
+                String simple = getLiteralValue(clazz, block, (Expression) arg);
                 if (simple != null && !simple.isEmpty()) {
                     int position = ((Expression) arg).getStartPosition();
                     expressions.add(new ParserResult(position, simple));
@@ -346,7 +346,7 @@ public class CamelJavaParserHelper {
         return null;
     }
 
-    public static String getLiteralValue(JavaClassSource clazz, Block block, Expression expression, boolean literalOnly) {
+    public static String getLiteralValue(JavaClassSource clazz, Block block, Expression expression) {
         // unwrap parenthesis
         if (expression instanceof ParenthesizedExpression) {
             expression = ((ParenthesizedExpression) expression).getExpression();
@@ -360,17 +360,12 @@ public class CamelJavaParserHelper {
             return ((NumberLiteral) expression).getToken();
         }
 
-        // stop here we only do literals
-//        if (literalOnly) {
-//            return null;
-//        }
-
         if (expression instanceof SimpleName) {
             FieldSource field = getField(clazz, block, (SimpleName) expression);
             if (field != null) {
                 VariableDeclarationFragment vdf = (VariableDeclarationFragment) field.getInternal();
                 expression = vdf.getInitializer();
-                return getLiteralValue(clazz, block, expression, literalOnly);
+                return getLiteralValue(clazz, block, expression);
             }
         } else if (expression instanceof InfixExpression) {
             String answer = null;
@@ -378,8 +373,8 @@ public class CamelJavaParserHelper {
             InfixExpression ie = (InfixExpression) expression;
             if (InfixExpression.Operator.PLUS.equals(ie.getOperator())) {
 
-                String val1 = getLiteralValue(clazz, block, ie.getLeftOperand(), literalOnly);
-                String val2 = getLiteralValue(clazz, block, ie.getRightOperand(), literalOnly);
+                String val1 = getLiteralValue(clazz, block, ie.getLeftOperand());
+                String val2 = getLiteralValue(clazz, block, ie.getRightOperand());
 
                 // if numeric then we plus the values, otherwise we string concat
                 boolean numeric = isNumericOperator(clazz, block, ie.getLeftOperand()) && isNumericOperator(clazz, block, ie.getRightOperand());
@@ -396,7 +391,7 @@ public class CamelJavaParserHelper {
                     List extended = ie.extendedOperands();
                     if (extended != null) {
                         for (Object ext : extended) {
-                            String val3 = getLiteralValue(clazz, block, (Expression) ext, literalOnly);
+                            String val3 = getLiteralValue(clazz, block, (Expression) ext);
                             if (numeric) {
                                 Long num3 = (val3 != null ? Long.valueOf(val3) : 0);
                                 Long num = Long.valueOf(answer);
