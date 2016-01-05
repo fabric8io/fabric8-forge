@@ -203,6 +203,7 @@ public class CamelJavaParserHelper {
             if (uri != null) {
                 int position = ((Expression) arg).getStartPosition();
                 uris.add(new ParserResult(position, uri));
+                return;
             }
         }
         if (fields && arg instanceof SimpleName) {
@@ -371,7 +372,12 @@ public class CamelJavaParserHelper {
             if (field != null) {
                 VariableDeclarationFragment vdf = (VariableDeclarationFragment) field.getInternal();
                 expression = vdf.getInitializer();
-                return getLiteralValue(clazz, block, expression);
+                if (expression == null) {
+                    // its a field which has no initializer, then add a dummy value assuming the field will be initialized at runtime
+                    return "#" + field.getName();
+                } else {
+                    return getLiteralValue(clazz, block, expression);
+                }
             }
         } else if (expression instanceof InfixExpression) {
             String answer = null;
