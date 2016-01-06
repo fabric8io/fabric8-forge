@@ -167,7 +167,7 @@ public class CamelAddEndpointCommand extends AbstractCamelProjectCommand impleme
             // lets default the value if there's only one choice
             routeBuilder.setDefaultValue(first(routeBuilders));
         }
-        builder.add(componentNameFilter).add(componentName).add(endpointType).add(instanceName).add(routeBuilder);
+        builder.add(componentNameFilter).add(componentName).add(instanceName).add(routeBuilder).add(endpointType);
     }
 
     @Override
