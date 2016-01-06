@@ -23,6 +23,7 @@ import io.fabric8.forge.camel.commands.project.helper.ParserResult;
 import org.jboss.forge.roaster.Roaster;
 import org.jboss.forge.roaster.model.source.JavaClassSource;
 import org.jboss.forge.roaster.model.source.MethodSource;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class RoasterCdiRouteBuilderConfigureTest {
@@ -36,11 +37,14 @@ public class RoasterCdiRouteBuilderConfigureTest {
         for (ParserResult result : list) {
             System.out.println("Consumer: " + result.getElement());
         }
+        Assert.assertEquals("timer:foo?period=4999", list.get(0).getElement());
 
         list = CamelJavaParserHelper.parseCamelProducerUris(method, true, true);
         for (ParserResult result : list) {
             System.out.println("Producer: " + result.getElement());
         }
+        Assert.assertEquals("log:a", list.get(0).getElement());
+        Assert.assertEquals("netty4-http:http:someserver:80/hello", list.get(1).getElement());
     }
 
 }
