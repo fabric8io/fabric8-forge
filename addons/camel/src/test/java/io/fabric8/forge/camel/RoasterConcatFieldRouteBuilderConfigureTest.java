@@ -23,16 +23,12 @@ import io.fabric8.forge.camel.commands.project.helper.ParserResult;
 import org.jboss.forge.roaster.Roaster;
 import org.jboss.forge.roaster.model.source.JavaClassSource;
 import org.jboss.forge.roaster.model.source.MethodSource;
-import org.junit.Ignore;
+import org.junit.Assert;
+import org.junit.Test;
 
-@Ignore
 public class RoasterConcatFieldRouteBuilderConfigureTest {
 
-    public static void main(String[] args) throws Exception {
-        RoasterConcatFieldRouteBuilderConfigureTest me = new RoasterConcatFieldRouteBuilderConfigureTest();
-        me.parse();
-    }
-
+    @Test
     public void parse() throws Exception {
         JavaClassSource clazz = (JavaClassSource) Roaster.parse(new File("src/test/java/io/fabric8/forge/camel/MyConcatFieldRouteBuilder.java"));
         MethodSource<JavaClassSource> method = clazz.getMethod("configure");
@@ -41,11 +37,13 @@ public class RoasterConcatFieldRouteBuilderConfigureTest {
         for (ParserResult result : list) {
             System.out.println("Consumer: " + result.getElement());
         }
+        Assert.assertEquals("ftp:localhost:#ftpPort/myapp?password=admin&username=admin", list.get(0).getElement());
 
         list = CamelJavaParserHelper.parseCamelProducerUris(method, true, true);
         for (ParserResult result : list) {
             System.out.println("Producer: " + result.getElement());
         }
+        Assert.assertEquals("log:b", list.get(0).getElement());
     }
 
 }
