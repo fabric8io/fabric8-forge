@@ -41,6 +41,7 @@ import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.Type;
 import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.VariableDeclaration;
 import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.VariableDeclarationStatement;
+import org.jboss.forge.roaster.model.Annotation;
 import org.jboss.forge.roaster.model.source.AnnotationSource;
 import org.jboss.forge.roaster.model.source.FieldSource;
 import org.jboss.forge.roaster.model.source.JavaClassSource;
@@ -318,7 +319,8 @@ public class CamelJavaParserHelper {
         }
     }
 
-    private static FieldSource getField(JavaClassSource clazz, Block block, SimpleName ref) {
+    @SuppressWarnings("unchecked")
+    private static FieldSource<JavaClassSource> getField(JavaClassSource clazz, Block block, SimpleName ref) {
         String fieldName = ref.getIdentifier();
         if (fieldName != null) {
             // find field in class
@@ -368,8 +370,33 @@ public class CamelJavaParserHelper {
         }
 
         if (expression instanceof SimpleName) {
-            FieldSource field = getField(clazz, block, (SimpleName) expression);
+            FieldSource<JavaClassSource> field = getField(clazz, block, (SimpleName) expression);
             if (field != null) {
+                // is the field annotated with a Camel endpoint
+                if (field.getAnnotations() != null) {
+                    for (Annotation ann : field.getAnnotations()) {
+                        boolean valid = "org.apache.camel.EndpointInject".equals(ann.getQualifiedName()) || "org.apache.camel.cdi.Uri".equals(ann.getQualifiedName());
+                        if (valid) {
+                            Expression exp = (Expression) ann.getInternal();
+                            if (exp instanceof SingleMemberAnnotation) {
+                                exp = ((SingleMemberAnnotation) exp).getValue();
+                            } else if (exp instanceof NormalAnnotation) {
+                                List values = ((NormalAnnotation) exp).values();
+                                for (Object value : values) {
+                                    MemberValuePair pair = (MemberValuePair) value;
+                                    if ("uri".equals(pair.getName().toString())) {
+                                        exp = pair.getValue();
+                                        break;
+                                    }
+                                }
+                            }
+                            if (exp != null) {
+                                return getLiteralValue(clazz, block, exp);
+                            }
+                        }
+                    }
+                }
+                // no annotations so try its initializer
                 VariableDeclarationFragment vdf = (VariableDeclarationFragment) field.getInternal();
                 expression = vdf.getInitializer();
                 if (expression == null) {
