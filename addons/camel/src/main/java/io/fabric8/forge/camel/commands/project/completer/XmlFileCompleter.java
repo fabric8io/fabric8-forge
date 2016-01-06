@@ -20,12 +20,15 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+import io.fabric8.forge.camel.commands.project.helper.CamelXmlHelper;
 import org.jboss.forge.addon.projects.facets.ResourcesFacet;
 import org.jboss.forge.addon.projects.facets.WebResourcesFacet;
 import org.jboss.forge.addon.resource.visit.ResourceVisitor;
 import org.jboss.forge.addon.ui.context.UIContext;
+import org.jboss.forge.addon.ui.context.UIValidationContext;
 import org.jboss.forge.addon.ui.input.InputComponent;
 import org.jboss.forge.addon.ui.input.UICompleter;
+import org.jboss.forge.addon.ui.input.UIInput;
 
 /**
  * XML file completer that finds all XML files which includes &lt;camelContext&gt;
@@ -33,17 +36,22 @@ import org.jboss.forge.addon.ui.input.UICompleter;
 public class XmlFileCompleter implements UICompleter<String> {
 
     private final Set<String> files = new TreeSet<String>();
+    private final Set<String> directories = new TreeSet<String>();
 
     public XmlFileCompleter(final ResourcesFacet facet, final WebResourcesFacet webFacet) {
         // find Camel XML files
         if (facet != null) {
-            ResourceVisitor visitor = new XmlResourcesCamelFilesVisitor(facet, files);
+            ResourceVisitor visitor = new XmlResourcesCamelFilesVisitor(facet, files, directories);
             facet.visitResources(visitor);
         }
         if (webFacet != null) {
-            ResourceVisitor visitor = new XmlWebResourcesCamelFilesVisitor(webFacet, files);
+            ResourceVisitor visitor = new XmlWebResourcesCamelFilesVisitor(webFacet, files, directories);
             webFacet.visitWebResources(visitor);
         }
+    }
+
+    public Set<String> getDirectories() {
+        return directories;
     }
 
     public Set<String> getFiles() {
@@ -61,5 +69,15 @@ public class XmlFileCompleter implements UICompleter<String> {
         }
 
         return answer;
+    }
+
+    /**
+     * Validates that the given selected directory and fileName are valid and that the file doesn't already exist
+     */
+    public void validateFileDoesNotExist(UIInput<String> directory, UIInput<String> fileName, UIValidationContext validator) {
+        String resourcePath = CamelXmlHelper.createFileName(directory, fileName);
+        if (files.contains(resourcePath)) {
+            validator.addValidationError(fileName, "A file with that name already exists!");
+        }
     }
 }

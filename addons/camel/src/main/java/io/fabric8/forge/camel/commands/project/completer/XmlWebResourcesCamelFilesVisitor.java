@@ -26,10 +26,12 @@ public class XmlWebResourcesCamelFilesVisitor implements ResourceVisitor {
 
     private final WebResourcesFacet facet;
     private final Set<String> files;
+    private final Set<String> directories;
 
-    public XmlWebResourcesCamelFilesVisitor(WebResourcesFacet facet, Set<String> files) {
+    public XmlWebResourcesCamelFilesVisitor(WebResourcesFacet facet, Set<String> files, Set<String> directories) {
         this.facet = facet;
         this.files = files;
+        this.directories = directories;
     }
 
     @Override
@@ -46,6 +48,10 @@ public class XmlWebResourcesCamelFilesVisitor implements ResourceVisitor {
                     fqn = fqn.substring(baseDir.length() + 1);
                 }
 
+                int idx = Math.max(fqn.lastIndexOf("/"), fqn.lastIndexOf("\\"));
+                if (idx > 0) {
+                    directories.add(fqn.substring(0, idx));
+                }
                 files.add(fqn);
             }
         }

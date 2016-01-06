@@ -34,6 +34,7 @@ import org.jboss.forge.roaster.model.JavaClass;
 public class RouteBuilderCompleter implements UICompleter<String> {
 
     private final Set<String> routeBuilders = new TreeSet<String>();
+    private final Set<String> packages = new TreeSet<String>();
 
     public RouteBuilderCompleter(JavaSourceFacet facet) {
         // find package names in the source code
@@ -45,12 +46,17 @@ public class RouteBuilderCompleter implements UICompleter<String> {
                     String superType = clazz.getSuperType();
                     if (superType != null && RouteBuilder.class.getName().equals(superType)) {
                         routeBuilders.add(clazz.getQualifiedName());
+                        packages.add(clazz.getPackage());
                     }
                 } catch (FileNotFoundException e) {
                     // ignore
                 }
             }
         });
+    }
+
+    public Set<String> getPackages() {
+        return packages;
     }
 
     public Set<String> getRouteBuilders() {

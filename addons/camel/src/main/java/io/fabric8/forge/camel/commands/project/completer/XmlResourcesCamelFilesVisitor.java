@@ -26,10 +26,12 @@ public class XmlResourcesCamelFilesVisitor implements ResourceVisitor {
 
     private final ResourcesFacet facet;
     private final Set<String> files;
+    private final Set<String> directories;
 
-    public XmlResourcesCamelFilesVisitor(ResourcesFacet facet, Set<String> files) {
+    public XmlResourcesCamelFilesVisitor(ResourcesFacet facet, Set<String> files, Set<String> directories) {
         this.facet = facet;
         this.files = files;
+        this.directories = directories;
     }
 
     @Override

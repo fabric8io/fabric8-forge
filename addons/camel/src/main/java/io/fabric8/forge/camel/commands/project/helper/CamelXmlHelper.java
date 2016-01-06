@@ -15,9 +15,11 @@
  */
 package io.fabric8.forge.camel.commands.project.helper;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jboss.forge.addon.ui.input.UIInput;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
@@ -141,5 +143,9 @@ public final class CamelXmlHelper {
         uri = uri.replaceAll("(\\&)(\\s+)", "$1");
         uri = uri.replaceAll("(\\?)(\\s+)", "$1");
         return uri;
+    }
+
+    public static String createFileName(UIInput<String> directory, UIInput<String> name) {
+        return directory.getValue() != null ? directory.getValue() + File.separator + name.getValue() : name.getValue();
     }
 }

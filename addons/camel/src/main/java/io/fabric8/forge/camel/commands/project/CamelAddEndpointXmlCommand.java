@@ -111,11 +111,6 @@ public class CamelAddEndpointXmlCommand extends AbstractCamelProjectCommand impl
         attributeMap.remove("navigationResult");
 
         Project project = getSelectedProject(builder.getUIContext());
-        final ResourcesFacet resourcesFacet = project.getFacet(ResourcesFacet.class);
-        WebResourcesFacet webResourcesFacet = null;
-        if (project.hasFacet(WebResourcesFacet.class)) {
-            webResourcesFacet = project.getFacet(WebResourcesFacet.class);
-        }
 
         componentNameFilter.setValueChoices(CamelCommandsHelper.createComponentLabelValues(project, getCamelCatalog()));
         componentNameFilter.setDefaultValue("<all>");
@@ -178,7 +173,8 @@ public class CamelAddEndpointXmlCommand extends AbstractCamelProjectCommand impl
         endpointType.setValueChoices(Arrays.asList(types));
         endpointType.setDefaultValue("<any>");
 
-        Set<String> files = new XmlFileCompleter(resourcesFacet, webResourcesFacet).getFiles();
+        XmlFileCompleter xmlFileCompleter = createXmlFileCompleter(project);
+        Set<String> files = xmlFileCompleter.getFiles();
 
         // use value choices instead of completer as that works better in web console
         xml.setValueChoices(files);

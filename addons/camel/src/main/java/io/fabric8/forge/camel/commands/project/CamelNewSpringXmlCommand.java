@@ -19,10 +19,14 @@ import java.io.File;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import javax.inject.Inject;
 
+import io.fabric8.forge.addon.utils.completer.StringCompleter;
 import io.fabric8.forge.addon.utils.validator.ResourceNameValidator;
+import io.fabric8.forge.camel.commands.project.completer.XmlFileCompleter;
 import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
+import io.fabric8.forge.camel.commands.project.helper.CamelXmlHelper;
 import org.jboss.forge.addon.dependencies.Dependency;
 import org.jboss.forge.addon.dependencies.builder.DependencyBuilder;
 import org.jboss.forge.addon.facets.constraints.FacetConstraint;
@@ -39,6 +43,7 @@ import org.jboss.forge.addon.templates.freemarker.FreemarkerTemplate;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
+import org.jboss.forge.addon.ui.context.UIValidationContext;
 import org.jboss.forge.addon.ui.facets.HintsFacet;
 import org.jboss.forge.addon.ui.hints.InputType;
 import org.jboss.forge.addon.ui.input.UIInput;
@@ -48,6 +53,8 @@ import org.jboss.forge.addon.ui.result.Result;
 import org.jboss.forge.addon.ui.result.Results;
 import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
+
+import static io.fabric8.forge.camel.commands.project.helper.CollectionHelper.first;
 
 @FacetConstraint({ResourcesFacet.class})
 public class CamelNewSpringXmlCommand extends AbstractCamelProjectCommand {
@@ -95,7 +102,25 @@ public class CamelNewSpringXmlCommand extends AbstractCamelProjectCommand {
         name.addValidator(new ResourceNameValidator("xml"));
         name.getFacet(HintsFacet.class).setInputType(InputType.FILE_PICKER);
         directory.getFacet(HintsFacet.class).setInputType(InputType.DIRECTORY_PICKER);
+
+        XmlFileCompleter xmlFileCompleter = createXmlFileCompleter(builder.getUIContext());
+        Set<String> directories = xmlFileCompleter.getDirectories();
+        if (directories.size() == 1) {
+            directory.setDefaultValue(first(directories));
+        }
+        if (!directories.isEmpty()) {
+            directory.setCompleter(new StringCompleter(directories));
+        }
+
         builder.add(directory).add(name);
+    }
+
+    @Override
+    public void validate(UIValidationContext validator) {
+        XmlFileCompleter xmlFileCompleter = createXmlFileCompleter(validator.getUIContext());
+        xmlFileCompleter.validateFileDoesNotExist(directory, name, validator);
+
+        super.validate(validator);
     }
 
     @Override
@@ -103,7 +128,7 @@ public class CamelNewSpringXmlCommand extends AbstractCamelProjectCommand {
         Project project = getSelectedProject(context);
         String projectName = project.getRoot().getName();
 
-        String fileName = directory.getValue() != null ? directory.getValue() + File.separator + name.getValue() : name.getValue();
+        String fileName = CamelXmlHelper.createFileName(directory, name);
         String fullName = "src" + File.separator + "main" + File.separator + "resources" + File.separator + fileName;
 
         ResourcesFacet facet = project.getFacet(ResourcesFacet.class);

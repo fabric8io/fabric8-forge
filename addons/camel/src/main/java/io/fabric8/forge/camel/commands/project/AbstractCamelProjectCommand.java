@@ -20,6 +20,7 @@ import java.util.Set;
 import javax.inject.Inject;
 
 import io.fabric8.forge.addon.utils.CamelProjectHelper;
+import io.fabric8.forge.camel.commands.project.completer.XmlFileCompleter;
 import org.apache.camel.catalog.CamelCatalog;
 import org.jboss.forge.addon.convert.ConverterFactory;
 import org.jboss.forge.addon.dependencies.Coordinate;
@@ -28,6 +29,8 @@ import org.jboss.forge.addon.dependencies.builder.CoordinateBuilder;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.ProjectFactory;
 import org.jboss.forge.addon.projects.Projects;
+import org.jboss.forge.addon.projects.facets.ResourcesFacet;
+import org.jboss.forge.addon.projects.facets.WebResourcesFacet;
 import org.jboss.forge.addon.projects.ui.AbstractProjectCommand;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
@@ -112,5 +115,19 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
 
     protected Coordinate createCamelCoordinate(String artifactId, String version) {
         return createCoordinate("org.apache.camel", artifactId, version);
+    }
+
+    protected XmlFileCompleter createXmlFileCompleter(Project project) {
+        final ResourcesFacet resourcesFacet = project.getFacet(ResourcesFacet.class);
+        WebResourcesFacet webResourcesFacet = null;
+        if (project.hasFacet(WebResourcesFacet.class)) {
+            webResourcesFacet = project.getFacet(WebResourcesFacet.class);
+        }
+        return new XmlFileCompleter(resourcesFacet, webResourcesFacet);
+    }
+
+    protected XmlFileCompleter createXmlFileCompleter(UIContext context) {
+        Project project = getSelectedProject(context);
+        return createXmlFileCompleter(project);
     }
 }
