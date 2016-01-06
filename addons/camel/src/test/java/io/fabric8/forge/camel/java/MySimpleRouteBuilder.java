@@ -13,20 +13,21 @@
  *  implied.  See the License for the specific language governing
  *  permissions and limitations under the License.
  */
-package io.fabric8.forge.camel;
+package io.fabric8.forge.camel.java;
 
 import org.apache.camel.builder.RouteBuilder;
 
-public class MyMethodCallRouteBuilder extends RouteBuilder {
-
-    private String whatToDoWhenExists() {
-        return "Override";
-    }
+public class MySimpleRouteBuilder extends RouteBuilder {
 
     @Override
     public void configure() throws Exception {
         from("timer:foo")
-            .to("file:output?fileExist=" + whatToDoWhenExists())
-            .to("log:b");
+            .filter(simple("${body} > 100"))
+                .toD("log:a")
+            .end()
+            .filter().simple("${body} > 200")
+                .to("log:b")
+            .end()
+            .to("log:c");
     }
 }

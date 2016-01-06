@@ -13,7 +13,7 @@
  *  implied.  See the License for the specific language governing
  *  permissions and limitations under the License.
  */
-package io.fabric8.forge.camel;
+package io.fabric8.forge.camel.java;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -32,7 +32,7 @@ public class RoasterSimpleRouteBuilderConfigureTest {
 
     @Test
     public void parse() throws Exception {
-        JavaClassSource clazz = (JavaClassSource) Roaster.parse(new File("src/test/java/io/fabric8/forge/camel/MySimpleRouteBuilder.java"));
+        JavaClassSource clazz = (JavaClassSource) Roaster.parse(new File("src/test/java/io/fabric8/forge/camel/java/MySimpleRouteBuilder.java"));
         MethodSource<JavaClassSource> method = clazz.getMethod("configure");
 
         List<ParserResult> list = CamelJavaParserHelper.parseCamelSimpleExpressions(method);
@@ -49,7 +49,7 @@ public class RoasterSimpleRouteBuilderConfigureTest {
     public static int findLineNumber(int pos) throws Exception {
         int lines = 0;
         int current = 0;
-        File file = new File("src/test/java/io/fabric8/forge/camel/MySimpleRouteBuilder.java");
+        File file = new File("src/test/java/io/fabric8/forge/camel/java/MySimpleRouteBuilder.java");
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = br.readLine()) != null) {

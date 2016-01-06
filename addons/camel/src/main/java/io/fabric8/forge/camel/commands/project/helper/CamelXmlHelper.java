@@ -66,6 +66,39 @@ public final class CamelXmlHelper {
                 }
             }
         }
+
+        list = dom.getElementsByTagName("onException");
+        for (int i = 0; i < list.getLength(); i++) {
+            Node child = list.item(i);
+            findAllUrisRecursive(child, nodes);
+        }
+        list = dom.getElementsByTagName("onCompletion");
+        for (int i = 0; i < list.getLength(); i++) {
+            Node child = list.item(i);
+            findAllUrisRecursive(child, nodes);
+        }
+        list = dom.getElementsByTagName("intercept");
+        for (int i = 0; i < list.getLength(); i++) {
+            Node child = list.item(i);
+            findAllUrisRecursive(child, nodes);
+        }
+        list = dom.getElementsByTagName("interceptFrom");
+        for (int i = 0; i < list.getLength(); i++) {
+            Node child = list.item(i);
+            findAllUrisRecursive(child, nodes);
+        }
+        list = dom.getElementsByTagName("interceptSendToEndpoint");
+        for (int i = 0; i < list.getLength(); i++) {
+            Node child = list.item(i);
+            findAllUrisRecursive(child, nodes);
+        }
+        list = dom.getElementsByTagName("rest");
+        for (int i = 0; i < list.getLength(); i++) {
+            Node child = list.item(i);
+            if ("route".equals(child.getNodeName()) || "to".equals(child.getNodeName())) {
+                findAllUrisRecursive(child, nodes);
+            }
+        }
         list = dom.getElementsByTagName("route");
         for (int i = 0; i < list.getLength(); i++) {
             Node child = list.item(i);

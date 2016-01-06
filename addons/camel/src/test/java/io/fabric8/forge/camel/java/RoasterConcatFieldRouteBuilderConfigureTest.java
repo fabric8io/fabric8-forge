@@ -13,7 +13,7 @@
  *  implied.  See the License for the specific language governing
  *  permissions and limitations under the License.
  */
-package io.fabric8.forge.camel;
+package io.fabric8.forge.camel.java;
 
 import java.io.File;
 import java.util.List;
@@ -30,7 +30,7 @@ public class RoasterConcatFieldRouteBuilderConfigureTest {
 
     @Test
     public void parse() throws Exception {
-        JavaClassSource clazz = (JavaClassSource) Roaster.parse(new File("src/test/java/io/fabric8/forge/camel/MyConcatFieldRouteBuilder.java"));
+        JavaClassSource clazz = (JavaClassSource) Roaster.parse(new File("src/test/java/io/fabric8/forge/camel/java/MyConcatFieldRouteBuilder.java"));
         MethodSource<JavaClassSource> method = clazz.getMethod("configure");
 
         List<ParserResult> list = CamelJavaParserHelper.parseCamelConsumerUris(method, true, true);
