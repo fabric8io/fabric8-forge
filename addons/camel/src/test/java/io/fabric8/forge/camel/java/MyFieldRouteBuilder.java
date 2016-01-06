@@ -13,27 +13,18 @@
  *  implied.  See the License for the specific language governing
  *  permissions and limitations under the License.
  */
-package io.fabric8.forge.camel;
+package io.fabric8.forge.camel.java;
 
 import org.apache.camel.builder.RouteBuilder;
-import org.apache.camel.test.junit4.CamelTestSupport;
-import org.junit.Test;
 
-public class MyRouteTest extends CamelTestSupport {
-
-    @Test
-    public void testFoo() throws Exception {
-        // noop
-    }
+public class MyFieldRouteBuilder extends RouteBuilder {
 
     @Override
-    protected RouteBuilder createRouteBuilder() throws Exception {
-        return new RouteBuilder() {
-            @Override
-            public void configure() throws Exception {
-                from("direct:foo")
-                    .to("mock:foo");
-            }
-        };
+    public void configure() throws Exception {
+        String exists = "Override";
+
+        from("timer:foo")
+            .toD("file:output?fileExist=" + exists)
+            .to("log:b");
     }
 }

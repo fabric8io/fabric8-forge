@@ -13,7 +13,7 @@
  *  implied.  See the License for the specific language governing
  *  permissions and limitations under the License.
  */
-package io.fabric8.forge.camel;
+package io.fabric8.forge.camel.java;
 
 import java.io.File;
 import java.util.List;
@@ -26,25 +26,25 @@ import org.jboss.forge.roaster.model.source.MethodSource;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class RoasterCdiConcatRouteBuilderConfigureTest {
+public class RoasterMethodCallRouteBuilderConfigureTest {
 
     @Test
     public void parse() throws Exception {
-        JavaClassSource clazz = (JavaClassSource) Roaster.parse(new File("src/test/java/io/fabric8/forge/camel/MyCdiConcatRouteBuilder.java"));
+        JavaClassSource clazz = (JavaClassSource) Roaster.parse(new File("src/test/java/io/fabric8/forge/camel/java/MyMethodCallRouteBuilder.java"));
         MethodSource<JavaClassSource> method = clazz.getMethod("configure");
 
         List<ParserResult> list = CamelJavaParserHelper.parseCamelConsumerUris(method, true, true);
         for (ParserResult result : list) {
             System.out.println("Consumer: " + result.getElement());
         }
-        Assert.assertEquals("timer:foo?period=4999", list.get(0).getElement());
+        Assert.assertEquals("timer:foo", list.get(0).getElement());
 
         list = CamelJavaParserHelper.parseCamelProducerUris(method, true, true);
         for (ParserResult result : list) {
             System.out.println("Producer: " + result.getElement());
         }
-        Assert.assertEquals("log:a", list.get(0).getElement());
-        Assert.assertEquals("netty4-http:http:someserver:80/hello", list.get(1).getElement());
+        Assert.assertEquals("file:output?fileExist=#whatToDoWhenExists()", list.get(0).getElement());
+        Assert.assertEquals("log:b", list.get(1).getElement());
     }
 
 }

@@ -13,7 +13,7 @@
  *  implied.  See the License for the specific language governing
  *  permissions and limitations under the License.
  */
-package io.fabric8.forge.camel;
+package io.fabric8.forge.camel.java;
 
 import java.io.File;
 import java.util.List;
@@ -26,24 +26,25 @@ import org.jboss.forge.roaster.model.source.MethodSource;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class RoasterRouteBuilderCamelTestSupportTest {
+public class RoasterNewLineConstRouteBuilderConfigureTest {
 
     @Test
     public void parse() throws Exception {
-        JavaClassSource clazz = (JavaClassSource) Roaster.parse(new File("src/test/java/io/fabric8/forge/camel/MyRouteTest.java"));
-        MethodSource<JavaClassSource> method = CamelJavaParserHelper.findConfigureMethod(clazz);
+        JavaClassSource clazz = (JavaClassSource) Roaster.parse(new File("src/test/java/io/fabric8/forge/camel/java/MyNewLineConstRouteBuilder.java"));
+        MethodSource<JavaClassSource> method = clazz.getMethod("configure");
 
         List<ParserResult> list = CamelJavaParserHelper.parseCamelConsumerUris(method, true, false);
         for (ParserResult result : list) {
             System.out.println("Consumer: " + result.getElement());
         }
-        Assert.assertEquals("direct:foo", list.get(0).getElement());
+        Assert.assertEquals("timer:foo", list.get(0).getElement());
 
         list = CamelJavaParserHelper.parseCamelProducerUris(method, true, false);
         for (ParserResult result : list) {
             System.out.println("Producer: " + result.getElement());
         }
-        Assert.assertEquals("mock:foo", list.get(0).getElement());
+        Assert.assertEquals("file:output?fileExist=Append&chmod=777&allowNullBody=true", list.get(0).getElement());
+        Assert.assertEquals("log:b", list.get(1).getElement());
     }
 
 }

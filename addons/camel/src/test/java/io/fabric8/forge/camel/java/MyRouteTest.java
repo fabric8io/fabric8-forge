@@ -13,33 +13,27 @@
  *  implied.  See the License for the specific language governing
  *  permissions and limitations under the License.
  */
-package io.fabric8.forge.camel;
+package io.fabric8.forge.camel.java;
 
-import javax.inject.Inject;
-
-import org.apache.camel.Endpoint;
 import org.apache.camel.builder.RouteBuilder;
-import org.apache.camel.cdi.Uri;
+import org.apache.camel.test.junit4.CamelTestSupport;
+import org.junit.Test;
 
-public class MyCdiRouteBuilder extends RouteBuilder {
+public class MyRouteTest extends CamelTestSupport {
 
-    @Inject
-    @Uri("timer:foo?period=4999")
-    private Endpoint inputEndpoint;
-
-    @Inject
-    @Uri("log:a")
-    private Endpoint loga;
-
-    @Inject
-    @Uri("netty4-http:http:someserver:80/hello")
-    private Endpoint mynetty;
+    @Test
+    public void testFoo() throws Exception {
+        // noop
+    }
 
     @Override
-    public void configure() throws Exception {
-        from(inputEndpoint)
-            .log("I was here")
-            .to(loga)
-            .to(mynetty);
+    protected RouteBuilder createRouteBuilder() throws Exception {
+        return new RouteBuilder() {
+            @Override
+            public void configure() throws Exception {
+                from("direct:foo")
+                    .to("mock:foo");
+            }
+        };
     }
 }

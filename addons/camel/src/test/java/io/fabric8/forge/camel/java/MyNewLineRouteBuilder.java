@@ -13,18 +13,18 @@
  *  implied.  See the License for the specific language governing
  *  permissions and limitations under the License.
  */
-package io.fabric8.forge.camel;
+package io.fabric8.forge.camel.java;
 
 import org.apache.camel.builder.RouteBuilder;
 
-public class MyRouteBuilder extends RouteBuilder {
+public class MyNewLineRouteBuilder extends RouteBuilder {
 
     @Override
     public void configure() throws Exception {
         from("timer:foo")
-            .log("I was here")
-            .toD("log:a")
-            .wireTap("mock:tap")
+            .toD("file:output?fileExist=Append"
+                    + "&chmod=777"
+                    + "&allowNullBody=true")
             .to("log:b");
     }
 }
