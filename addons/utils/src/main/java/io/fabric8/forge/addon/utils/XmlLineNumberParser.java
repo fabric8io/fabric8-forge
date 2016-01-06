@@ -15,7 +15,9 @@
  */
 package io.fabric8.forge.addon.utils;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.util.Stack;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -26,6 +28,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.xml.sax.Attributes;
+import org.xml.sax.InputSource;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -56,8 +59,17 @@ public final class XmlLineNumberParser {
         SAXParser parser;
         final SAXParserFactory factory = SAXParserFactory.newInstance();
         parser = factory.newSAXParser();
-        final DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
-        final DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
+        final DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        // turn off validator and loading external dtd
+        dbf.setValidating(false);
+        dbf.setNamespaceAware(true);
+        dbf.setFeature("http://xml.org/sax/features/namespaces", false);
+        dbf.setFeature("http://xml.org/sax/features/validation", false);
+        dbf.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
+        dbf.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+        dbf.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+        dbf.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        final DocumentBuilder docBuilder = dbf.newDocumentBuilder();
         doc = docBuilder.newDocument();
 
         final Stack<Element> elementStack = new Stack<Element>();
@@ -100,6 +112,12 @@ public final class XmlLineNumberParser {
             @Override
             public void characters(final char ch[], final int start, final int length) throws SAXException {
                 textBuffer.append(ch, start, length);
+            }
+
+            @Override
+            public InputSource resolveEntity(String publicId, String systemId) throws IOException, SAXException {
+                // do not resolve external dtd
+                return new InputSource(new StringReader(""));
             }
 
             // Outputs text accumulated under the current node
