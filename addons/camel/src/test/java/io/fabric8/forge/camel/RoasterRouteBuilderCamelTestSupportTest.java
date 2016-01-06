@@ -23,16 +23,12 @@ import io.fabric8.forge.camel.commands.project.helper.ParserResult;
 import org.jboss.forge.roaster.Roaster;
 import org.jboss.forge.roaster.model.source.JavaClassSource;
 import org.jboss.forge.roaster.model.source.MethodSource;
-import org.junit.Ignore;
+import org.junit.Assert;
+import org.junit.Test;
 
-@Ignore
 public class RoasterRouteBuilderCamelTestSupportTest {
 
-    public static void main(String[] args) throws Exception {
-        RoasterRouteBuilderCamelTestSupportTest me = new RoasterRouteBuilderCamelTestSupportTest();
-        me.parse();
-    }
-
+    @Test
     public void parse() throws Exception {
         JavaClassSource clazz = (JavaClassSource) Roaster.parse(new File("src/test/java/io/fabric8/forge/camel/MyRouteTest.java"));
         MethodSource<JavaClassSource> method = CamelJavaParserHelper.findConfigureMethod(clazz);
@@ -41,11 +37,13 @@ public class RoasterRouteBuilderCamelTestSupportTest {
         for (ParserResult result : list) {
             System.out.println("Consumer: " + result.getElement());
         }
+        Assert.assertEquals("direct:foo", list.get(0).getElement());
 
         list = CamelJavaParserHelper.parseCamelProducerUris(method, true, false);
         for (ParserResult result : list) {
             System.out.println("Producer: " + result.getElement());
         }
+        Assert.assertEquals("mock:foo", list.get(0).getElement());
     }
 
 }

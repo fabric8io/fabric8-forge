@@ -17,9 +17,7 @@ package io.fabric8.forge.camel;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileReader;
-import java.io.InputStream;
 import java.util.List;
 
 import io.fabric8.forge.camel.commands.project.helper.CamelJavaParserHelper;
@@ -27,16 +25,12 @@ import io.fabric8.forge.camel.commands.project.helper.ParserResult;
 import org.jboss.forge.roaster.Roaster;
 import org.jboss.forge.roaster.model.source.JavaClassSource;
 import org.jboss.forge.roaster.model.source.MethodSource;
-import org.junit.Ignore;
+import org.junit.Assert;
+import org.junit.Test;
 
-@Ignore
 public class RoasterSimpleRouteBuilderConfigureTest {
 
-    public static void main(String[] args) throws Exception {
-        RoasterSimpleRouteBuilderConfigureTest me = new RoasterSimpleRouteBuilderConfigureTest();
-        me.parse();
-    }
-
+    @Test
     public void parse() throws Exception {
         JavaClassSource clazz = (JavaClassSource) Roaster.parse(new File("src/test/java/io/fabric8/forge/camel/MySimpleRouteBuilder.java"));
         MethodSource<JavaClassSource> method = clazz.getMethod("configure");
@@ -46,6 +40,10 @@ public class RoasterSimpleRouteBuilderConfigureTest {
             System.out.println("Simple: " + simple.getElement());
             System.out.println("  Line: " + findLineNumber(simple.getPosition()));
         }
+        Assert.assertEquals("${body} > 100", list.get(0).getElement());
+        Assert.assertEquals(26, findLineNumber(list.get(0).getPosition()));
+        Assert.assertEquals("${body} > 200", list.get(1).getElement());
+        Assert.assertEquals(29, findLineNumber(list.get(1).getPosition()));
     }
 
     public static int findLineNumber(int pos) throws Exception {

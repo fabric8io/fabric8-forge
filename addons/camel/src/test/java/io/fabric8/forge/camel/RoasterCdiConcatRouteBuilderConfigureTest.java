@@ -16,26 +16,19 @@
 package io.fabric8.forge.camel;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 import io.fabric8.forge.camel.commands.project.helper.CamelJavaParserHelper;
 import io.fabric8.forge.camel.commands.project.helper.ParserResult;
-import io.fabric8.forge.camel.commands.project.helper.RouteBuilderParser;
-import io.fabric8.forge.camel.commands.project.model.CamelEndpointDetails;
+import junit.framework.Assert;
 import org.jboss.forge.roaster.Roaster;
 import org.jboss.forge.roaster.model.source.JavaClassSource;
 import org.jboss.forge.roaster.model.source.MethodSource;
-import org.junit.Ignore;
+import org.junit.Test;
 
-@Ignore
 public class RoasterCdiConcatRouteBuilderConfigureTest {
 
-    public static void main(String[] args) throws Exception {
-        RoasterCdiConcatRouteBuilderConfigureTest me = new RoasterCdiConcatRouteBuilderConfigureTest();
-        me.parse();
-    }
-
+    @Test
     public void parse() throws Exception {
         JavaClassSource clazz = (JavaClassSource) Roaster.parse(new File("src/test/java/io/fabric8/forge/camel/MyCdiConcatRouteBuilder.java"));
         MethodSource<JavaClassSource> method = clazz.getMethod("configure");
