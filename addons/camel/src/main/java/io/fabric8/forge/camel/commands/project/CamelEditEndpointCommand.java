@@ -74,11 +74,8 @@ public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implem
         Map<Object, Object> attributeMap = builder.getUIContext().getAttributeMap();
         attributeMap.remove("navigationResult");
 
-        Project project = getSelectedProject(builder.getUIContext());
-        JavaSourceFacet facet = project.getFacet(JavaSourceFacet.class);
-
         // use value choices instead of completer as that works better in web console
-        completer = new RouteBuilderEndpointsCompleter(facet);
+        completer = createRouteBuilderEndpointsCompleter(builder.getUIContext());
         // must add dummy <select> in the dropdown as otherwise there is problems with auto selecting
         // the first element where its a different between its auto selected vs end user clicked and selected
         // it, which also affects all this next() callback issue from forge

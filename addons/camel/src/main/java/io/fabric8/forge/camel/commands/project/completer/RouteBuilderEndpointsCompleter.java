@@ -54,7 +54,18 @@ public class RouteBuilderEndpointsCompleter implements UICompleter<String> {
 
     public CamelEndpointDetails getEndpointDetail(String uri) {
         for (CamelEndpointDetails detail : endpoints) {
-            if (detail.getEndpointUri().equals(uri)) {
+            String endpointUri = detail.getEndpointUri();
+            if (endpointUri != null && endpointUri.equals(uri)) {
+                return detail;
+            }
+        }
+        return null;
+    }
+
+    public CamelEndpointDetails getEndpointDetailByInstanceName(String instanceName) {
+        for (CamelEndpointDetails detail : endpoints) {
+            String endpointInstance = detail.getEndpointInstance();
+            if (endpointInstance != null && endpointInstance.equals(instanceName)) {
                 return detail;
             }
         }
@@ -72,5 +83,17 @@ public class RouteBuilderEndpointsCompleter implements UICompleter<String> {
         }
 
         return answer;
+    }
+
+    public String createDefaultNewInstanceName() {
+        int count = endpoints.size() + 1;
+        while (count > 0 && count < Integer.MAX_VALUE) {
+            String name = "endpoint" + count;
+            if (getEndpointDetailByInstanceName(name) == null) {
+                return name;
+            }
+            count++;
+        }
+        return null;
     }
 }

@@ -20,12 +20,14 @@ import java.util.Set;
 import javax.inject.Inject;
 
 import io.fabric8.forge.addon.utils.CamelProjectHelper;
+import io.fabric8.forge.camel.commands.project.completer.RouteBuilderEndpointsCompleter;
 import io.fabric8.forge.camel.commands.project.completer.XmlFileCompleter;
 import org.apache.camel.catalog.CamelCatalog;
 import org.jboss.forge.addon.convert.ConverterFactory;
 import org.jboss.forge.addon.dependencies.Coordinate;
 import org.jboss.forge.addon.dependencies.Dependency;
 import org.jboss.forge.addon.dependencies.builder.CoordinateBuilder;
+import org.jboss.forge.addon.parser.java.facets.JavaSourceFacet;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.ProjectFactory;
 import org.jboss.forge.addon.projects.Projects;
@@ -115,6 +117,16 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
 
     protected Coordinate createCamelCoordinate(String artifactId, String version) {
         return createCoordinate("org.apache.camel", artifactId, version);
+    }
+
+    protected RouteBuilderEndpointsCompleter createRouteBuilderEndpointsCompleter(UIContext context) {
+        Project project = getSelectedProject(context);
+        return createRouteBuilderEndpointsCompleter(project);
+    }
+
+    protected RouteBuilderEndpointsCompleter createRouteBuilderEndpointsCompleter(Project project) {
+        JavaSourceFacet facet = project.getFacet(JavaSourceFacet.class);
+        return new RouteBuilderEndpointsCompleter(facet);
     }
 
     protected XmlFileCompleter createXmlFileCompleter(Project project) {
