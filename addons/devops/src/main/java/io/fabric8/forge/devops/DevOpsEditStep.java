@@ -206,7 +206,14 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
             CommandHelpers.setInitialComponentValue(issueProjectName, config.getIssueProjectName());
             CommandHelpers.setInitialComponentValue(codeReview, config.getCodeReview());
         }
-        inputComponents = CommandHelpers.addInputComponents(builder, pipeline, copyFlowToProject, chatRoom, issueProjectName, codeReview);
+        inputComponents = new ArrayList<>();
+        File jenkinsFile = getProjectContextFile(context, project, "Jenkinsfile");
+        boolean hasJenkinsFile = Files.isFile(jenkinsFile);
+        LOG.debug("Has Jenkinsfile " + hasJenkinsFile + " with file: " + jenkinsFile);
+        if (!hasJenkinsFile) {
+            inputComponents.addAll(CommandHelpers.addInputComponents(builder, pipeline, copyFlowToProject));
+        }
+        inputComponents.addAll(CommandHelpers.addInputComponents(builder, chatRoom, issueProjectName, codeReview));
     }
 
     public static Iterable<String> filterCompletions(Iterable<String> values, String inputValue) {
