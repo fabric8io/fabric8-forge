@@ -326,24 +326,27 @@ public class CamelJavaParserHelper {
             // find field in class
             FieldSource field = clazz != null ? clazz.getField(fieldName) : null;
             if (field == null) {
-                // maybe the field is in the block
-                for (Object statement : block.statements()) {
-                    if (statement instanceof VariableDeclarationStatement) {
-                        final Type type = ((VariableDeclarationStatement) statement).getType();
-                        for (Object obj : ((VariableDeclarationStatement) statement).fragments()) {
-                            if (obj instanceof VariableDeclarationFragment) {
-                                VariableDeclarationFragment fragment = (VariableDeclarationFragment) obj;
-                                SimpleName name = fragment.getName();
-                                if (name != null && fieldName.equals(name.getIdentifier())) {
-                                    field = new StatementFieldSource(clazz, fragment, type);
-                                    return field;
-                                }
-                            }
+                field = findFieldInBlock(clazz, block, fieldName);
+            }
+            return field;
+        }
+        return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static FieldSource<JavaClassSource> findFieldInBlock(JavaClassSource clazz, Block block, String fieldName) {
+        for (Object statement : block.statements()) {
+            if (statement instanceof VariableDeclarationStatement) {
+                final Type type = ((VariableDeclarationStatement) statement).getType();
+                for (Object obj : ((VariableDeclarationStatement) statement).fragments()) {
+                    if (obj instanceof VariableDeclarationFragment) {
+                        VariableDeclarationFragment fragment = (VariableDeclarationFragment) obj;
+                        SimpleName name = fragment.getName();
+                        if (name != null && fieldName.equals(name.getIdentifier())) {
+                            return new StatementFieldSource(clazz, fragment, type);
                         }
                     }
                 }
-            } else {
-                return field;
             }
         }
         return null;
