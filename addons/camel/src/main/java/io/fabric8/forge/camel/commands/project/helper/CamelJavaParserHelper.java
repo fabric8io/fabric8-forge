@@ -166,17 +166,20 @@ public class CamelJavaParserHelper {
                 List args = mi.arguments();
                 if (args != null) {
                     for (Object arg : args) {
-                        extractEndpointUriFromArgument(clazz, block, uris, arg, strings, fields);
+                        if (isValidArgument(arg)) {
+                            extractEndpointUriFromArgument(clazz, block, uris, arg, strings, fields);
+                        }
                     }
                 }
             }
             if ("pollEnrich".equals(name)) {
                 List args = mi.arguments();
-                // the first argument is a string parameter for the uri for these eips
+                // the first argument is where the uri is
                 if (args != null && args.size() >= 1) {
-                    // it is a String type
                     Object arg = args.get(0);
-                    extractEndpointUriFromArgument(clazz, block, uris, arg, strings, fields);
+                    if (isValidArgument(arg)) {
+                        extractEndpointUriFromArgument(clazz, block, uris, arg, strings, fields);
+                    }
                 }
             }
         }
@@ -186,20 +189,40 @@ public class CamelJavaParserHelper {
                 List args = mi.arguments();
                 if (args != null) {
                     for (Object arg : args) {
-                        extractEndpointUriFromArgument(clazz, block, uris, arg, strings, fields);
+                        // skip if the arg is a boolean, ExchangePattern or Iterateable, type
+                        if (isValidArgument(arg)) {
+                            extractEndpointUriFromArgument(clazz, block, uris, arg, strings, fields);
+                        }
                     }
                 }
             }
             if ("enrich".equals(name) || "wireTap".equals(name)) {
                 List args = mi.arguments();
-                // the first argument is a string parameter for the uri for these eips
+                // the first argument is where the uri is
                 if (args != null && args.size() >= 1) {
-                    // it is a String type
                     Object arg = args.get(0);
-                    extractEndpointUriFromArgument(clazz, block, uris, arg, strings, fields);
+                    if (isValidArgument(arg)) {
+                        extractEndpointUriFromArgument(clazz, block, uris, arg, strings, fields);
+                    }
                 }
             }
         }
+    }
+
+    private static boolean isValidArgument(Object arg) {
+        // skip boolean argument, as toD can accept a boolean value
+        if (arg instanceof BooleanLiteral) {
+            return false;
+        }
+        // skip ExchangePattern argument
+        if (arg instanceof QualifiedName) {
+            QualifiedName qn = (QualifiedName) arg;
+            String name = qn.getFullyQualifiedName();
+            if (name.startsWith("ExchangePattern")) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static void extractEndpointUriFromArgument(JavaClassSource clazz, Block block, List<ParserResult> uris, Object arg, boolean strings, boolean fields) {
