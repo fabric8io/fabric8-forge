@@ -17,12 +17,18 @@ package io.fabric8.forge.camel.commands.project.helper;
 
 public class ParserResult {
 
+    private boolean parsed;
     private int position;
     private String element;
 
     public ParserResult(int position, String element) {
+        this(position, element, true);
+    }
+
+    public ParserResult(int position, String element, boolean parsed) {
         this.position = position;
         this.element = element;
+        this.parsed = parsed;
     }
 
     public int getPosition() {
@@ -39,6 +45,14 @@ public class ParserResult {
 
     public void setElement(String element) {
         this.element = element;
+    }
+
+    public boolean isParsed() {
+        return parsed;
+    }
+
+    public void setParsed(boolean parsed) {
+        this.parsed = parsed;
     }
 
     public String toString() {

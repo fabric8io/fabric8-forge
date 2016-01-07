@@ -103,4 +103,32 @@ public class CamelEndpointDetails {
     public String toString() {
         return endpointUri;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        CamelEndpointDetails that = (CamelEndpointDetails) o;
+
+        if (!fileName.equals(that.fileName)) return false;
+        if (lineNumber != null ? !lineNumber.equals(that.lineNumber) : that.lineNumber != null) return false;
+        if (!className.equals(that.className)) return false;
+        if (methodName != null ? !methodName.equals(that.methodName) : that.methodName != null) return false;
+        if (endpointInstance != null ? !endpointInstance.equals(that.endpointInstance) : that.endpointInstance != null)
+            return false;
+        return endpointUri.equals(that.endpointUri);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = fileName.hashCode();
+        result = 31 * result + (lineNumber != null ? lineNumber.hashCode() : 0);
+        result = 31 * result + className.hashCode();
+        result = 31 * result + (methodName != null ? methodName.hashCode() : 0);
+        result = 31 * result + (endpointInstance != null ? endpointInstance.hashCode() : 0);
+        result = 31 * result + endpointUri.hashCode();
+        return result;
+    }
 }
