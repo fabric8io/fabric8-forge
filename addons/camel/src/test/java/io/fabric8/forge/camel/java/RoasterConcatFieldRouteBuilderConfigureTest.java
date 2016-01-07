@@ -37,7 +37,7 @@ public class RoasterConcatFieldRouteBuilderConfigureTest {
         for (ParserResult result : list) {
             System.out.println("Consumer: " + result.getElement());
         }
-        Assert.assertEquals("ftp:localhost:#ftpPort/myapp?password=admin&username=admin", list.get(0).getElement());
+        Assert.assertEquals("ftp:localhost:{{ftpPort}}/myapp?password=admin&username=admin", list.get(0).getElement());
 
         list = CamelJavaParserHelper.parseCamelProducerUris(method, true, true);
         for (ParserResult result : list) {
