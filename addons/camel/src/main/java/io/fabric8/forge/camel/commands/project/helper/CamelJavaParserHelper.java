@@ -19,11 +19,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.ASTNode;
+import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
 import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.Block;
 import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.BooleanLiteral;
 import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.Expression;
 import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.ExpressionStatement;
+import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.InfixExpression;
 import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.MemberValuePair;
 import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.MethodDeclaration;
@@ -326,24 +329,53 @@ public class CamelJavaParserHelper {
             // find field in class
             FieldSource field = clazz != null ? clazz.getField(fieldName) : null;
             if (field == null) {
-                // maybe the field is in the block
-                for (Object statement : block.statements()) {
-                    if (statement instanceof VariableDeclarationStatement) {
-                        final Type type = ((VariableDeclarationStatement) statement).getType();
-                        for (Object obj : ((VariableDeclarationStatement) statement).fragments()) {
+                field = findFieldInBlock(clazz, block, fieldName);
+            }
+            return field;
+        }
+        return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static FieldSource<JavaClassSource> findFieldInBlock(JavaClassSource clazz, Block block, String fieldName) {
+        for (Object statement : block.statements()) {
+            // try local statements first in the block
+            if (statement instanceof VariableDeclarationStatement) {
+                final Type type = ((VariableDeclarationStatement) statement).getType();
+                for (Object obj : ((VariableDeclarationStatement) statement).fragments()) {
+                    if (obj instanceof VariableDeclarationFragment) {
+                        VariableDeclarationFragment fragment = (VariableDeclarationFragment) obj;
+                        SimpleName name = fragment.getName();
+                        if (name != null && fieldName.equals(name.getIdentifier())) {
+                            return new StatementFieldSource(clazz, fragment, type);
+                        }
+                    }
+                }
+            }
+
+            // okay the field may be burried inside an anonymous inner class as a field declaration
+            // outside the configure method, so lets go back to the parent and see what we can find
+            ASTNode node = block.getParent();
+            if (node instanceof MethodDeclaration) {
+                node = node.getParent();
+            }
+            if (node instanceof AnonymousClassDeclaration) {
+                List declarations = ((AnonymousClassDeclaration) node).bodyDeclarations();
+                for (Object dec : declarations) {
+                    if (dec instanceof FieldDeclaration) {
+                        FieldDeclaration fd = (FieldDeclaration) dec;
+                        final Type type = fd.getType();
+                        for (Object obj : fd.fragments()) {
                             if (obj instanceof VariableDeclarationFragment) {
                                 VariableDeclarationFragment fragment = (VariableDeclarationFragment) obj;
                                 SimpleName name = fragment.getName();
                                 if (name != null && fieldName.equals(name.getIdentifier())) {
-                                    field = new StatementFieldSource(clazz, fragment, type);
-                                    return field;
+                                    return new StatementFieldSource(clazz, fragment, type);
                                 }
                             }
                         }
                     }
                 }
-            } else {
-                return field;
             }
         }
         return null;
