@@ -40,7 +40,7 @@
       <outputDirectory>/maven</outputDirectory>
     </fileSet>
     <fileSet>
-      <directory>${basedir}/target/localMavenRepo</directory>
+      <directory>${basedir}/localMavenRepo</directory>
       <outputDirectory>/root/.m2/repository</outputDirectory>
     </fileSet>
   </fileSets>

@@ -49,7 +49,7 @@ public class PopulateMavenRepositoryTest {
     private static final transient Logger LOG = LoggerFactory.getLogger(PopulateMavenRepositoryTest.class);
 
     protected String baseDir = System.getProperty("basedir", ".");
-    protected File localMavenRepo = new File(baseDir, "target/localMavenRepo");
+    protected File localMavenRepo = new File(baseDir, "localMavenRepo");
 
     @Test
     public void testPopulateMavenRepo() throws Exception {
