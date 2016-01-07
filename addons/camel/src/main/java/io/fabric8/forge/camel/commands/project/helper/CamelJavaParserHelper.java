@@ -34,6 +34,7 @@ import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.MethodInvocation;
 import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.NormalAnnotation;
 import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.NumberLiteral;
 import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.ParenthesizedExpression;
+import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.QualifiedName;
 import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.ReturnStatement;
 import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.SimpleName;
 import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.SimpleType;
@@ -401,6 +402,15 @@ public class CamelJavaParserHelper {
         // if it a method invocation then add a dummy value assuming the method invocation will return a valid response
         if (expression instanceof MethodInvocation) {
             String name = ((MethodInvocation) expression).getName().getIdentifier();
+            return "{{" + name + "}}";
+        }
+
+        // if its a qualified name (usually a constant field in another class)
+        // then add a dummy value as we cannot find the field value in other classes and maybe even outside the
+        // source code we have access to
+        if (expression instanceof QualifiedName) {
+            QualifiedName qn = (QualifiedName) expression;
+            String name = qn.getFullyQualifiedName();
             return "{{" + name + "}}";
         }
 
