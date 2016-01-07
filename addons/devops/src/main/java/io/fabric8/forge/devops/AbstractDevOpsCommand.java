@@ -157,12 +157,16 @@ public abstract class AbstractDevOpsCommand extends AbstractProjectCommand imple
     }
 
     public static File getProjectConfigFile(UIContext context, Project project) {
+        return getProjectContextFile(context, project, ProjectConfigs.FILE_NAME);
+    }
+
+    public static File getProjectContextFile(UIContext context, Project project, String fileName) {
         if (project != null) {
             Resource<?> root = project.getRoot();
             if (root == null) {
                 return null;
             }
-            Resource<?> configFileResource = root.getChild(ProjectConfigs.FILE_NAME);
+            Resource<?> configFileResource = root.getChild(fileName);
             if (configFileResource == null) {
                 return null;
             }
@@ -174,7 +178,7 @@ public abstract class AbstractDevOpsCommand extends AbstractProjectCommand imple
             if (object instanceof Resource) {
                 File folder = ResourceUtil.getContextFile((Resource<?>) object);
                 if (folder != null && Files.isDirectory(folder)) {
-                    return new File(folder, ProjectConfigs.FILE_NAME);
+                    return new File(folder, fileName);
                 }
             }
         }
