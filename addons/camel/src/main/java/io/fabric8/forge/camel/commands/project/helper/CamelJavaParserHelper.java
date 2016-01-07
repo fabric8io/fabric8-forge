@@ -401,7 +401,7 @@ public class CamelJavaParserHelper {
         // if it a method invocation then add a dummy value assuming the method invocation will return a valid response
         if (expression instanceof MethodInvocation) {
             String name = ((MethodInvocation) expression).getName().getIdentifier();
-            return "#" + name + "()";
+            return "{{" + name + "}}";
         }
 
         if (expression instanceof SimpleName) {
@@ -436,10 +436,14 @@ public class CamelJavaParserHelper {
                 expression = vdf.getInitializer();
                 if (expression == null) {
                     // its a field which has no initializer, then add a dummy value assuming the field will be initialized at runtime
-                    return "#" + field.getName();
+                    return "{{" + field.getName() + "}}";
                 } else {
                     return getLiteralValue(clazz, block, expression);
                 }
+            } else {
+                // we could not find the field in this class/method, so its maybe from some other super class, so insert a dummy value
+                final String fieldName = ((SimpleName) expression).getIdentifier();
+                return "{{" + fieldName + "}}";
             }
         } else if (expression instanceof InfixExpression) {
             String answer = null;

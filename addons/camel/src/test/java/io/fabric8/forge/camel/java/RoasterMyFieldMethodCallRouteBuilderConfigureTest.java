@@ -38,14 +38,14 @@ public class RoasterMyFieldMethodCallRouteBuilderConfigureTest {
             System.out.println("Consumer: " + result.getElement());
         }
         Assert.assertEquals("netty-http:http://0.0.0.0:{{port}}/foo", list.get(0).getElement());
-        Assert.assertEquals("netty-http:http://0.0.0.0:#getNextPort()/bar", list.get(1).getElement());
+        Assert.assertEquals("netty-http:http://0.0.0.0:{{getNextPort}}/bar", list.get(1).getElement());
 
         list = CamelJavaParserHelper.parseCamelProducerUris(method, true, true);
         for (ParserResult result : list) {
             System.out.println("Producer: " + result.getElement());
         }
         Assert.assertEquals("mock:input1", list.get(0).getElement());
-        Assert.assertEquals("netty-http:http://0.0.0.0:#getNextPort()/bar", list.get(1).getElement());
+        Assert.assertEquals("netty-http:http://0.0.0.0:{{getNextPort}}/bar", list.get(1).getElement());
         Assert.assertEquals("mock:input2", list.get(2).getElement());
     }
 

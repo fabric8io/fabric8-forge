@@ -43,7 +43,7 @@ public class RoasterMethodCallRouteBuilderConfigureTest {
         for (ParserResult result : list) {
             System.out.println("Producer: " + result.getElement());
         }
-        Assert.assertEquals("file:output?fileExist=#whatToDoWhenExists()", list.get(0).getElement());
+        Assert.assertEquals("file:output?fileExist={{whatToDoWhenExists}}", list.get(0).getElement());
         Assert.assertEquals("log:b", list.get(1).getElement());
     }
 
