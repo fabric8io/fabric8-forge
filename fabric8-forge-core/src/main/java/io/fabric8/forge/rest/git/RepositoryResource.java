@@ -1049,7 +1049,7 @@ public class RepositoryResource {
         } catch (IOException e) {
             LOG.warn("Failed to find relative path of " + parentFile.getPath() + ". " + e, e);
         }
-        FileDTO answer = FileDTO.createFileDTO(file, relativePath, includeContent);
+        FileDTO answer = FileDTO.createFileDTO(file, relativePath, includeContent, "", false);
         String path = answer.getPath();
         if (path.equals(".git")) {
             // lets ignore the git folder!
@@ -1060,6 +1060,9 @@ public class RepositoryResource {
         return answer;
     }
 
+    public static boolean includeFile(File file, String relativePath) {
+        return true;
+    }
 
 
     protected String toString(Collection<RemoteRefUpdate> updates) {

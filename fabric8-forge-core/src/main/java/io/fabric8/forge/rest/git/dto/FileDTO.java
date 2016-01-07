@@ -26,6 +26,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Set;
 
+import static io.fabric8.forge.rest.git.RepositoryResource.includeFile;
+
 /**
  * Used to list contents of git
  */
@@ -47,6 +49,7 @@ public class FileDTO extends GitDTOSupport {
     private String htmlUrl;
     private String downloadUrl;
     private String[] xmlNamespaces;
+    private boolean skipsEmptyDirectory;
 
     public FileDTO(String type, long size, String name, String path, String encoding, String content) {
         this.content = content;
@@ -73,10 +76,34 @@ public class FileDTO extends GitDTOSupport {
         return new FileDTO(type, size, name, path, encoding, base64Content);
     }
 
-    public static FileDTO createFileDTO(File file, String parentPath, boolean includeContent) {
+    public static FileDTO createFileDTO(File file, String parentPath, boolean includeContent, String collapseFolderName, boolean skipsEmptyDirectory) {
         String content = null;
         String encoding = null;
+        boolean isDirectory = file.isDirectory();
         boolean isFile = file.isFile();
+        String name = joinPaths(collapseFolderName, file.getName());
+        if (isDirectory) {
+            int count = 0;
+            File lastChild = null;
+            File[] files = file.listFiles();
+            if (files != null) {
+                for (File child : files) {
+                    String childPath = joinPaths(parentPath, child.getName());
+                    if (includeFile(file, childPath)) {
+                        lastChild = child;
+                        if (++count > 1) {
+                            break;
+                        }
+                    }
+                }
+            }
+            if (lastChild != null && count == 1) {
+                // lets return the child file
+                String childCollapseFolderName = joinPaths(collapseFolderName, file.getName());
+                return createFileDTO(lastChild, parentPath, includeContent, childCollapseFolderName, true);
+            }
+        }
+        String path = joinPaths(parentPath, name);
         if (includeContent && isFile) {
             try {
                 byte[] bytes = Files.readBytes(file);
@@ -86,18 +113,13 @@ public class FileDTO extends GitDTOSupport {
                 LOG.warn("Failed to load: " + file.getPath() + ". " + e, e);
             }
         }
-        String type = file.isDirectory() ? DIR_TYPE : FILE_TYPE;
+        String type = isDirectory ? DIR_TYPE : FILE_TYPE;
         long size = 0;
         if (isFile) {
             size = file.length();
         }
-        String name = file.getName();
-        String path = name;
-        if (Strings.isNotBlank(parentPath)) {
-            String separator = path.endsWith("/") ? "" : "/";
-            path = parentPath + separator + name;
-        }
         FileDTO fileDTO = new FileDTO(type, size, name, path, encoding, content);
+        fileDTO.skipsEmptyDirectory = skipsEmptyDirectory;
         if (isFile && name.endsWith(".xml")) {
             // lets load the XML namespaces
             try {
@@ -111,6 +133,15 @@ public class FileDTO extends GitDTOSupport {
             }
         }
         return fileDTO;
+    }
+
+    protected static String joinPaths(String parentPath, String name) {
+        String path = name;
+        if (Strings.isNotBlank(parentPath)) {
+            String separator = path.endsWith("/") ? "" : "/";
+            path = parentPath + separator + name;
+        }
+        return path;
     }
 
     protected static String toBase64(byte[] bytes) {
@@ -183,6 +214,10 @@ public class FileDTO extends GitDTOSupport {
 
     public String getType() {
         return type;
+    }
+
+    public boolean isSkipsEmptyDirectory() {
+        return skipsEmptyDirectory;
     }
 
     public String getUrl() {
