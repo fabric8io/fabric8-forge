@@ -22,6 +22,7 @@ import java.util.List;
 
 import io.fabric8.forge.camel.commands.project.model.CamelEndpointDetails;
 import io.fabric8.forge.camel.commands.project.model.CamelSimpleDetails;
+import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.ASTNode;
 import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.Expression;
 import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.MemberValuePair;
 import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.NormalAnnotation;
@@ -84,6 +85,15 @@ public class RouteBuilderParser {
                 detail.setEndpointInstance(id);
                 detail.setEndpointUri(uri);
                 detail.setEndpointComponentName(endpointComponentName(uri));
+                Object internal = field.getInternal();
+                // find position of field
+                if (internal instanceof ASTNode) {
+                    int pos = ((ASTNode) internal).getStartPosition();
+                    int line = findLineNumber(fullyQualifiedFileName, pos);
+                    if (line > -1) {
+                        detail.setLineNumber("" + line);
+                    }
+                }
                 // we do not know if this field is used as consumer or producer only, but we try
                 // to find out by scanning the route in the configure method below
                 endpoints.add(detail);
@@ -95,7 +105,7 @@ public class RouteBuilderParser {
         MethodSource<JavaClassSource> method = CamelJavaParserHelper.findConfigureMethod(clazz);
         if (method != null) {
             // consumers only
-            List<ParserResult> uris = CamelJavaParserHelper.parseCamelConsumerUris(method, false, true);
+            List<ParserResult> uris = CamelJavaParserHelper.parseCamelConsumerUris(method, true, true);
             for (ParserResult result : uris) {
                 CamelEndpointDetails detail = findEndpointByUri(endpoints, result.getElement());
                 if (detail != null) {
@@ -124,7 +134,7 @@ public class RouteBuilderParser {
                 }
             }
             // producer only
-            uris = CamelJavaParserHelper.parseCamelProducerUris(method, false, true);
+            uris = CamelJavaParserHelper.parseCamelProducerUris(method, true, true);
             for (ParserResult result : uris) {
                 CamelEndpointDetails detail = findEndpointByUri(endpoints, result.getElement());
                 if (detail != null) {
@@ -156,63 +166,6 @@ public class RouteBuilderParser {
                     detail.setConsumerOnly(false);
                     detail.setProducerOnly(true);
                     endpoints.add(detail);
-                }
-            }
-
-            // look for endpoints in the configure method that are string based
-            // consumers only
-            uris = CamelJavaParserHelper.parseCamelConsumerUris(method, true, false);
-            for (ParserResult result : uris) {
-                String fileName = fullyQualifiedFileName;
-                if (fileName.startsWith(baseDir)) {
-                    fileName = fileName.substring(baseDir.length() + 1);
-                }
-
-                CamelEndpointDetails detail = new CamelEndpointDetails();
-                detail.setFileName(fileName);
-                detail.setClassName(clazz.getQualifiedName());
-                detail.setMethodName("configure");
-                detail.setEndpointInstance(null);
-                detail.setEndpointUri(result.getElement());
-                int line = findLineNumber(fullyQualifiedFileName, result.getPosition());
-                if (line > -1) {
-                    detail.setLineNumber("" + line);
-                }
-                detail.setEndpointComponentName(endpointComponentName(result.getElement()));
-                detail.setConsumerOnly(true);
-                detail.setProducerOnly(false);
-                endpoints.add(detail);
-            }
-            uris = CamelJavaParserHelper.parseCamelProducerUris(method, true, false);
-            for (ParserResult result : uris) {
-                // the same uri may already have been used as consumer as well
-                CamelEndpointDetails detail = findEndpointByUri(endpoints, result.getElement());
-                if (detail == null) {
-                    // its a producer only uri
-                    String fileName = fullyQualifiedFileName;
-                    if (fileName.startsWith(baseDir)) {
-                        fileName = fileName.substring(baseDir.length() + 1);
-                    }
-
-                    detail = new CamelEndpointDetails();
-                    detail.setFileName(fileName);
-                    detail.setClassName(clazz.getQualifiedName());
-                    detail.setMethodName("configure");
-                    detail.setEndpointInstance(null);
-                    detail.setEndpointUri(result.getElement());
-                    int line = findLineNumber(fullyQualifiedFileName, result.getPosition());
-                    if (line > -1) {
-                        detail.setLineNumber("" + line);
-                    }
-                    detail.setEndpointComponentName(endpointComponentName(result.getElement()));
-                    detail.setConsumerOnly(false);
-                    detail.setProducerOnly(true);
-
-                    endpoints.add(detail);
-                } else {
-                    // we already have this uri as a consumer, then mark it as both consumer+producer
-                    detail.setConsumerOnly(false);
-                    detail.setProducerOnly(false);
                 }
             }
         }
