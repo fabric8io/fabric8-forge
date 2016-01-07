@@ -69,13 +69,11 @@ public class XmlEndpointsCompleter implements UICompleter<String> {
     @Override
     public Iterable<String> getCompletionProposals(UIContext context, InputComponent input, String value) {
         List<String> answer = new ArrayList<String>();
-
         for (CamelEndpointDetails detail : endpoints) {
             if (value == null || detail.getEndpointUri().startsWith(value)) {
                 answer.add(detail.getEndpointUri());
             }
         }
-
         return answer;
     }
 }

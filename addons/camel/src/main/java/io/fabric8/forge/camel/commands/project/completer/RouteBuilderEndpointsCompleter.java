@@ -18,6 +18,7 @@ package io.fabric8.forge.camel.commands.project.completer;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.fabric8.forge.camel.commands.project.helper.CamelEndpoints;
 import io.fabric8.forge.camel.commands.project.model.CamelEndpointDetails;
 import org.jboss.forge.addon.parser.java.facets.JavaSourceFacet;
 import org.jboss.forge.addon.parser.java.resources.JavaResourceVisitor;
@@ -62,38 +63,15 @@ public class RouteBuilderEndpointsCompleter implements UICompleter<String> {
         return null;
     }
 
-    public CamelEndpointDetails getEndpointDetailByInstanceName(String instanceName) {
-        for (CamelEndpointDetails detail : endpoints) {
-            String endpointInstance = detail.getEndpointInstance();
-            if (endpointInstance != null && endpointInstance.equals(instanceName)) {
-                return detail;
-            }
-        }
-        return null;
-    }
-
     @Override
     public Iterable<String> getCompletionProposals(UIContext context, InputComponent input, String value) {
         List<String> answer = new ArrayList<String>();
-
         for (CamelEndpointDetails detail : endpoints) {
             if (value == null || detail.getEndpointUri().startsWith(value)) {
                 answer.add(detail.getEndpointUri());
             }
         }
-
         return answer;
     }
 
-    public String createDefaultNewInstanceName() {
-        int count = endpoints.size() + 1;
-        while (count > 0 && count < Integer.MAX_VALUE) {
-            String name = "endpoint" + count;
-            if (getEndpointDetailByInstanceName(name) == null) {
-                return name;
-            }
-            count++;
-        }
-        return null;
-    }
 }
