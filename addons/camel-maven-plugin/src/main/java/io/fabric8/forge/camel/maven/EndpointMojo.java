@@ -106,6 +106,12 @@ public class EndpointMojo extends AbstractMojo {
     private boolean ignoreUnknownComponent;
 
     /**
+     * Whether to ignore incapable of parsing the endpoint uri
+     */
+    @Parameter(property = "camel.ignoreIncapable", defaultValue = "true", readonly = true, required = false)
+    private boolean ignoreIncapable;
+
+    /**
      * Whether to ignore components that uses lenient properties. When this is true, then the uri validation is stricter
      * but would fail on properties that are not part of the component but in the uri because of using lenient properties.
      * For example using the HTTP components to provide query parameters in the endpoint uri.
@@ -209,6 +215,7 @@ public class EndpointMojo extends AbstractMojo {
 
         int endpointErrors = 0;
         int unknownComponents = 0;
+        int incapableErrors = 0;
         for (CamelEndpointDetails detail : endpoints) {
             EndpointValidationResult result = catalog.validateEndpointProperties(detail.getEndpointUri(), ignoreLenientProperties);
 
@@ -218,9 +225,16 @@ public class EndpointMojo extends AbstractMojo {
                 unknownComponents++;
                 ok = true;
             }
+            if (!ok && ignoreIncapable && result.getIncapable() != null) {
+                // if we failed due incapable then be okay if we should ignore that
+                incapableErrors++;
+                ok = true;
+            }
             if (!ok) {
                 if (result.getUnknownComponent() != null) {
                     unknownComponents++;
+                } else if (result.getIncapable() != null) {
+                    incapableErrors++;
                 } else {
                     endpointErrors++;
                 }
@@ -258,11 +272,11 @@ public class EndpointMojo extends AbstractMojo {
         }
         String endpointSummary;
         if (endpointErrors == 0) {
-            int ok = endpoints.size() - endpointErrors - unknownComponents;
-            endpointSummary = String.format("Endpoint validation success: (%s = passed, %s = invalid, %s = unknown components)", ok, endpointErrors, unknownComponents);
+            int ok = endpoints.size() - endpointErrors - incapableErrors - unknownComponents;
+            endpointSummary = String.format("Endpoint validation success: (%s = passed, %s = invalid, %s = incapable, %s = unknown components)", ok, endpointErrors, incapableErrors, unknownComponents);
         } else {
-            int ok = endpoints.size() - endpointErrors - unknownComponents;
-            endpointSummary = String.format("Endpoint validation error: (%s = passed, %s = invalid, %s = unknown components)", ok, endpointErrors, unknownComponents);
+            int ok = endpoints.size() - endpointErrors - incapableErrors - unknownComponents;
+            endpointSummary = String.format("Endpoint validation error: (%s = passed, %s = invalid, %s = incapable, %s = unknown components)", ok, endpointErrors, incapableErrors, unknownComponents);
         }
 
         if (endpointErrors > 0) {
