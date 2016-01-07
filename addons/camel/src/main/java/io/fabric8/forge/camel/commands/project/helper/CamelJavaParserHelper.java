@@ -252,6 +252,9 @@ public class CamelJavaParserHelper {
                 }
             }
         }
+
+        // cannot parse it so add a failure
+        uris.add(new ParserResult(-1, arg.toString()));
     }
 
     public static List<ParserResult> parseCamelSimpleExpressions(MethodSource<JavaClassSource> method) {

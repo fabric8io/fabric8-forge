@@ -1,17 +1,17 @@
 /**
- *  Copyright 2005-2015 Red Hat, Inc.
- *
- *  Red Hat licenses this file to you under the Apache License, version
- *  2.0 (the "License"); you may not use this file except in compliance
- *  with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
- *  implied.  See the License for the specific language governing
- *  permissions and limitations under the License.
+ * Copyright 2005-2015 Red Hat, Inc.
+ * <p/>
+ * Red Hat licenses this file to you under the Apache License, version
+ * 2.0 (the "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+ * implied.  See the License for the specific language governing
+ * permissions and limitations under the License.
  */
 package io.fabric8.forge.camel.maven;
 
@@ -60,6 +60,12 @@ public class EndpointMojo extends AbstractMojo {
      */
     @Parameter(property = "camel.failOnError", defaultValue = "false", readonly = true, required = false)
     private boolean failOnError;
+
+    /**
+     * Whether to log endpoint URIs which was un-parsable and therefore not possible to validate
+     */
+    @Parameter(property = "camel.logUnparseable", defaultValue = "false", readonly = true, required = false)
+    private boolean logUnparseable;
 
     /**
      * Whether to include Java files to be validated for invalid Camel endpoints
@@ -144,6 +150,10 @@ public class EndpointMojo extends AbstractMojo {
         for (File file : javaFiles) {
             if (matchFile(file)) {
                 try {
+                    List<CamelEndpointDetails> fileEndpoints = new ArrayList<>();
+                    List<CamelSimpleDetails> fileSimpleExpressions = new ArrayList<>();
+                    List<String> unparsable = new ArrayList<>();
+
                     // parse the java source code and find Camel RouteBuilder classes
                     String fqn = file.getPath();
                     String baseDir = ".";
@@ -151,8 +161,19 @@ public class EndpointMojo extends AbstractMojo {
                     // we should only parse java classes (not interfaces and enums etc)
                     if (out != null && out instanceof JavaClassSource) {
                         JavaClassSource clazz = (JavaClassSource) out;
-                        RouteBuilderParser.parseRouteBuilderEndpoints(clazz, baseDir, fqn, endpoints);
-                        RouteBuilderParser.parseRouteBuilderSimpleExpressions(clazz, baseDir, fqn, simpleExpressions);
+                        RouteBuilderParser.parseRouteBuilderEndpoints(clazz, baseDir, fqn, fileEndpoints, unparsable);
+                        RouteBuilderParser.parseRouteBuilderSimpleExpressions(clazz, baseDir, fqn, fileSimpleExpressions);
+
+                        // add what we found in this file to the total list
+                        endpoints.addAll(fileEndpoints);
+                        simpleExpressions.addAll(fileSimpleExpressions);
+
+                        // was there any unparsable?
+                        if (logUnparseable && !unparsable.isEmpty()) {
+                            for (String uri : unparsable) {
+                                getLog().warn("Cannot parse endpoint uri " + uri + " in java file " + file);
+                            }
+                        }
                     }
                 } catch (Exception e) {
                     getLog().warn("Error parsing java file " + file + " code due " + e.getMessage(), e);
@@ -162,17 +183,24 @@ public class EndpointMojo extends AbstractMojo {
         for (File file : xmlFiles) {
             if (matchFile(file)) {
                 try {
+                    List<CamelEndpointDetails> fileEndpoints = new ArrayList<>();
+                    List<CamelSimpleDetails> fileSimpleExpressions = new ArrayList<>();
+
                     // parse the xml source code and find Camel routes
                     String fqn = file.getPath();
                     String baseDir = ".";
 
                     InputStream is = new FileInputStream(file);
-                    XmlRouteParser.parseXmlRouteEndpoints(is, baseDir, fqn, endpoints);
+                    XmlRouteParser.parseXmlRouteEndpoints(is, baseDir, fqn, fileEndpoints);
                     is.close();
                     // need a new stream
                     is = new FileInputStream(file);
-                    XmlRouteParser.parseXmlRouteSimpleExpressions(is, baseDir, fqn, simpleExpressions);
+                    XmlRouteParser.parseXmlRouteSimpleExpressions(is, baseDir, fqn, fileSimpleExpressions);
                     is.close();
+
+                    // add what we found in this file to the total list
+                    endpoints.addAll(fileEndpoints);
+                    simpleExpressions.addAll(fileSimpleExpressions);
                 } catch (Exception e) {
                     getLog().warn("Error parsing xml file " + file + " code due " + e.getMessage(), e);
                 }

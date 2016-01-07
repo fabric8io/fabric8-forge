@@ -43,6 +43,11 @@ public class RouteBuilderParser {
 
     public static void parseRouteBuilderEndpoints(JavaClassSource clazz, String baseDir, String fullyQualifiedFileName,
                                                   List<CamelEndpointDetails> endpoints) {
+        parseRouteBuilderEndpoints(clazz, baseDir, fullyQualifiedFileName, endpoints, null);
+    }
+
+    public static void parseRouteBuilderEndpoints(JavaClassSource clazz, String baseDir, String fullyQualifiedFileName,
+                                                  List<CamelEndpointDetails> endpoints, List<String> unparsable) {
 
         // look for fields which are not used in the route
         for (FieldSource<JavaClassSource> field : clazz.getFields()) {
@@ -107,46 +112,55 @@ public class RouteBuilderParser {
             // consumers only
             List<ParserResult> uris = CamelJavaParserHelper.parseCamelConsumerUris(method, true, true);
             for (ParserResult result : uris) {
-                CamelEndpointDetails detail = findEndpointByUri(endpoints, result.getElement());
-                if (detail != null) {
-                    // its a consumer only
-                    detail.setConsumerOnly(true);
+                if (!result.isParsed() && unparsable != null) {
+                    unparsable.add(result.getElement());
                 } else {
-                    String fileName = fullyQualifiedFileName;
-                    if (fileName.startsWith(baseDir)) {
-                        fileName = fileName.substring(baseDir.length() + 1);
-                    }
+                    CamelEndpointDetails detail = findEndpointByUri(endpoints, result.getElement());
+                    if (detail != null) {
+                        // its a consumer only
+                        detail.setConsumerOnly(true);
+                    } else {
+                        String fileName = fullyQualifiedFileName;
+                        if (fileName.startsWith(baseDir)) {
+                            fileName = fileName.substring(baseDir.length() + 1);
+                        }
 
-                    detail = new CamelEndpointDetails();
-                    detail.setFileName(fileName);
-                    detail.setClassName(clazz.getQualifiedName());
-                    detail.setMethodName("configure");
-                    detail.setEndpointInstance(null);
-                    detail.setEndpointUri(result.getElement());
-                    int line = findLineNumber(fullyQualifiedFileName, result.getPosition());
-                    if (line > -1) {
-                        detail.setLineNumber("" + line);
+                        detail = new CamelEndpointDetails();
+                        detail.setFileName(fileName);
+                        detail.setClassName(clazz.getQualifiedName());
+                        detail.setMethodName("configure");
+                        detail.setEndpointInstance(null);
+                        detail.setEndpointUri(result.getElement());
+                        int line = findLineNumber(fullyQualifiedFileName, result.getPosition());
+                        if (line > -1) {
+                            detail.setLineNumber("" + line);
+                        }
+                        detail.setEndpointComponentName(endpointComponentName(result.getElement()));
+                        detail.setConsumerOnly(true);
+                        detail.setProducerOnly(false);
+                        endpoints.add(detail);
                     }
-                    detail.setEndpointComponentName(endpointComponentName(result.getElement()));
-                    detail.setConsumerOnly(true);
-                    detail.setProducerOnly(false);
-                    endpoints.add(detail);
                 }
             }
             // producer only
             uris = CamelJavaParserHelper.parseCamelProducerUris(method, true, true);
             for (ParserResult result : uris) {
-                CamelEndpointDetails detail = findEndpointByUri(endpoints, result.getElement());
-                if (detail != null) {
-                    if (detail.isConsumerOnly()) {
-                        // its both a consumer and producer
-                        detail.setConsumerOnly(false);
-                        detail.setProducerOnly(false);
-                    } else {
-                        // its a producer only
-                        detail.setProducerOnly(true);
-                    }
+                if (!result.isParsed() && unparsable != null) {
+                    unparsable.add(result.getElement());
                 } else {
+                    CamelEndpointDetails detail = findEndpointByUri(endpoints, result.getElement());
+                    if (detail != null) {
+                        if (detail.isConsumerOnly()) {
+                            // its both a consumer and producer
+                            detail.setConsumerOnly(false);
+                            detail.setProducerOnly(false);
+                        } else {
+                            // its a producer only
+                            detail.setProducerOnly(true);
+                        }
+                    }
+                    // the same endpoint uri may be used in multiple places in the same route
+                    // so we should maybe add all of them
                     String fileName = fullyQualifiedFileName;
                     if (fileName.startsWith(baseDir)) {
                         fileName = fileName.substring(baseDir.length() + 1);
