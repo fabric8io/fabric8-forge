@@ -338,7 +338,59 @@
     <profile>
       <id>f8-local-deploy</id>
       <build>
-        <defaultGoal>clean install docker:build fabric8:json fabric8:apply</defaultGoal>
+        <plugins>
+          <plugin>
+            <groupId>org.jolokia</groupId>
+            <artifactId>docker-maven-plugin</artifactId>
+            <version>${docker.maven.plugin.version}</version>
+            <executions>
+              <execution>
+                <phase>package</phase>
+                <goals>
+                  <goal>build</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>io.fabric8</groupId>
+            <artifactId>fabric8-maven-plugin</artifactId>
+            <version>${fabric8.version}</version>
+            <executions>
+              <execution>
+                <id>json</id>
+                <phase>generate-resources</phase>
+                <goals>
+                  <goal>json</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>attach</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>attach</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>apply</id>
+                <phase>install</phase>
+                <goals>
+                  <goal>apply</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>helm</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>helm</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <replaceReadmeLinksPrefix>/apps/</replaceReadmeLinksPrefix>
+            </configuration>
+          </plugin>
+        </plugins>
       </build>
       <properties>
         <fabric8.recreate>true</fabric8.recreate>

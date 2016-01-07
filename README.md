@@ -19,18 +19,21 @@ To try out addons:
     
 Then you can install the addons into forge via the [forge addon-install command](http://fabric8.io/guide/forge.html) using the current snapshot build version 
     
-### Building the REST service
+### Building and testing REST service
 
-Build everything via:
+To build everything and run it in your local OpenShift installation on your laptop try:
 
-    mvn install
-    
+    mvn -Pf8-local-deploy
+
+To push the docker image first then provision it onto a remote OpenShift cluster try:
+
+    mvn -Pf8-deploy
+
+If you just want to build the docker image and kubernetes resources but not deploy them use:
+
+    mvn -Pf8-build
+
+
 The test case in the [fabric8-forge](fabric8-forge) module takes a while to build as it pre-populates the local maven repository with all the required jars for the Forge tooling.
     
-So you might want to only include tests in the [fabric8-forge](fabric8-forge) module the first build of the day.
-    
-
-Then to build and deploy the docker image:
-    
-    cd fabric8-forge
-    mvn docker:build fabric8:apply            
+So you might want to only include tests in the [fabric8-forge](fabric8-forge) module the first build of the day, then disable tests after that?
