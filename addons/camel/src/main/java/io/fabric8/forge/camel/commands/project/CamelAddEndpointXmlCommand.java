@@ -195,21 +195,23 @@ public class CamelAddEndpointXmlCommand extends AbstractCamelProjectCommand impl
         attributeMap.put("mode", "add");
         attributeMap.put("kind", "xml");
 
+        ComponentDto component = componentName.getValue();
+        String camelComponentName = component.getScheme();
+
         // must be same component name and endpoint type to allow reusing existing navigation result
         String previous = (String) attributeMap.get("componentName");
         String previous2 = (String) attributeMap.get("endpointType");
-        if (previous != null && previous.equals(componentName.getValue()) && previous2 != null && previous2.equals(endpointType.getValue())) {
+        if (previous != null && previous.equals(camelComponentName) && previous2 != null && previous2.equals(endpointType.getValue())) {
             NavigationResult navigationResult = (NavigationResult) attributeMap.get("navigationResult");
             if (navigationResult != null) {
                 return navigationResult;
             }
         }
 
-        attributeMap.put("componentName", componentName.getValue().getScheme());
+        attributeMap.put("componentName", camelComponentName);
         attributeMap.put("endpointType", endpointType.getValue());
 
         // we need to figure out how many options there is so we can as many steps we need
-        String camelComponentName = componentName.getValue().getScheme();
 
         // producer vs consumer only if selected
         boolean consumerOnly = false;
