@@ -55,6 +55,12 @@
     <dependency>
       <groupId>io.fabric8</groupId>
       <artifactId>fabric8-utils</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.jboss.forge.furnace.container</groupId>
@@ -76,6 +82,17 @@
       <groupId>org.jboss.forge.addon</groupId>
       <artifactId>core</artifactId>
       <classifier>forge-addon</classifier>
+      <exclusions>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <scope>provided</scope>
     </dependency>
 
 

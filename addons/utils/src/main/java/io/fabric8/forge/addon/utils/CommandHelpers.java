@@ -15,22 +15,31 @@
  */
 package io.fabric8.forge.addon.utils;
 
+import io.fabric8.utils.Files;
+import org.jboss.forge.addon.projects.Project;
+import org.jboss.forge.addon.resource.Resource;
+import org.jboss.forge.addon.resource.util.ResourceUtil;
+import org.jboss.forge.addon.ui.context.UIBuilder;
+import org.jboss.forge.addon.ui.context.UIContext;
+import org.jboss.forge.addon.ui.context.UIExecutionContext;
+import org.jboss.forge.addon.ui.context.UISelection;
+import org.jboss.forge.addon.ui.input.InputComponent;
+import org.jboss.forge.addon.ui.input.UIInput;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.jboss.forge.addon.projects.Project;
-import org.jboss.forge.addon.resource.Resource;
-import org.jboss.forge.addon.resource.util.ResourceUtil;
-import org.jboss.forge.addon.ui.context.UIBuilder;
-import org.jboss.forge.addon.ui.context.UIExecutionContext;
-import org.jboss.forge.addon.ui.input.InputComponent;
-import org.jboss.forge.addon.ui.input.UIInput;
+import static io.fabric8.forge.addon.utils.Files.joinPaths;
 
 /**
  */
 public class CommandHelpers {
+    private static final transient Logger LOG = LoggerFactory.getLogger(CommandHelpers.class);
+    
     /**
      * A helper function to add the components to the builder and return a list of all the components
      */
@@ -74,5 +83,49 @@ public class CommandHelpers {
             return null;
         }
         return ResourceUtil.getContextFile(root);
+    }
+
+    public static File getProjectContextFile(UIContext context, Project project, String fileName) {
+        if (project != null) {
+            Resource<?> root = project.getRoot();
+            if (root != null) {
+                Resource<?> fileResource = root.getChild(fileName);
+                if (fileResource != null) {
+                    File answer = ResourceUtil.getContextFile(fileResource);
+                    if (answer != null) {
+                        return answer;
+                    } else {
+                        LOG.info("No file found for resource " + fileResource + " for " + fileName);
+                    }
+                }
+                File folder = ResourceUtil.getContextFile(root);
+                if (folder != null && Files.isDirectory(folder)) {
+                    return new File(folder, fileName);
+                } else {
+                    LOG.info("No context root selection - found: " + folder);
+                }
+            } else {
+                LOG.info("No root for project!");
+            }
+        }
+        UISelection<Object> selection = context.getSelection();
+        if (selection != null) {
+            Object object = selection.get();
+            if (object instanceof Resource) {
+                File folder = ResourceUtil.getContextFile((Resource<?>) object);
+                if (folder != null && Files.isDirectory(folder)) {
+                    return new File(folder, fileName);
+                } else {
+                    LOG.info("No context root selection - found: " + folder);
+                }
+            }
+        } else {
+            LOG.info("Context has no selection!");
+        }
+        return null;
+    }
+
+    public static File getProjectResourceFile(UIContext context, Project project, String fileName) {
+        return getProjectContextFile(context, project, joinPaths("src/main/resources", fileName));
     }
 }

@@ -17,12 +17,12 @@ package io.fabric8.forge.devops;
 
 import io.fabric8.devops.ProjectConfig;
 import io.fabric8.devops.ProjectConfigs;
+import io.fabric8.forge.addon.utils.CommandHelpers;
 import io.fabric8.forge.devops.dto.PipelineDTO;
 import io.fabric8.kubernetes.api.Controller;
 import io.fabric8.kubernetes.client.ConfigBuilder;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.utils.Files;
 import io.fabric8.utils.GitHelpers;
 import io.fabric8.utils.Objects;
 import io.fabric8.utils.Strings;
@@ -35,7 +35,6 @@ import org.jboss.forge.addon.projects.ProjectFactory;
 import org.jboss.forge.addon.projects.Projects;
 import org.jboss.forge.addon.projects.ui.AbstractProjectCommand;
 import org.jboss.forge.addon.resource.Resource;
-import org.jboss.forge.addon.resource.util.ResourceUtil;
 import org.jboss.forge.addon.ui.UIProvider;
 import org.jboss.forge.addon.ui.command.UICommand;
 import org.jboss.forge.addon.ui.context.UIBuilder;
@@ -157,32 +156,7 @@ public abstract class AbstractDevOpsCommand extends AbstractProjectCommand imple
     }
 
     public static File getProjectConfigFile(UIContext context, Project project) {
-        return getProjectContextFile(context, project, ProjectConfigs.FILE_NAME);
-    }
-
-    public static File getProjectContextFile(UIContext context, Project project, String fileName) {
-        if (project != null) {
-            Resource<?> root = project.getRoot();
-            if (root == null) {
-                return null;
-            }
-            Resource<?> configFileResource = root.getChild(fileName);
-            if (configFileResource == null) {
-                return null;
-            }
-            return ResourceUtil.getContextFile(configFileResource);
-        }
-        UISelection<Object> selection = context.getSelection();
-        if (selection != null) {
-            Object object = selection.get();
-            if (object instanceof Resource) {
-                File folder = ResourceUtil.getContextFile((Resource<?>) object);
-                if (folder != null && Files.isDirectory(folder)) {
-                    return new File(folder, fileName);
-                }
-            }
-        }
-        return null;
+        return CommandHelpers.getProjectContextFile(context, project, ProjectConfigs.FILE_NAME);
     }
 
     @Override

@@ -29,13 +29,14 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 
 public final class XmlHelper {
 
     /**
      * To output a DOM as a stream.
      */
-    public static InputStream documentToPrettyInputStream(Document document) throws Exception {
+    public static InputStream documentToPrettyInputStream(Node document) throws Exception {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
         Source xmlSource = new DOMSource(document);

@@ -21,6 +21,7 @@ import java.util.List;
 
 import org.jboss.forge.addon.ui.input.UIInput;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -40,6 +41,31 @@ public final class CamelXmlHelper {
             }
         }
         return null;
+    }
+
+    public static List<Element> findAllContexts(Document dom) {
+        List<Element> nodes = new ArrayList<>();
+        NodeList list = dom.getElementsByTagName("camelContext");
+        for (int i = 0; i < list.getLength(); i++) {
+            Node child = list.item(i);
+            String ns = child.getNamespaceURI();
+            if (ns == null) {
+                NamedNodeMap attrs = child.getAttributes();
+                if (attrs != null) {
+                    Node node = attrs.getNamedItem("xmlns");
+                    if (node != null) {
+                        ns = node.getNodeValue();
+                    }
+                }
+            }
+            // assume no namespace its for camel
+            if (ns == null || ns.contains("camel")) {
+                if (child instanceof Element) {
+                    nodes.add((Element) child);
+                }
+            }
+        }
+        return nodes;
     }
 
     public static List<Node> findAllEndpoints(Document dom) {
