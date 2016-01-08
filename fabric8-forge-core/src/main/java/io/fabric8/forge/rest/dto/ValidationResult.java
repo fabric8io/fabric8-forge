@@ -15,14 +15,16 @@
  */
 package io.fabric8.forge.rest.dto;
 
+import org.jboss.forge.addon.ui.output.UIMessage;
+
 import java.util.List;
 
 /**
  */
 public class ValidationResult {
     private final List<UIMessageDTO> messages;
-    private final boolean valid;
-    private final boolean canExecute;
+    private boolean valid;
+    private boolean canExecute;
     private final String out;
     private final String err;
     private WizardResultsDTO wizardResults;
@@ -72,5 +74,14 @@ public class ValidationResult {
 
     public WizardResultsDTO getWizardResults() {
         return wizardResults;
+    }
+
+    /**
+     * Adds an extra validation error
+     */
+    public void addValidationError(String message) {
+        messages.add(new UIMessageDTO(message, null, UIMessage.Severity.ERROR));
+        valid = false;
+        canExecute = false;
     }
 }
