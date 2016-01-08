@@ -16,6 +16,7 @@
  */
 package io.fabric8.forge.camel.commands.project.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.camel.RouteNode;
 
 import java.util.ArrayList;
@@ -41,6 +42,7 @@ public class ContextDto extends NodeDtoSupport {
     public void setPattern(String pattern) {
     }
 
+    @JsonIgnore
     public List<RouteDto> getRoutes() {
         return routes;
     }
