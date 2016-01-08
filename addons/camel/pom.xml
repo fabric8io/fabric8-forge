@@ -70,6 +70,11 @@
       <artifactId>utils</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>io.fabric8.forge</groupId>
+      <artifactId>camel-tooling-util</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
     <!-- we use dtos with jackson annotations -->
     <dependency>
@@ -153,11 +158,23 @@
       <groupId>org.apache.camel</groupId>
       <artifactId>camel-core</artifactId>
       <!--<version>${camel.version}</version>-->
+      <exclusions>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.camel</groupId>
       <artifactId>camel-catalog</artifactId>
       <!--<version>${camel.version}</version>-->
+      <exclusions>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <!-- TODO: Requires Camel 2.16.2+
     <dependency>
@@ -187,10 +204,20 @@
           <groupId>org.apache.activemq</groupId>
           <artifactId>activemq-pool</artifactId>
         </exclusion>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
 
     <!-- testing -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+
     <dependency>
       <groupId>org.apache.camel</groupId>
       <artifactId>camel-test</artifactId>

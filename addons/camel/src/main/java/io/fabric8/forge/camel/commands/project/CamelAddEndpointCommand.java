@@ -22,12 +22,11 @@ import java.util.Map;
 import java.util.Set;
 import javax.inject.Inject;
 
-import com.google.common.collect.Collections2;
 import io.fabric8.forge.camel.commands.project.completer.RouteBuilderCompleter;
 import io.fabric8.forge.camel.commands.project.completer.RouteBuilderEndpointsCompleter;
 import io.fabric8.forge.camel.commands.project.dto.ComponentDto;
 import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
-import io.fabric8.forge.camel.commands.project.model.CamelEndpointDetails;
+import io.fabric8.forge.camel.commands.project.helper.CamelEndpoints;
 import io.fabric8.forge.camel.commands.project.model.EndpointOptionByGroup;
 import org.jboss.forge.addon.convert.Converter;
 import org.jboss.forge.addon.facets.constraints.FacetConstraint;
@@ -162,7 +161,7 @@ public class CamelAddEndpointCommand extends AbstractCamelProjectCommand impleme
         endpointType.setDefaultValue("<any>");
 
         RouteBuilderEndpointsCompleter endpointCompleter = createRouteBuilderEndpointsCompleter(builder.getUIContext());
-        instanceName.setDefaultValue(endpointCompleter.createDefaultNewInstanceName());
+        instanceName.setDefaultValue(CamelEndpoints.createDefaultNewInstanceName(endpointCompleter.getEndpoints()));
 
         Set<String> routeBuilders = new RouteBuilderCompleter(facet).getRouteBuilders();
 

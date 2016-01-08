@@ -21,6 +21,7 @@ import javax.inject.Inject;
 
 import io.fabric8.forge.addon.utils.CamelProjectHelper;
 import io.fabric8.forge.camel.commands.project.completer.RouteBuilderEndpointsCompleter;
+import io.fabric8.forge.camel.commands.project.completer.XmlEndpointsCompleter;
 import io.fabric8.forge.camel.commands.project.completer.XmlFileCompleter;
 import org.apache.camel.catalog.CamelCatalog;
 import org.jboss.forge.addon.convert.ConverterFactory;
@@ -127,6 +128,20 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
     protected RouteBuilderEndpointsCompleter createRouteBuilderEndpointsCompleter(Project project) {
         JavaSourceFacet facet = project.getFacet(JavaSourceFacet.class);
         return new RouteBuilderEndpointsCompleter(facet);
+    }
+
+    protected XmlEndpointsCompleter createXmlEndpointsCompleter(UIContext context) {
+        Project project = getSelectedProject(context);
+        return createXmlEndpointsCompleter(project);
+    }
+
+    protected XmlEndpointsCompleter createXmlEndpointsCompleter(Project project) {
+        final ResourcesFacet resourcesFacet = project.getFacet(ResourcesFacet.class);
+        WebResourcesFacet webResourcesFacet = null;
+        if (project.hasFacet(WebResourcesFacet.class)) {
+            webResourcesFacet = project.getFacet(WebResourcesFacet.class);
+        }
+        return new XmlEndpointsCompleter(resourcesFacet, webResourcesFacet);
     }
 
     protected XmlFileCompleter createXmlFileCompleter(Project project) {

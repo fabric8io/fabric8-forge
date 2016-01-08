@@ -22,10 +22,12 @@ import java.util.Map;
 import java.util.Set;
 import javax.inject.Inject;
 
+import io.fabric8.forge.camel.commands.project.completer.XmlEndpointsCompleter;
 import io.fabric8.forge.camel.commands.project.completer.XmlFileCompleter;
 import io.fabric8.forge.camel.commands.project.dto.ComponentDto;
 import io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper;
 import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
+import io.fabric8.forge.camel.commands.project.helper.CamelEndpoints;
 import io.fabric8.forge.camel.commands.project.model.EndpointOptionByGroup;
 import org.jboss.forge.addon.convert.Converter;
 import org.jboss.forge.addon.projects.Project;
@@ -176,13 +178,16 @@ public class CamelAddEndpointXmlCommand extends AbstractCamelProjectCommand impl
         XmlFileCompleter xmlFileCompleter = createXmlFileCompleter(project);
         Set<String> files = xmlFileCompleter.getFiles();
 
+        XmlEndpointsCompleter endpointCompleter = createXmlEndpointsCompleter(project);
+        instanceName.setDefaultValue(CamelEndpoints.createDefaultNewInstanceName(endpointCompleter.getEndpoints()));
+
         // use value choices instead of completer as that works better in web console
         xml.setValueChoices(files);
         if (files.size() == 1) {
             // lets default the value if there's only one choice
             xml.setDefaultValue(first(files));
         }
-        builder.add(componentNameFilter).add(componentName).add(endpointType).add(instanceName).add(xml);
+        builder.add(componentNameFilter).add(componentName).add(instanceName).add(xml).add(endpointType);
     }
 
     @Override

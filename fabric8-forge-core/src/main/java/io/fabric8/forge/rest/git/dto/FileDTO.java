@@ -138,7 +138,7 @@ public class FileDTO extends GitDTOSupport {
     protected static String joinPaths(String parentPath, String name) {
         String path = name;
         if (Strings.isNotBlank(parentPath)) {
-            String separator = path.endsWith("/") ? "" : "/";
+            String separator = path.endsWith("/") || name.startsWith("/") ? "" : "/";
             path = parentPath + separator + name;
         }
         return path;

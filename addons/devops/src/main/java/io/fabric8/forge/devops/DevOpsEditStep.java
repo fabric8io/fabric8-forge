@@ -207,7 +207,7 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
             CommandHelpers.setInitialComponentValue(codeReview, config.getCodeReview());
         }
         inputComponents = new ArrayList<>();
-        File jenkinsFile = getProjectContextFile(context, project, "Jenkinsfile");
+        File jenkinsFile = CommandHelpers.getProjectContextFile(context, project, "Jenkinsfile");
         boolean hasJenkinsFile = Files.isFile(jenkinsFile);
         LOG.debug("Has Jenkinsfile " + hasJenkinsFile + " with file: " + jenkinsFile);
         if (!hasJenkinsFile) {

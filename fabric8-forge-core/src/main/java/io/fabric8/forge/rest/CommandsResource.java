@@ -316,13 +316,21 @@ public class CommandsResource {
                     canMoveToNextStep = lastController.canMoveToNextStep();
                     boolean valid = lastController.isValid();
                     if (!canMoveToNextStep) {
-                        // lets assume we can execute now
-                        lastResult = lastController.execute();
-                        LOG.debug("Invoked command " + name + " with " + executionRequest + " result: " + lastResult);
-                        ExecutionResult stepResults = UICommands.createExecutionResult(context, lastResult, false);
-                        stepResultList.add(stepResults);
-                        break;
+                        if (lastController.canExecute()) {
+                            // lets assume we can execute now
+                            LOG.info("About to invoked command " + name + " stepValidation: " + stepValidation + " messages: " + messages + " with " + executionRequest);
+                            lastResult = lastController.execute();
+                            LOG.debug("Invoked command " + name + " with " + executionRequest + " result: " + lastResult);
+                            ExecutionResult stepResults = UICommands.createExecutionResult(context, lastResult, false);
+                            stepResultList.add(stepResults);
+                            break;
+                        } else {
+                            stepValidation.addValidationError("Forge command failed with an internal error");
+                            LOG.warn("Cannot move to next step as canExecute() returns false but the validation seems to be fine!");
+                            break;
+                        }
                     } else if (!valid) {
+                        stepValidation.addValidationError("Forge command is not valid but didn't report any validation errors!");
                         LOG.warn("Cannot move to next step as invalid despite the validation saying otherwise");
                         break;
                     }

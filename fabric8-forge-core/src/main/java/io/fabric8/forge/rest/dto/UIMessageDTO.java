@@ -37,10 +37,14 @@ public class UIMessageDTO {
         return answer;
     }
 
+    public UIMessageDTO(String description, String inputName, UIMessage.Severity severity) {
+        this.description = description;
+        this.inputName = inputName;
+        this.severity = severity;
+    }
+
     public UIMessageDTO(UIMessage message) {
-        this.description = message.getDescription();
-        this.inputName = message.getSource().getName();
-        this.severity = message.getSeverity();
+        this(message.getDescription(), message.getSource().getName(), message.getSeverity());
     }
 
     @Override
