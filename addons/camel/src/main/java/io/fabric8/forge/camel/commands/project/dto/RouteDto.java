@@ -16,12 +16,25 @@
  */
 package io.fabric8.forge.camel.commands.project.dto;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  */
 public class RouteDto extends NodeDto {
+    public static final String PATTERN = "route";
 
     public RouteDto() {
-        super.setPattern("route");
+        super.setPattern(PATTERN);
+    }
+
+    public RouteDto(String key, String id, String label, String description, List<NodeDto> children) {
+        super(key, id, label, PATTERN, description, children);
+    }
+
+    @Override
+    protected RouteDto copy() {
+        return new RouteDto(getKey(), getId(), getLabel(), getDescription(), new ArrayList<>(getChildren()));
     }
 
     @Override

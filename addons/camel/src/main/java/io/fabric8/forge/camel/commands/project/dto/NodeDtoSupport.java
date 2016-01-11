@@ -18,17 +18,31 @@ package io.fabric8.forge.camel.commands.project.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import java.util.ArrayList;
 import java.util.List;
+
+import static io.fabric8.forge.camel.commands.project.dto.NodeDtos.getNodeText;
 
 /**
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class NodeDtoSupport {
+    private String key;
     private String id;
     private String pattern;
     private String label;
     private String description;
 
+    public NodeDtoSupport() {
+    }
+
+    public NodeDtoSupport(String key, String id, String label, String pattern, String description) {
+        this.key = key;
+        this.id = id;
+        this.label = label;
+        this.pattern = pattern;
+        this.description = description;
+    }
 
     @Override
     public String toString() {
@@ -74,5 +88,31 @@ public abstract class NodeDtoSupport {
         this.pattern = pattern;
     }
 
+    public String getKey() {
+        return key;
+    }
 
+    public void setKey(String key) {
+        this.key = key;
+    }
+
+    public List<NodeDtoSupport> toNodeList(String indentation) {
+        List<NodeDtoSupport> answer = new ArrayList<>();
+        addToNodeList(answer, "", indentation);
+        return answer;
+    }
+
+    protected void addToNodeList(List<NodeDtoSupport> answer, String indent, String indentation) {
+        NodeDtoSupport copy = this.copy();
+        copy.setLabel(indent + getNodeText(copy));
+
+        answer.add(copy);
+
+        indent += indentation;
+        for (NodeDto child  : getChildren()) {
+            child.addToNodeList(answer, indent, indentation);
+        }
+    }
+
+    protected abstract NodeDtoSupport copy();
 }

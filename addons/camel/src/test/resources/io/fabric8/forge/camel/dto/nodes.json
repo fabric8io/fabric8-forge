@@ -1,0 +1,57 @@
+[
+  {
+    "pattern": "camelContext",
+    "children": [
+      {
+        "id": "cbr-route",
+        "pattern": "route",
+        "label": "cbr-route",
+        "children": [
+          {
+            "pattern": "from",
+            "label": "timer:foo?period=8000"
+          },
+          {
+            "pattern": "transform",
+            "label": "transform[bean{, method=randomNumeric(3)}]",
+            "description": "generate random number message, using a 3 digit number"
+          },
+          {
+            "pattern": "choice",
+            "label": "choice",
+            "children": [
+              {
+                "pattern": "when",
+                "label": "when ${body} > 500",
+                "children": [
+                  {
+                    "pattern": "log",
+                    "label": "log "
+                  },
+                  {
+                    "pattern": "to",
+                    "label": "mock:high"
+                  }
+                ]
+              },
+              {
+                "pattern": "otherwise",
+                "label": "otherwise",
+                "children": [
+                  {
+                    "pattern": "log",
+                    "label": "log "
+                  },
+                  {
+                    "pattern": "to",
+                    "label": "mock:regular"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

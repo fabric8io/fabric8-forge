@@ -17,19 +17,16 @@ package io.fabric8.forge.camel.commands.project;
 
 import io.fabric8.camel.tooling.util.CamelModelHelper;
 import io.fabric8.camel.tooling.util.RouteXml;
-import io.fabric8.camel.tooling.util.Strings2;
 import io.fabric8.camel.tooling.util.XmlModel;
 import io.fabric8.forge.addon.utils.CommandHelpers;
 import io.fabric8.forge.addon.utils.Indenter;
 import io.fabric8.forge.camel.commands.project.completer.XmlFileCompleter;
 import io.fabric8.forge.camel.commands.project.dto.ContextDto;
 import io.fabric8.forge.camel.commands.project.dto.NodeDto;
-import io.fabric8.forge.camel.commands.project.dto.NodeDtoSupport;
+import io.fabric8.forge.camel.commands.project.dto.NodeDtos;
 import io.fabric8.forge.camel.commands.project.dto.OutputFormat;
 import io.fabric8.forge.camel.commands.project.dto.RouteDto;
-import io.fabric8.utils.Block;
 import io.fabric8.utils.Files;
-import io.fabric8.utils.Strings;
 import org.apache.camel.model.FromDefinition;
 import org.apache.camel.model.OptionalIdentifiedDefinition;
 import org.apache.camel.model.ProcessorDefinition;
@@ -51,8 +48,6 @@ import org.jboss.forge.addon.ui.util.Metadata;
 import javax.inject.Inject;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -61,7 +56,6 @@ import static io.fabric8.forge.camel.commands.project.helper.CollectionHelper.fi
 import static io.fabric8.forge.camel.commands.project.helper.OutputFormatHelper.toJson;
 
 public class CamelGetRoutesXmlCommand extends AbstractCamelProjectCommand {
-    private static Set<String> patternsToPrefix = new HashSet<>(Arrays.asList("camelContext", "route", "from", "to"));
 
     @Inject
     @WithAttributes(label = "XML File", required = true, description = "The XML file to use (either Spring or Blueprint)")
@@ -124,13 +118,13 @@ public class CamelGetRoutesXmlCommand extends AbstractCamelProjectCommand {
         CamelContextFactoryBean context = xmlModel.getContextElement();
         String name = context.getId();
         List<RouteDefinition> routeDefs = context.getRoutes();
-        List<RouteDto> routes = createRouteDtos(routeDefs);
+        List<NodeDto> routes = createRouteDtos(routeDefs);
         camelContexts.add(new ContextDto(name, routes));
         return camelContexts;
     }
 
-    protected List<RouteDto> createRouteDtos(List<RouteDefinition> routeDefs) {
-        List<RouteDto> answer = new ArrayList<>();
+    protected List<NodeDto> createRouteDtos(List<RouteDefinition> routeDefs) {
+        List<NodeDto> answer = new ArrayList<>();
         for (RouteDefinition def : routeDefs) {
             RouteDto route = new RouteDto();
             route.setId(def.getId());
@@ -169,33 +163,6 @@ public class CamelGetRoutesXmlCommand extends AbstractCamelProjectCommand {
         return node;
     }
 
-
-/*
-    protected CamelContext createCamelContext() {
-        CamelContext camelContext = null;
-        try {
-            camelContext = new DefaultCamelContext();
-        } catch (Exception e) {
-            System.out.println("Failed: " + e);
-            e.printStackTrace();
-            Set<Throwable> exceptions = new HashSet<>();
-            Throwable value = e;
-            while (true) {
-                exceptions.add(value);
-                Throwable cause = value.getCause();
-                if (cause == null || cause == value || exceptions.contains(cause)) {
-                    break;
-                }
-                value = cause;
-                System.out.println("Caused by: " + cause);
-                cause.printStackTrace();
-            }
-            throw e;
-        }
-        return camelContext;
-    }
-*/
-
     protected String formatResult(List<ContextDto> result) throws Exception {
         OutputFormat outputFormat = format.getValue();
         switch (outputFormat) {
@@ -211,32 +178,9 @@ public class CamelGetRoutesXmlCommand extends AbstractCamelProjectCommand {
 
         final Indenter out = new Indenter(buffer);
         for (final ContextDto camelContext : camelContexts) {
-            printNode(out, camelContext);
+            NodeDtos.printNode(out, camelContext);
         }
         return buffer.toString();
     }
 
-    protected static void printNode(final Indenter out, final NodeDtoSupport node) throws Exception {
-        out.println(getNodeText(node));
-        out.withIndent(new Block() {
-
-            @Override
-            public void invoke() throws Exception {
-                for (NodeDto child : node.getChildren()) {
-                    printNode(out, child);
-                }
-            }
-        });
-    }
-
-    protected static String getNodeText(NodeDtoSupport node) {
-        String pattern = Strings2.getOrElse(node.getPattern());
-        String label = Strings2.getOrElse(node.getLabel());
-
-        // lets output the pattern for a few kinds of nodes....
-        if (patternsToPrefix.contains(pattern)) {
-            return Strings.join(" ", pattern, label);
-        }
-        return label;
-    }
 }
