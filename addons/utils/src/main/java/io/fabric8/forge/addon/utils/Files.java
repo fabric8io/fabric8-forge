@@ -18,6 +18,12 @@ package io.fabric8.forge.addon.utils;
 
 import io.fabric8.utils.Strings;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
 /**
  */
 public class Files {
@@ -28,5 +34,34 @@ public class Files {
             path = parentPath + separator + name;
         }
         return path;
+    }
+
+
+    /**
+     * Copy the source {@link File} to the target {@link File}.
+     *
+     * // TODO DELETEME when fabric8-utils released with this method
+     */
+    public static void copy(File source, File target) throws IOException {
+        if (!source.exists()) {
+            throw new FileNotFoundException("Source file not found:" + source.getAbsolutePath());
+        }
+
+        if (!target.exists() && !target.getParentFile().exists() && !target.getParentFile().mkdirs()) {
+            throw new IOException("Can't create target directory:" + target.getParentFile().getAbsolutePath());
+        }
+        if (source.isDirectory()) {
+            target.mkdirs();
+            File[] files = source.listFiles();
+            if (files != null) {
+                for (File child : files) {
+                    copy(child, new File(target, child.getName()));
+                }
+            }
+        } else {
+            FileInputStream is = new FileInputStream(source);
+            FileOutputStream os = new FileOutputStream(target);
+            io.fabric8.utils.Files.copy(is, os);
+        }
     }
 }

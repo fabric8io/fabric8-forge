@@ -25,31 +25,36 @@ import java.util.List;
 
 /**
  */
-public class ContextDto extends NodeDtoSupport {
-    private final List<RouteDto> routes;
+public class ContextDto extends NodeDto {
+    public static final String PATTERN = "camelContext";
 
     public ContextDto() {
         this(null, Collections.EMPTY_LIST);
     }
 
-    public ContextDto(String name, List<RouteDto> routes) {
-        this.routes = routes;
-        super.setPattern("camelContext");
+    public ContextDto(String key, String id, String label, String description, List<NodeDto> children) {
+        super(key, id, label, PATTERN, description, children);
+    }
+
+    public ContextDto(String name, List<NodeDto> routes) {
+        super.setPattern(PATTERN);
         setId(name);
+        setChildren(routes);
+    }
+
+    @Override
+    protected ContextDto copy() {
+        return new ContextDto(getKey(), getId(), getLabel(), getDescription(), new ArrayList<>(getChildren()));
     }
 
     @Override
     public void setPattern(String pattern) {
     }
 
-    @JsonIgnore
-    public List<RouteDto> getRoutes() {
-        return routes;
+    public void addRoute(RouteDto node) {
+        super.addChild(node);
     }
 
-    public void addRoute(RouteDto node) {
-        routes.add(node);
-    }
     @Override
     public void addChild(NodeDto node) {
         if (node instanceof RouteNode) {
@@ -57,10 +62,5 @@ public class ContextDto extends NodeDtoSupport {
         } else {
             throw new IllegalArgumentException("Child node is not a route: " + node);
         }
-    }
-
-    @Override
-    public List<NodeDto> getChildren() {
-        return new ArrayList<NodeDto>(routes);
     }
 }

@@ -26,6 +26,19 @@ import java.util.List;
 public class NodeDto extends NodeDtoSupport {
     private List<NodeDto> children = new ArrayList<>();
 
+    public NodeDto() {
+    }
+
+    public NodeDto(String key, String id, String label, String pattern, String description, List<NodeDto> children) {
+        super(key, id, label, pattern, description);
+        this.children = children;
+    }
+
+    @Override
+    protected NodeDtoSupport copy() {
+        return new NodeDto(getKey(), getId(), getLabel(), getPattern(), getDescription(), new ArrayList<>(children));
+    }
+
     @Override
     public void addChild(NodeDto node) {
         children.add(node);
