@@ -464,14 +464,30 @@ public class CamelJavaParserHelper {
                         }
                     }
                 }
-                // no annotations so try its initializer
-                VariableDeclarationFragment vdf = (VariableDeclarationFragment) field.getInternal();
-                expression = vdf.getInitializer();
-                if (expression == null) {
-                    // its a field which has no initializer, then add a dummy value assuming the field will be initialized at runtime
-                    return "{{" + field.getName() + "}}";
+                // is the field an org.apache.camel.Endpoint type?
+                if ("Endpoint".equals(field.getType().getSimpleName())) {
+                    // then grab the uri from the first argument
+                    VariableDeclarationFragment vdf = (VariableDeclarationFragment) field.getInternal();
+                    expression = vdf.getInitializer();
+                    if (expression instanceof MethodInvocation) {
+                        MethodInvocation mi = (MethodInvocation) expression;
+                        List args = mi.arguments();
+                        if (args != null && args.size() > 0) {
+                            // the first argument has the endpoint uri
+                            expression = (Expression) args.get(0);
+                            return getLiteralValue(clazz, block, expression);
+                        }
+                    }
                 } else {
-                    return getLiteralValue(clazz, block, expression);
+                    // no annotations so try its initializer
+                    VariableDeclarationFragment vdf = (VariableDeclarationFragment) field.getInternal();
+                    expression = vdf.getInitializer();
+                    if (expression == null) {
+                        // its a field which has no initializer, then add a dummy value assuming the field will be initialized at runtime
+                        return "{{" + field.getName() + "}}";
+                    } else {
+                        return getLiteralValue(clazz, block, expression);
+                    }
                 }
             } else {
                 // we could not find the field in this class/method, so its maybe from some other super class, so insert a dummy value
