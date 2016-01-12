@@ -16,6 +16,7 @@
 package io.fabric8.forge.addon.utils;
 
 import io.fabric8.utils.Files;
+import io.fabric8.utils.Strings;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.resource.Resource;
 import org.jboss.forge.addon.resource.util.ResourceUtil;
@@ -25,6 +26,8 @@ import org.jboss.forge.addon.ui.context.UIExecutionContext;
 import org.jboss.forge.addon.ui.context.UISelection;
 import org.jboss.forge.addon.ui.input.InputComponent;
 import org.jboss.forge.addon.ui.input.UIInput;
+import org.jboss.forge.addon.ui.result.CompositeResult;
+import org.jboss.forge.addon.ui.result.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -127,5 +130,27 @@ public class CommandHelpers {
 
     public static File getProjectResourceFile(UIContext context, Project project, String fileName) {
         return getProjectContextFile(context, project, joinPaths("src/main/resources", fileName));
+    }
+
+    public static String getResultMessage(Result result) {
+        if (result instanceof CompositeResult) {
+            CompositeResult compositeResult = (CompositeResult) result;
+            List<Result> results = compositeResult.getResults();
+            StringBuilder buffer = new StringBuilder();
+            for (Result childResult : results) {
+                String childResultMessage = getResultMessage(childResult);
+                if (Strings.isNotBlank(childResultMessage)) {
+                    if (buffer.length() > 0) {
+                        buffer.append("\n");
+                    }
+                    buffer.append(childResultMessage);
+                }
+            }
+            return buffer.toString();
+        } else if (result != null) {
+            return result.getMessage();
+        } else {
+            return null;
+        }
     }
 }

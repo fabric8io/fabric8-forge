@@ -60,7 +60,7 @@ import static io.fabric8.forge.camel.commands.project.helper.CollectionHelper.fi
 
 public class CamelAddEndpointXmlCommand extends AbstractCamelProjectCommand implements UIWizard {
 
-    private static final int MAX_OPTIONS = 20;
+    public static final int MAX_OPTIONS = 20;
 
     @Inject
     @WithAttributes(label = "Filter", required = false, description = "To filter components")
