@@ -179,6 +179,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
+        <version>${maven.surefire.plugin.version}</version>
         <configuration>
           <!-- skip this test as it requires some manual setup
           initializationError(org.fusesource.camel.tooling.util.ArchetypeTest): No file available at /Users/davsclaus/.repo.fusesource.com.properties to contain the username and password to connect to the fusesource repo!
