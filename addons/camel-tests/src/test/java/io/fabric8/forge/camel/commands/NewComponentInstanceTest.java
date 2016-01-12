@@ -18,7 +18,7 @@ package io.fabric8.forge.camel.commands;
 import java.io.File;
 import javax.inject.Inject;
 
-import io.fabric8.forge.camel.commands.project.CamelListComponentCommand;
+import io.fabric8.forge.camel.commands.project.CamelGetComponentsCommand;
 import io.fabric8.forge.camel.commands.project.CamelSetupCommand;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
@@ -35,6 +35,7 @@ import org.jboss.forge.furnace.repositories.AddonDependencyEntry;
 import org.jboss.forge.furnace.util.OperatingSystemUtils;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -86,11 +87,14 @@ public class NewComponentInstanceTest {
             Result result = command.execute();
             Assert.assertFalse("Should setup Camel in the project", result instanceof Failed);
 
-            command = testHarness.createCommandController(CamelListComponentCommand.class, project.getRoot());
+            command = testHarness.createCommandController(CamelGetComponentsCommand.class, project.getRoot());
             command.initialize();
 
             result = command.execute();
             Assert.assertFalse("Should not fail", result instanceof Failed);
+
+            String message = result.getMessage();
+            System.out.println(message);
         } finally {
             tempDir.delete();
         }
