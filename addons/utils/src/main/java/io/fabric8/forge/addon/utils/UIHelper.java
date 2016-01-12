@@ -79,12 +79,15 @@ public final class UIHelper {
                 }
                 ui.setValue(value);
             }
-            // This will always prompt, regardless if there is a value set
-            Iterator it = ui.getFacets().iterator();
-            while (it.hasNext()) {
-                Object facet = it.next();
-                if (facet instanceof HintsFacet) {
-                    ((HintsFacet) facet).setPromptInInteractiveMode(true);
+
+            if ("true".equals(required)) {
+                // This will always prompt, regardless if there is a value set
+                Iterator it = ui.getFacets().iterator();
+                while (it.hasNext()) {
+                    Object facet = it.next();
+                    if (facet instanceof HintsFacet) {
+                        ((HintsFacet) facet).setPromptInInteractiveMode(true);
+                    }
                 }
             }
 
@@ -108,12 +111,14 @@ public final class UIHelper {
                 ui.setValue(value);
             }
 
-            // This will always prompt, regardless if there is a value set
-            Iterator it = ui.getFacets().iterator();
-            while (it.hasNext()) {
-                Object facet = it.next();
-                if (facet instanceof HintsFacet) {
-                    ((HintsFacet) facet).setPromptInInteractiveMode(true);
+            if ("true".equals(required)) {
+                // This will always prompt, regardless if there is a value set
+                Iterator it = ui.getFacets().iterator();
+                while (it.hasNext()) {
+                    Object facet = it.next();
+                    if (facet instanceof HintsFacet) {
+                        ((HintsFacet) facet).setPromptInInteractiveMode(true);
+                    }
                 }
             }
 
