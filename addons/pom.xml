@@ -38,7 +38,6 @@
 
     <module>camel-tests</module>
 -->
-    <module>camel-tests</module>
     <module>kubernetes</module>
     <module>devops</module>
     <module>utils</module>
