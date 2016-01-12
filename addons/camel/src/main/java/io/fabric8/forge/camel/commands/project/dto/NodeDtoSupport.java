@@ -17,6 +17,7 @@
 package io.fabric8.forge.camel.commands.project.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.fabric8.utils.Strings;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -94,6 +95,22 @@ public abstract class NodeDtoSupport {
 
     public void setKey(String key) {
         this.key = key;
+    }
+
+    public void defaultKey(NodeDto owner, int size) {
+        if (Strings.isNullOrBlank(key)) {
+            key = owner.getKey();
+            if (Strings.isNullOrBlank(key)) {
+                key = "";
+            } else {
+                key += "/";
+            }
+            if (Strings.isNotBlank(id)) {
+                key += id;
+            } else {
+                key += "" + size;
+            }
+        }
     }
 
     public List<NodeDtoSupport> toNodeList(String indentation) {

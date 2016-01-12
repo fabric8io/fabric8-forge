@@ -52,4 +52,5 @@ public class NodeDto extends NodeDtoSupport {
     public void setChildren(List<NodeDto> children) {
         this.children = children;
     }
+
 }

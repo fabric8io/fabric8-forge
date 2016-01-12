@@ -97,6 +97,18 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
         this.total = total;
     }
 
+    public String getGroup() {
+        return group;
+    }
+
+    public int getIndex() {
+        return index;
+    }
+
+    public int getTotal() {
+        return total;
+    }
+
     @Override
     public UICommandMetadata getMetadata(UIContext context) {
         return Metadata.forCommand(ConfigureEndpointPropertiesStep.class).name(
@@ -217,7 +229,10 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
         if (file == null || !file.exists()) {
             return Results.fail("Cannot find XML file " + xml);
         }
+        return addOrEditEndpointXml(file, uri, endpointUrl, endpointInstanceName, xml, lineNumber);
+    }
 
+    protected Result addOrEditEndpointXml(FileResource file, String uri, String endpointUrl, String endpointInstanceName, String xml, String lineNumber) throws Exception {
         // if we have a line number then use that to edit the existing value
         if (lineNumber != null) {
             List<String> lines = LineNumberHelper.readLines(file.getResourceInputStream());

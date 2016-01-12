@@ -15,8 +15,11 @@
  */
 package io.fabric8.forge.camel.commands;
 
+import com.google.common.base.Objects;
+import io.fabric8.forge.camel.commands.project.CamelAddRouteXmlCommand;
 import io.fabric8.forge.camel.commands.project.CamelGetRoutesXmlCommand;
 import io.fabric8.forge.camel.commands.project.dto.ContextDto;
+import io.fabric8.forge.camel.commands.project.dto.NodeDto;
 import io.fabric8.forge.camel.commands.project.dto.NodeDtoSupport;
 import io.fabric8.forge.camel.commands.project.dto.NodeDtos;
 import io.fabric8.utils.Files;
@@ -27,6 +30,7 @@ import org.jboss.forge.addon.projects.ProjectFactory;
 import org.jboss.forge.addon.resource.Resource;
 import org.jboss.forge.addon.resource.ResourceFactory;
 import org.jboss.forge.addon.ui.controller.CommandController;
+import org.jboss.forge.addon.ui.controller.WizardCommandController;
 import org.jboss.forge.addon.ui.result.Failed;
 import org.jboss.forge.addon.ui.result.Result;
 import org.jboss.forge.addon.ui.test.UITestHarness;
@@ -35,7 +39,6 @@ import org.jboss.forge.arquillian.AddonDependency;
 import org.jboss.forge.arquillian.archive.AddonArchive;
 import org.jboss.forge.furnace.repositories.AddonDependencyEntry;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -43,7 +46,10 @@ import javax.inject.Inject;
 import java.io.File;
 import java.util.List;
 
+import static io.fabric8.forge.addon.utils.CommandHelpers.getResultMessage;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
 
 
 @RunWith(Arquillian.class)
@@ -95,13 +101,43 @@ public class NewNodeXmlTest {
         System.out.println("Copied project to " + projectDir);
 
         Resource<?> resource = resourceFactory.create(projectDir);
-        Assert.assertNotNull("Should have found a resource", resource);
+        assertNotNull("Should have found a resource", resource);
 
         Project project = projectFactory.findProject(resource);
-        Assert.assertNotNull("Should have found a project", project);
+        assertNotNull("Should have found a project", project);
 
         List<ContextDto> contexts = getRoutesXml(project);
         assertFalse("Should have loaded a camelContext", contexts.isEmpty());
+
+        // lets add a new route
+        testAddRoute(project);
+    }
+
+    protected void testAddRoute(Project project) throws Exception {
+        WizardCommandController command = testHarness.createWizardController(CamelAddRouteXmlCommand.class, project.getRoot());
+        command.initialize();
+        command.setValueFor("id", "myNewRoute");
+        command.setValueFor("description", "The description of this new route");
+        command.setValueFor("componentName", "seda");
+        command.setValueFor("xml", "META-INF/spring/camel-context.xml");
+
+        command = command.next();
+
+        command.initialize();
+        command.setValueFor("name", "cheese");
+
+        Result result = command.execute();
+        assertFalse("Should not fail", result instanceof Failed);
+        System.out.println();
+        String message = getResultMessage(result);
+        System.out.println("Add route result: " + message);
+        System.out.println();
+
+
+        List<ContextDto> contexts = getRoutesXml(project);
+        assertFalse("Should have loaded a camelContext", contexts.isEmpty());
+
+        assertNodeWithKey(contexts, "camelContext1/myNewRoute");
     }
 
     protected List<ContextDto> getRoutesXml(Project project) throws Exception {
@@ -130,10 +166,32 @@ public class NewNodeXmlTest {
         return answer;
     }
 
+
+
+    public static NodeDto assertNodeWithKey(List<? extends NodeDto> contexts, String key) {
+        NodeDto actual = getNodeWithKey(contexts, key);
+        assertNotNull("No node found for key '" + key + ".", actual);
+        System.out.println("Found expected node with key '" + key + "' " + actual);
+        return actual;
+    }
+
+    public static NodeDto getNodeWithKey(Iterable<? extends NodeDto> nodes, String key) {
+        NodeDto answer = null;
+        for (NodeDto node : nodes) {
+            if (Objects.equal(key, node.getKey())) {
+                return node;
+            }
+            answer = getNodeWithKey(node.getChildren(), key);
+            if (answer != null) {
+                return answer;
+            }
+        }
+        return answer;
+    }
+
     public static File getBaseDir() {
         String dirName = System.getProperty("basedir", ".");
         return new File(dirName);
     }
-
 
 }
