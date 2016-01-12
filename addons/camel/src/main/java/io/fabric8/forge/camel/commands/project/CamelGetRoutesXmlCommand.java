@@ -27,6 +27,7 @@ import io.fabric8.forge.camel.commands.project.dto.NodeDtos;
 import io.fabric8.forge.camel.commands.project.dto.OutputFormat;
 import io.fabric8.forge.camel.commands.project.dto.RouteDto;
 import io.fabric8.utils.Files;
+import io.fabric8.utils.Strings;
 import org.apache.camel.model.FromDefinition;
 import org.apache.camel.model.OptionalIdentifiedDefinition;
 import org.apache.camel.model.ProcessorDefinition;
@@ -104,7 +105,6 @@ public class CamelGetRoutesXmlCommand extends AbstractCamelProjectCommand {
         }
 
         List<ContextDto> camelContexts = parseCamelContexts(xmlFile);
-
         String result = formatResult(camelContexts);
         return Results.success(result);
     }
@@ -115,24 +115,33 @@ public class CamelGetRoutesXmlCommand extends AbstractCamelProjectCommand {
         XmlModel xmlModel = routeXml.unmarshal(xmlFile);
 
         // TODO we don't handle multiple contexts inside an XML file!
-        CamelContextFactoryBean context = xmlModel.getContextElement();
-        String name = context.getId();
-        List<RouteDefinition> routeDefs = context.getRoutes();
-        List<NodeDto> routes = createRouteDtos(routeDefs);
-        camelContexts.add(new ContextDto(name, routes));
+        CamelContextFactoryBean contextElement = xmlModel.getContextElement();
+        String name = contextElement.getId();
+        List<RouteDefinition> routeDefs = contextElement.getRoutes();
+        ContextDto context = new ContextDto(name);
+        camelContexts.add(context);
+        String key = name;
+        if (Strings.isNullOrBlank(key)) {
+            key = "camelContext" + camelContexts.size();
+        }
+        context.setKey(key);
+        List<NodeDto> routes = createRouteDtos(routeDefs, context);
+        context.setChildren(routes);
         return camelContexts;
     }
 
-    protected List<NodeDto> createRouteDtos(List<RouteDefinition> routeDefs) {
+    protected List<NodeDto> createRouteDtos(List<RouteDefinition> routeDefs, ContextDto context) {
         List<NodeDto> answer = new ArrayList<>();
         for (RouteDefinition def : routeDefs) {
             RouteDto route = new RouteDto();
             route.setId(def.getId());
             route.setLabel(CamelModelHelper.getDisplayText(def));
             route.setDescription(CamelModelHelper.getDescription(def));
+            answer.add(route);
+            route.defaultKey(context, answer.size());
+
             addInputs(route, def.getInputs());
             addOutputs(route, def.getOutputs());
-            answer.add(route);
         }
         return answer;
     }
@@ -155,11 +164,13 @@ public class CamelGetRoutesXmlCommand extends AbstractCamelProjectCommand {
         node.setLabel(CamelModelHelper.getDisplayText(definition));
         node.setDescription(CamelModelHelper.getDescription(definition));
         node.setPattern(CamelModelHelper.getPatternName(definition));
+        owner.addChild(node);
+        node.defaultKey(owner, owner.getChildren().size());
+
         if (definition instanceof ProcessorDefinition) {
             ProcessorDefinition processorDefinition = (ProcessorDefinition) definition;
             addOutputs(node, processorDefinition.getOutputs());
         }
-        owner.addChild(node);
         return node;
     }
 

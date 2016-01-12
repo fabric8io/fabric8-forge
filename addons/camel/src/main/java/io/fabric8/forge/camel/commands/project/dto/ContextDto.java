@@ -29,17 +29,16 @@ public class ContextDto extends NodeDto {
     public static final String PATTERN = "camelContext";
 
     public ContextDto() {
-        this(null, Collections.EMPTY_LIST);
+        this(null);
     }
 
     public ContextDto(String key, String id, String label, String description, List<NodeDto> children) {
         super(key, id, label, PATTERN, description, children);
     }
 
-    public ContextDto(String name, List<NodeDto> routes) {
+    public ContextDto(String name) {
         super.setPattern(PATTERN);
         setId(name);
-        setChildren(routes);
     }
 
     @Override
