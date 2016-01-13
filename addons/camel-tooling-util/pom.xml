@@ -28,7 +28,7 @@
 
   <artifactId>camel-tooling-util</artifactId>
 
-  <name>Fabric8 :: Tooling :: Camel Util</name>
+  <name>Fabric8 :: Forge Addons :: Camel Util</name>
 
   <properties>
     <camel.file>src/test/resources/simpleRoute.xml</camel.file>
@@ -65,27 +65,7 @@
       <groupId>org.apache.camel</groupId>
       <artifactId>camel-blueprint</artifactId>
     </dependency>
-    <!--
-            <dependency>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-beans</artifactId>
-                <version>${spring-version}</version>
-            </dependency>
-    -->
 
-
-    <!--
-            <dependency>
-                <groupId>org.osgi</groupId>
-                <artifactId>org.osgi.core</artifactId>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.osgi</groupId>
-                <artifactId>org.osgi.compendium</artifactId>
-                <scope>provided</scope>
-            </dependency>
-    -->
     <dependency>
       <groupId>de.pdark</groupId>
       <artifactId>decentxml</artifactId>
@@ -117,58 +97,8 @@
     <dependency>
       <groupId>org.apache.cxf</groupId>
       <artifactId>cxf-rt-frontend-jaxws</artifactId>
-      <!--
-                  <version>${cxf-version}</version>
-      -->
       <scope>test</scope>
     </dependency>
-
-    <!--        <dependency>
-                <groupId>org.apache.camel.archetypes</groupId>
-                <artifactId>camel-archetype-activemq</artifactId>
-                <version>${camel-version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.camel.archetypes</groupId>
-                <artifactId>camel-archetype-spring</artifactId>
-                <version>${camel-version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.camel.archetypes</groupId>
-                <artifactId>camel-archetype-java</artifactId>
-                <version>${camel-version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.camel.archetypes</groupId>
-                <artifactId>camel-archetype-component</artifactId>
-                <version>${camel-version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.camel.archetypes</groupId>
-                <artifactId>camel-archetype-dataformat</artifactId>
-                <version>${camel-version}</version>
-                <scope>test</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.maven</groupId>
-                <artifactId>maven-embedder</artifactId>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.sonatype.plexus</groupId>
-                <artifactId>plexus-cipher</artifactId>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.maven.shared</groupId>
-                <artifactId>maven-invoker</artifactId>
-                <scope>test</scope>
-            </dependency>
-            -->
   </dependencies>
 
   <build>
@@ -181,16 +111,7 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>${maven.surefire.plugin.version}</version>
         <configuration>
-          <!-- skip this test as it requires some manual setup
-          initializationError(org.fusesource.camel.tooling.util.ArchetypeTest): No file available at /Users/davsclaus/.repo.fusesource.com.properties to contain the username and password to connect to the fusesource repo!
-          -->
-          <excludes>
-            <!--<exclude>**/ArchetypeTest.*</exclude>-->
-          </excludes>
           <systemPropertyVariables>
-            <!--
-                        <camel-version>${camel-version}</camel-version>
-            -->
             <basedir>${basedir}</basedir>
             <project.version>${project.version}</project.version>
           </systemPropertyVariables>
