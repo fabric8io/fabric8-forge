@@ -251,4 +251,24 @@ public class StatementFieldSource implements FieldSource {
     public Visibility getVisibility() {
         return null;
     }
+
+    @Override
+    public int getColumnNumber() {
+        return 0;
+    }
+
+    @Override
+    public int getStartPosition() {
+        return 0;
+    }
+
+    @Override
+    public int getEndPosition() {
+        return 0;
+    }
+
+    @Override
+    public int getLineNumber() {
+        return 0;
+    }
 }

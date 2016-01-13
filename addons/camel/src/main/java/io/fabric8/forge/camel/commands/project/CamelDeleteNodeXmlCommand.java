@@ -74,9 +74,6 @@ public class CamelDeleteNodeXmlCommand extends AbstractCamelProjectCommand {
     @Override
     public void initializeUI(UIBuilder builder) throws Exception {
         final UIContext context = builder.getUIContext();
-        Map<Object, Object> attributeMap = context.getAttributeMap();
-        attributeMap.remove("navigationResult");
-
         final Project project = getSelectedProject(context);
 
         XmlFileCompleter xmlFileCompleter = createXmlFileCompleter(project);
