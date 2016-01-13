@@ -46,4 +46,13 @@
 -->
   </modules>
 
+
+  <profiles>
+    <profile>
+      <id>itests</id>
+      <modules>
+        <module>camel-tests</module>
+      </modules>
+    </profile>
+  </profiles>
 </project>

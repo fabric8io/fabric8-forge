@@ -16,9 +16,8 @@
  */
 package io.fabric8.forge.camel.dto;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.fabric8.forge.camel.commands.project.dto.ContextDto;
-import io.fabric8.forge.camel.commands.project.dto.NodeDtoSupport;
+import io.fabric8.forge.camel.commands.project.dto.NodeDto;
 import io.fabric8.forge.camel.commands.project.dto.NodeDtos;
 import io.fabric8.utils.Files;
 import org.junit.Test;
@@ -40,10 +39,10 @@ public class NodeTest {
         List<ContextDto> contexts = NodeDtos.parseContexts(jsonFile);
         assertFalse("Should have loaded a camelContext", contexts.isEmpty());
 
-        List<NodeDtoSupport> nodeList = NodeDtos.toNodeList(contexts);
+        List<NodeDto> nodeList = NodeDtos.toNodeList(contexts);
         assertFalse("Should have created a not empty node list", nodeList.isEmpty());
 
-        for (NodeDtoSupport node : nodeList) {
+        for (NodeDto node : nodeList) {
             System.out.println(node.getLabel());
         }
     }

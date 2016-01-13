@@ -17,10 +17,10 @@ package io.fabric8.forge.camel.commands;
 
 import com.google.common.base.Objects;
 import io.fabric8.forge.camel.commands.project.CamelAddRouteXmlCommand;
+import io.fabric8.forge.camel.commands.project.CamelDeleteNodeXmlCommand;
 import io.fabric8.forge.camel.commands.project.CamelGetRoutesXmlCommand;
 import io.fabric8.forge.camel.commands.project.dto.ContextDto;
 import io.fabric8.forge.camel.commands.project.dto.NodeDto;
-import io.fabric8.forge.camel.commands.project.dto.NodeDtoSupport;
 import io.fabric8.forge.camel.commands.project.dto.NodeDtos;
 import io.fabric8.utils.Files;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -31,6 +31,8 @@ import org.jboss.forge.addon.resource.Resource;
 import org.jboss.forge.addon.resource.ResourceFactory;
 import org.jboss.forge.addon.ui.controller.CommandController;
 import org.jboss.forge.addon.ui.controller.WizardCommandController;
+import org.jboss.forge.addon.ui.input.SelectComponent;
+import org.jboss.forge.addon.ui.output.UIMessage;
 import org.jboss.forge.addon.ui.result.Failed;
 import org.jboss.forge.addon.ui.result.Result;
 import org.jboss.forge.addon.ui.test.UITestHarness;
@@ -49,7 +51,7 @@ import java.util.List;
 import static io.fabric8.forge.addon.utils.CommandHelpers.getResultMessage;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 
 @RunWith(Arquillian.class)
@@ -111,7 +113,10 @@ public class NewNodeXmlTest {
 
         // lets add a new route
         testAddRoute(project);
+
+        testDeleteRoute(project);
     }
+
 
     protected void testAddRoute(Project project) throws Exception {
         WizardCommandController command = testHarness.createWizardController(CamelAddRouteXmlCommand.class, project.getRoot());
@@ -137,8 +142,51 @@ public class NewNodeXmlTest {
         List<ContextDto> contexts = getRoutesXml(project);
         assertFalse("Should have loaded a camelContext", contexts.isEmpty());
 
-        assertNodeWithKey(contexts, "camelContext1/myNewRoute");
+        assertNodeWithKey(contexts, "1/myNewRoute");
     }
+
+    protected void testDeleteRoute(Project project) throws Exception {
+        String key = "1/cbr-route";
+        CommandController command = testHarness.createCommandController(CamelDeleteNodeXmlCommand.class, project.getRoot());
+        command.initialize();
+        command.setValueFor("xml", "META-INF/spring/camel-context.xml");
+
+        Object value = key;
+        SelectComponent nodeInput = (SelectComponent) command.getInput("node");
+        Iterable<NodeDto> valueChoices = nodeInput.getValueChoices();
+        NodeDto found = NodeDtos.findNodeByKey(valueChoices, key);
+        if (found != null) {
+            value = found;
+            System.out.println("Found node " + value);
+        } else {
+            System.out.println("Failed to find node with key '" + key + "' in the node choices: " + nodeInput.getValueChoices());
+        }
+        command.setValueFor("node", value);
+
+        System.out.println("Set value of node " + value + " currently has " + nodeInput.getValue());
+
+        if (nodeInput.getValue() == null) {
+            command.setValueFor("node", key);
+        }
+        System.out.println("Set value of node " + value + " currently has " + nodeInput.getValue());
+
+        List<UIMessage> validate = command.validate();
+        for (UIMessage uiMessage : validate) {
+            System.out.println("Invalid value of input: " + uiMessage.getSource().getName() + " message: " + uiMessage.getDescription());
+        }
+        Result result = command.execute();
+        assertFalse("Should not fail", result instanceof Failed);
+
+        String message = result.getMessage();
+        System.out.println(message);
+
+        List<ContextDto> contexts = getRoutesXml(project);
+        assertFalse("Should have loaded a camelContext", contexts.isEmpty());
+
+        assertNoNodeWithKey(contexts, key);
+        assertNodeWithKey(contexts, "1/myNewRoute");
+    }
+
 
     protected List<ContextDto> getRoutesXml(Project project) throws Exception {
         CommandController command = testHarness.createCommandController(CamelGetRoutesXmlCommand.class, project.getRoot());
@@ -158,8 +206,8 @@ public class NewNodeXmlTest {
         List<ContextDto> answer = NodeDtos.parseContexts(message);
         System.out.println();
         System.out.println();
-        List<NodeDtoSupport> nodeList = NodeDtos.toNodeList(answer);
-        for (NodeDtoSupport node : nodeList) {
+        List<NodeDto> nodeList = NodeDtos.toNodeList(answer);
+        for (NodeDto node : nodeList) {
             System.out.println(node.getLabel());
         }
         System.out.println();
@@ -167,11 +215,16 @@ public class NewNodeXmlTest {
     }
 
 
-
     public static NodeDto assertNodeWithKey(List<? extends NodeDto> contexts, String key) {
         NodeDto actual = getNodeWithKey(contexts, key);
         assertNotNull("No node found for key '" + key + ".", actual);
         System.out.println("Found expected node with key '" + key + "' " + actual);
+        return actual;
+    }
+
+    public static NodeDto assertNoNodeWithKey(List<? extends NodeDto> contexts, String key) {
+        NodeDto actual = getNodeWithKey(contexts, key);
+        assertTrue("Should not have found a node key '" + key + ".", actual == null);
         return actual;
     }
 

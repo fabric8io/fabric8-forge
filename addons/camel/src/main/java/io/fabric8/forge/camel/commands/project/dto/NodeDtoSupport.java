@@ -46,6 +46,25 @@ public abstract class NodeDtoSupport {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        NodeDtoSupport that = (NodeDtoSupport) o;
+
+        if (!key.equals(that.key)) return false;
+        return pattern != null ? pattern.equals(that.pattern) : that.pattern == null;
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = key.hashCode();
+        result = 31 * result + (pattern != null ? pattern.hashCode() : 0);
+        return result;
+    }
+
+    @Override
     public String toString() {
         return pattern + "{" +
                 "id='" + id + '\'' +
@@ -113,14 +132,14 @@ public abstract class NodeDtoSupport {
         }
     }
 
-    public List<NodeDtoSupport> toNodeList(String indentation) {
-        List<NodeDtoSupport> answer = new ArrayList<>();
+    public List<NodeDto> toNodeList(String indentation) {
+        List<NodeDto> answer = new ArrayList<>();
         addToNodeList(answer, "", indentation);
         return answer;
     }
 
-    protected void addToNodeList(List<NodeDtoSupport> answer, String indent, String indentation) {
-        NodeDtoSupport copy = this.copy();
+    protected void addToNodeList(List<NodeDto> answer, String indent, String indentation) {
+        NodeDto copy = this.copy();
         copy.setLabel(indent + getNodeText(copy));
 
         answer.add(copy);
@@ -131,5 +150,5 @@ public abstract class NodeDtoSupport {
         }
     }
 
-    protected abstract NodeDtoSupport copy();
+    protected abstract NodeDto copy();
 }

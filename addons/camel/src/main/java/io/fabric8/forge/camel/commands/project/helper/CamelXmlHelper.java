@@ -19,12 +19,32 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.fabric8.camel.tooling.util.CamelModelHelper;
+import io.fabric8.camel.tooling.util.RouteXml;
+import io.fabric8.camel.tooling.util.XmlModel;
+import io.fabric8.forge.addon.utils.CommandHelpers;
+import io.fabric8.forge.camel.commands.project.dto.ContextDto;
+import io.fabric8.forge.camel.commands.project.dto.NodeDto;
+import io.fabric8.forge.camel.commands.project.dto.RouteDto;
+import io.fabric8.utils.Files;
+import io.fabric8.utils.Objects;
+import io.fabric8.utils.Strings;
+import org.apache.camel.model.FromDefinition;
+import org.apache.camel.model.OptionalIdentifiedDefinition;
+import org.apache.camel.model.ProcessorDefinition;
+import org.apache.camel.model.RouteDefinition;
+import org.apache.camel.spring.CamelContextFactoryBean;
+import org.jboss.forge.addon.projects.Project;
+import org.jboss.forge.addon.ui.context.UIContext;
+import org.jboss.forge.addon.ui.context.UIExecutionContext;
 import org.jboss.forge.addon.ui.input.UIInput;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+
+import static io.fabric8.forge.addon.utils.Files.joinPaths;
 
 public final class CamelXmlHelper {
 
@@ -207,4 +227,138 @@ public final class CamelXmlHelper {
     public static String createFileName(UIInput<String> directory, UIInput<String> name) {
         return directory.getValue() != null ? directory.getValue() + File.separator + name.getValue() : name.getValue();
     }
+
+    public static List<ContextDto> loadCamelContext(UIContext context, Project project, String xmlResourceName) throws Exception {
+        String xmlFileName = joinPaths("src/main/resources", xmlResourceName);
+        List<ContextDto> camelContexts = null;
+        File xmlFile = CommandHelpers.getProjectContextFile(context, project, xmlFileName);
+        if (Files.isFile(xmlFile)) {
+            camelContexts = parseCamelContexts(xmlFile);
+        }
+        return camelContexts;
+    }
+
+    protected static List<ContextDto> parseCamelContexts(File xmlFile) throws Exception {
+        List<ContextDto> camelContexts = new ArrayList<>();
+
+        RouteXml routeXml = new RouteXml();
+        XmlModel xmlModel = routeXml.unmarshal(xmlFile);
+
+        // TODO we don't handle multiple contexts inside an XML file!
+        CamelContextFactoryBean contextElement = xmlModel.getContextElement();
+        String name = contextElement.getId();
+        List<RouteDefinition> routeDefs = contextElement.getRoutes();
+        ContextDto context = new ContextDto(name);
+        camelContexts.add(context);
+        String key = name;
+        if (Strings.isNullOrBlank(key)) {
+            key = "" + camelContexts.size();
+        }
+        context.setKey(key);
+        List<NodeDto> routes = createRouteDtos(routeDefs, context);
+        context.setChildren(routes);
+        return camelContexts;
+    }
+
+    protected static List<NodeDto> createRouteDtos(List<RouteDefinition> routeDefs, ContextDto context) {
+        List<NodeDto> answer = new ArrayList<>();
+        for (RouteDefinition def : routeDefs) {
+            RouteDto route = new RouteDto();
+            route.setId(def.getId());
+            route.setLabel(CamelModelHelper.getDisplayText(def));
+            route.setDescription(CamelModelHelper.getDescription(def));
+            answer.add(route);
+            route.defaultKey(context, answer.size());
+
+            addInputs(route, def.getInputs());
+            addOutputs(route, def.getOutputs());
+        }
+        return answer;
+    }
+
+    protected static void addInputs(NodeDto owner, List<FromDefinition> inputs) {
+        for (FromDefinition input : inputs) {
+            addChild(owner, input);
+        }
+    }
+
+    protected static void addOutputs(NodeDto owner, List<ProcessorDefinition<?>> outputs) {
+        for (ProcessorDefinition<?> output : outputs) {
+            addChild(owner, output);
+        }
+    }
+
+    private static NodeDto addChild(NodeDto owner, OptionalIdentifiedDefinition definition) {
+        NodeDto node = new NodeDto();
+        node.setId(definition.getId());
+        node.setLabel(CamelModelHelper.getDisplayText(definition));
+        node.setDescription(CamelModelHelper.getDescription(definition));
+        node.setPattern(CamelModelHelper.getPatternName(definition));
+        owner.addChild(node);
+        node.defaultKey(owner, owner.getChildren().size());
+
+        if (definition instanceof ProcessorDefinition) {
+            ProcessorDefinition processorDefinition = (ProcessorDefinition) definition;
+            addOutputs(node, processorDefinition.getOutputs());
+        }
+        return node;
+    }
+
+    public static Node findCamelNodeInDocument(Document root, String key) {
+        Node selectedNode = null;
+        if (root != null && Strings.isNotBlank(key)) {
+            String[] paths = key.split("/");
+            NodeList camels = root.getElementsByTagName("camelContext");
+            if (camels != null) {
+                for (int i = 0, size = camels.getLength(); i < size; i++) {
+                    Node node = camels.item(i);
+                    for (String path : paths) {
+                        node = findCamelNodeForPath(node, path);
+                        if (node == null) {
+                            break;
+                        }
+                    }
+                    if (node != null) {
+                        return node;
+                    }
+                }
+            }
+        }
+        return selectedNode;
+    }
+
+    protected static Node findCamelNodeForPath(Node node, String path) {
+        String actual = getIdOrIndex(node, 0);
+        if (Objects.equal(actual, path)) {
+            return node;
+        }
+        NodeList childNodes = node.getChildNodes();
+        if (childNodes != null) {
+            int elementCount = 0;
+            for (int i = 0, size = childNodes.getLength(); i < size; i++) {
+                Node child = childNodes.item(i);
+                if (child instanceof Element) {
+                    actual = getIdOrIndex(child, elementCount);
+                    if (Objects.equal(actual, path)) {
+                        return child;
+                    }
+                }
+            }
+        }
+        System.out.println("Could not find path '" + path + "' in node " + node.getNodeName() + " " + node.getAttributes());
+        return null;
+    }
+
+    private static String getIdOrIndex(Node node, int index) {
+        String answer = null;
+        if (node instanceof Element) {
+            Element element = (Element) node;
+             answer = element.getAttribute("id");
+            if (Strings.isNullOrBlank(answer)) {
+                answer = "" + (index + 1);
+            }
+        }
+        return answer;
+    }
+
 }

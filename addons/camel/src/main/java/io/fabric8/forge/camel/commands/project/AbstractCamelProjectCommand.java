@@ -35,8 +35,12 @@ import org.jboss.forge.addon.projects.Projects;
 import org.jboss.forge.addon.projects.facets.ResourcesFacet;
 import org.jboss.forge.addon.projects.facets.WebResourcesFacet;
 import org.jboss.forge.addon.projects.ui.AbstractProjectCommand;
+import org.jboss.forge.addon.resource.FileResource;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
+import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
+import org.jboss.forge.addon.ui.util.Categories;
+import org.jboss.forge.addon.ui.util.Metadata;
 
 public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand {
 
@@ -54,6 +58,13 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
     @Override
     protected boolean isProjectRequired() {
         return true;
+    }
+
+    @Override
+    public UICommandMetadata getMetadata(UIContext context) {
+        return Metadata.forCommand(CamelDeleteNodeXmlCommand.class).name(
+                "Camel: Delete Node XML").category(Categories.create(CATEGORY))
+                .description("Deletes a node from a Camel XML file");
     }
 
     @Override
@@ -156,5 +167,18 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
     protected XmlFileCompleter createXmlFileCompleter(UIContext context) {
         Project project = getSelectedProject(context);
         return createXmlFileCompleter(project);
+    }
+
+    protected FileResource getXmlResourceFile(Project project, String xmlResourceName) {
+        ResourcesFacet facet = project.getFacet(ResourcesFacet.class);
+        WebResourcesFacet webResourcesFacet = null;
+        if (project.hasFacet(WebResourcesFacet.class)) {
+            webResourcesFacet = project.getFacet(WebResourcesFacet.class);
+        }
+        FileResource file = facet != null ? facet.getResource(xmlResourceName) : null;
+        if (file == null || !file.exists()) {
+            file = webResourcesFacet != null ? webResourcesFacet.getWebResource(xmlResourceName) : null;
+        }
+        return file;
     }
 }

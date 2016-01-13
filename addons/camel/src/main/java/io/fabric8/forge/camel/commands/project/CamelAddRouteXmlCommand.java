@@ -147,7 +147,6 @@ public class CamelAddRouteXmlCommand extends AbstractCamelProjectCommand impleme
             xml.setDefaultValue(first(files));
         }
         builder.add(xml).add(id).add(description).add(componentNameFilter).add(componentName);
-        System.out.println("====== " + getClass().getName() + ".init()");
     }
 
     @Override
