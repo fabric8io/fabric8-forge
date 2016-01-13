@@ -35,7 +35,7 @@ public class NodeDto extends NodeDtoSupport {
     }
 
     @Override
-    protected NodeDtoSupport copy() {
+    protected NodeDto copy() {
         return new NodeDto(getKey(), getId(), getLabel(), getPattern(), getDescription(), new ArrayList<>(children));
     }
 

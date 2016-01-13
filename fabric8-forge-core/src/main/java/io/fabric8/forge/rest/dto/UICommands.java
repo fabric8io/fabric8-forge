@@ -192,17 +192,20 @@ public class UICommands {
                 ProjectType projectType = (ProjectType) value;
                 return projectType.getType();
             }
-            Class<?> aClass = value.getClass();
-            Annotation[] annotations = aClass.getAnnotations();
-            if (annotations != null) {
-                for (Annotation annotation : annotations) {
-                    String text = annotation.toString();
-                    // because of the Forge proxying we can't just use the actual class here...
-                    if (text.indexOf("com.fasterxml.jackson.") >= 0) {
-                        // lets assume its a JSON DTO!
-                        return value;
+            Class<?> aClass = Proxies.unwrap(value).getClass();
+            while (aClass != null && !aClass.equals(Object.class)) {
+                Annotation[] annotations = aClass.getAnnotations();
+                if (annotations != null) {
+                    for (Annotation annotation : annotations) {
+                        String text = annotation.toString();
+                        // because of the Forge proxying we can't just use the actual class here...
+                        if (text.indexOf("com.fasterxml.jackson.") >= 0) {
+                            // lets assume its a JSON DTO!
+                            return value;
+                        }
                     }
                 }
+                aClass = aClass.getSuperclass();
             }
             return value.toString();
         }

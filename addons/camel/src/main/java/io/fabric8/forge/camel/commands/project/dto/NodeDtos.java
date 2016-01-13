@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.fabric8.camel.tooling.util.Strings2;
 import io.fabric8.forge.addon.utils.Indenter;
 import io.fabric8.utils.Block;
+import io.fabric8.utils.Objects;
 import io.fabric8.utils.Strings;
 
 import java.io.File;
@@ -35,14 +36,14 @@ import java.util.Set;
 public class NodeDtos {
     private static Set<String> patternsToPrefix = new HashSet<>(Arrays.asList("camelContext", "route", "from", "to"));
 
-    public static List<NodeDtoSupport> toNodeList(Iterable<? extends NodeDtoSupport> nodes) {
+    public static List<NodeDto> toNodeList(Iterable<? extends NodeDto> nodes) {
         return toNodeList(nodes, "  ");
     }
 
-    public static List<NodeDtoSupport> toNodeList(Iterable<? extends NodeDtoSupport> nodes, String indentation) {
-        List<NodeDtoSupport> answer = new ArrayList<>();
-        for (NodeDtoSupport node : nodes) {
-            List<NodeDtoSupport> list = node.toNodeList(indentation);
+    public static List<NodeDto> toNodeList(Iterable<? extends NodeDto> nodes, String indentation) {
+        List<NodeDto> answer = new ArrayList<>();
+        for (NodeDto node : nodes) {
+            List<NodeDto> list = node.toNodeList(indentation);
             answer.addAll(list);
         }
         return answer;
@@ -91,5 +92,20 @@ public class NodeDtos {
             return Strings.join(" ", pattern, label);
         }
         return label;
+    }
+
+    public static NodeDto findNodeByKey(Iterable<? extends NodeDto> nodes, String key) {
+        if (nodes != null) {
+            for (NodeDto node : nodes) {
+                if (Objects.equal(node.getKey(), key)) {
+                    return node;
+                }
+                NodeDto answer = findNodeByKey(node.getChildren(), key);
+                if (answer != null) {
+                    return answer;
+                }
+            }
+        }
+        return null;
     }
 }
