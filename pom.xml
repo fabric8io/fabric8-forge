@@ -76,8 +76,12 @@
     <fabric8.version>2.2.85</fabric8.version>
     <fabric8.archetypes.release.version>2.2.92</fabric8.archetypes.release.version>
     <furnace.version>2.22.10.Final</furnace.version>
+    <!--
     <jboss.forge.version>2.20.1.Final</jboss.forge.version>
     <jboss.roaster.version>2.17.4.Final</jboss.roaster.version>
+    -->
+    <jboss.forge.version>3.0.0.Beta1</jboss.forge.version>
+    <jboss.roaster.version>2.18.0.Final</jboss.roaster.version>
 
 
     <!--
