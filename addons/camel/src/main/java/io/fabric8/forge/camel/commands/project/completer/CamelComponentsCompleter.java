@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import io.fabric8.forge.addon.utils.CamelProjectHelper;
 import io.fabric8.forge.camel.commands.project.dto.ComponentDto;
@@ -41,13 +43,15 @@ public class CamelComponentsCompleter implements UICompleter<ComponentDto> {
     private final CamelCatalog camelCatalog;
     private final UIInput<String> filter;
     private final boolean excludeComponentsOnClasspath;
+    private final boolean includeCatalogComponents;
     private final Dependency core;
 
-    public CamelComponentsCompleter(Project project, CamelCatalog camelCatalog, UIInput<String> filter, boolean excludeComponentsOnClasspath) {
+    public CamelComponentsCompleter(Project project, CamelCatalog camelCatalog, UIInput<String> filter, boolean excludeComponentsOnClasspath, boolean includeCatalogComponents) {
         this.project = project;
         this.camelCatalog = camelCatalog;
         this.filter = filter;
         this.excludeComponentsOnClasspath = excludeComponentsOnClasspath;
+        this.includeCatalogComponents = includeCatalogComponents;
 
         // need to find camel-core so we known the camel version
         core = CamelProjectHelper.findCamelCoreDependency(project);
@@ -59,7 +63,7 @@ public class CamelComponentsCompleter implements UICompleter<ComponentDto> {
             return null;
         }
 
-        List<String> names = camelCatalog.findComponentNames();
+        List<String> names = getComponentNames();
 
         // filter non matching names first
         List<String> filtered = new ArrayList<String>();
@@ -87,17 +91,7 @@ public class CamelComponentsCompleter implements UICompleter<ComponentDto> {
             return null;
         }
 
-        // find all available component names
-        List<String> names = camelCatalog.findComponentNames();
-
-        // filter out existing components we already have
-        if (excludeComponentsOnClasspath) {
-            Set<Dependency> artifacts = findCamelArtifacts(project);
-            for (Dependency dep : artifacts) {
-                Set<String> components = componentsFromArtifact(camelCatalog, dep.getCoordinate().getArtifactId());
-                names.removeAll(components);
-            }
-        }
+        List<String> names = getComponentNames();
 
         if (label != null && !"<all>".equals(label)) {
             names = filterByLabel(names, label);
@@ -109,6 +103,31 @@ public class CamelComponentsCompleter implements UICompleter<ComponentDto> {
             answer.add(dto);
         }
         return answer;
+    }
+
+    protected List<String> getComponentNames() {
+        List<String> names;
+        if (includeCatalogComponents) {
+            // find all available component names
+            names = camelCatalog.findComponentNames();
+
+            // filter out existing components we already have
+            if (excludeComponentsOnClasspath) {
+                Set<Dependency> artifacts = findCamelArtifacts(project);
+                for (Dependency dep : artifacts) {
+                    Set<String> components = componentsFromArtifact(camelCatalog, dep.getCoordinate().getArtifactId());
+                    names.removeAll(components);
+                }
+            }
+        } else {
+            SortedSet<String> set = new TreeSet<>();
+            Set<Dependency> artifacts = findCamelArtifacts(project);
+            for (Dependency dep : artifacts) {
+                Set<String> components = componentsFromArtifact(camelCatalog, dep.getCoordinate().getArtifactId());
+                set.addAll(components);
+            }
+            names = new ArrayList<>(set);
+        } return names;
     }
 
     private List<String> filterByName(List<String> choices) {

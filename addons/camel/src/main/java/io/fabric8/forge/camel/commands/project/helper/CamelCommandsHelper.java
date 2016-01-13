@@ -56,6 +56,19 @@ public final class CamelCommandsHelper {
         return new CamelComponentsLabelCompleter(project, camelCatalog).getValueChoices();
     }
 
+    public static Callable<Iterable<ComponentDto>> createAllComponentDtoValues(final Project project, final CamelCatalog camelCatalog,
+                                                                            final UISelectOne<String> componentCategoryFilter,
+                                                                            final boolean excludeComponentsOnClasspath) {
+        // use callable so we can live update the filter
+        return new Callable<Iterable<ComponentDto>>() {
+            @Override
+            public Iterable<ComponentDto> call() throws Exception {
+                String label = componentCategoryFilter.getValue();
+                return new CamelComponentsCompleter(project, camelCatalog, null, excludeComponentsOnClasspath, true).getValueChoices(label);
+            }
+        };
+    }
+
     public static Callable<Iterable<ComponentDto>> createComponentDtoValues(final Project project, final CamelCatalog camelCatalog,
                                                                             final UISelectOne<String> componentCategoryFilter,
                                                                             final boolean excludeComponentsOnClasspath) {
@@ -64,7 +77,7 @@ public final class CamelCommandsHelper {
             @Override
             public Iterable<ComponentDto> call() throws Exception {
                 String label = componentCategoryFilter.getValue();
-                return new CamelComponentsCompleter(project, camelCatalog, null, excludeComponentsOnClasspath).getValueChoices(label);
+                return new CamelComponentsCompleter(project, camelCatalog, null, excludeComponentsOnClasspath, false).getValueChoices(label);
             }
         };
     }

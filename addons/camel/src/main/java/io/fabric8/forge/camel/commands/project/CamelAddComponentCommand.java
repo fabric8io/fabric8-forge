@@ -66,7 +66,7 @@ public class CamelAddComponentCommand extends AbstractCamelProjectCommand {
         filter.setValueChoices(CamelCommandsHelper.createComponentLabelValues(project, getCamelCatalog()));
         filter.setDefaultValue("<all>");
 
-        name.setValueChoices(CamelCommandsHelper.createComponentDtoValues(project, getCamelCatalog(), filter, false));
+        name.setValueChoices(CamelCommandsHelper.createAllComponentDtoValues(project, getCamelCatalog(), filter, true));
         // include converter from string->dto
         name.setValueConverter(new Converter<String, ComponentDto>() {
             @Override
