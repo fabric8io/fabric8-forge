@@ -15,10 +15,6 @@
  */
 package io.fabric8.forge.camel.commands.project.helper;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-
 import io.fabric8.camel.tooling.util.CamelModelHelper;
 import io.fabric8.camel.tooling.util.RouteXml;
 import io.fabric8.camel.tooling.util.XmlModel;
@@ -36,13 +32,18 @@ import org.apache.camel.model.RouteDefinition;
 import org.apache.camel.spring.CamelContextFactoryBean;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.ui.context.UIContext;
-import org.jboss.forge.addon.ui.context.UIExecutionContext;
 import org.jboss.forge.addon.ui.input.UIInput;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static io.fabric8.forge.addon.utils.Files.joinPaths;
 
@@ -252,7 +253,7 @@ public final class CamelXmlHelper {
         camelContexts.add(context);
         String key = name;
         if (Strings.isNullOrBlank(key)) {
-            key = "" + camelContexts.size();
+            key = "_camelContext" + camelContexts.size();
         }
         context.setKey(key);
         List<NodeDto> routes = createRouteDtos(routeDefs, context);
@@ -262,13 +263,14 @@ public final class CamelXmlHelper {
 
     protected static List<NodeDto> createRouteDtos(List<RouteDefinition> routeDefs, ContextDto context) {
         List<NodeDto> answer = new ArrayList<>();
+        Map<String,Integer> nodeCounts = new HashMap<>();
         for (RouteDefinition def : routeDefs) {
             RouteDto route = new RouteDto();
             route.setId(def.getId());
             route.setLabel(CamelModelHelper.getDisplayText(def));
             route.setDescription(CamelModelHelper.getDescription(def));
             answer.add(route);
-            route.defaultKey(context, answer.size());
+            route.defaultKey(context, nodeCounts);
 
             addInputs(route, def.getInputs());
             addOutputs(route, def.getOutputs());
@@ -277,25 +279,27 @@ public final class CamelXmlHelper {
     }
 
     protected static void addInputs(NodeDto owner, List<FromDefinition> inputs) {
+        Map<String,Integer> nodeCounts = new HashMap<>();
         for (FromDefinition input : inputs) {
-            addChild(owner, input);
+            addChild(owner, input, nodeCounts);
         }
     }
 
     protected static void addOutputs(NodeDto owner, List<ProcessorDefinition<?>> outputs) {
+        Map<String,Integer> nodeCounts = new HashMap<>();
         for (ProcessorDefinition<?> output : outputs) {
-            addChild(owner, output);
+            addChild(owner, output, nodeCounts);
         }
     }
 
-    private static NodeDto addChild(NodeDto owner, OptionalIdentifiedDefinition definition) {
+    private static NodeDto addChild(NodeDto owner, OptionalIdentifiedDefinition definition, Map<String, Integer> nodeCounts) {
         NodeDto node = new NodeDto();
         node.setId(definition.getId());
         node.setLabel(CamelModelHelper.getDisplayText(definition));
         node.setDescription(CamelModelHelper.getDescription(definition));
         node.setPattern(CamelModelHelper.getPatternName(definition));
         owner.addChild(node);
-        node.defaultKey(owner, owner.getChildren().size());
+        node.defaultKey(owner, nodeCounts);
 
         if (definition instanceof ProcessorDefinition) {
             ProcessorDefinition processorDefinition = (ProcessorDefinition) definition;
@@ -310,13 +314,14 @@ public final class CamelXmlHelper {
             String[] paths = key.split("/");
             NodeList camels = root.getElementsByTagName("camelContext");
             if (camels != null) {
+                Map<String, Integer> rootNodeCounts = new HashMap<>();
                 for (int i = 0, size = camels.getLength(); i < size; i++) {
                     Node node = camels.item(i);
                     boolean first = true;
                     for (String path : paths) {
                         if (first) {
                             first = false;
-                            String actual = getIdOrIndex(node, 0);
+                            String actual = getIdOrIndex(node, rootNodeCounts);
                             if (!Objects.equal(actual, path)) {
                                 node = null;
                             }
@@ -339,11 +344,11 @@ public final class CamelXmlHelper {
     protected static Node findCamelNodeForPath(Node node, String path) {
         NodeList childNodes = node.getChildNodes();
         if (childNodes != null) {
-            int elementCount = 0;
+            Map<String,Integer> nodeCounts = new HashMap<>();
             for (int i = 0, size = childNodes.getLength(); i < size; i++) {
                 Node child = childNodes.item(i);
                 if (child instanceof Element) {
-                    String actual = getIdOrIndex(child, elementCount++);
+                    String actual = getIdOrIndex(child, nodeCounts);
                     if (Objects.equal(actual, path)) {
                         return child;
                     }
@@ -354,13 +359,17 @@ public final class CamelXmlHelper {
         return null;
     }
 
-    private static String getIdOrIndex(Node node, int index) {
+    private static String getIdOrIndex(Node node, Map<String, Integer> nodeCounts) {
         String answer = null;
         if (node instanceof Element) {
             Element element = (Element) node;
-             answer = element.getAttribute("id");
+            String elementName = element.getTagName();
+            Integer countObject = nodeCounts.get(elementName);
+            int count = countObject != null ? countObject.intValue() : 0;
+            nodeCounts.put(elementName, ++count);
+            answer = element.getAttribute("id");
             if (Strings.isNullOrBlank(answer)) {
-                answer = "" + (index + 1);
+                answer = "_" + elementName + count;
             }
         }
         return answer;

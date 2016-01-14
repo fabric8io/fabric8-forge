@@ -21,6 +21,7 @@ import io.fabric8.utils.Strings;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static io.fabric8.forge.camel.commands.project.dto.NodeDtos.getNodeText;
 
@@ -116,7 +117,11 @@ public abstract class NodeDtoSupport {
         this.key = key;
     }
 
-    public void defaultKey(NodeDto owner, int size) {
+    public void defaultKey(NodeDto owner, Map<String, Integer> nodeCounts) {
+        String elementName = getPattern();
+        Integer countObject = nodeCounts.get(elementName);
+        int count = countObject != null ? countObject.intValue() : 0;
+        nodeCounts.put(elementName, ++count);
         if (Strings.isNullOrBlank(key)) {
             key = owner.getKey();
             if (Strings.isNullOrBlank(key)) {
@@ -127,7 +132,7 @@ public abstract class NodeDtoSupport {
             if (Strings.isNotBlank(id)) {
                 key += id;
             } else {
-                key += "" + size;
+                key += "_" + elementName + count;
             }
         }
     }

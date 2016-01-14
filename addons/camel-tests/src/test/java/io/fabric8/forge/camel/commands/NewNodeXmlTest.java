@@ -57,6 +57,7 @@ import static org.junit.Assert.assertTrue;
 @RunWith(Arquillian.class)
 public class NewNodeXmlTest {
 
+    public static final String NEW_ROUTE_KEY = "_camelContext1/myNewRoute";
     @Inject
     private UITestHarness testHarness;
 
@@ -142,11 +143,11 @@ public class NewNodeXmlTest {
         List<ContextDto> contexts = getRoutesXml(project);
         assertFalse("Should have loaded a camelContext", contexts.isEmpty());
 
-        assertNodeWithKey(contexts, "1/myNewRoute");
+        assertNodeWithKey(contexts, NEW_ROUTE_KEY);
     }
 
     protected void testDeleteRoute(Project project) throws Exception {
-        String key = "1/cbr-route/3/1/2";
+        String key = "_camelContext1/cbr-route/_choice1/_when1/_to1";
         CommandController command = testHarness.createCommandController(CamelDeleteNodeXmlCommand.class, project.getRoot());
         command.initialize();
         command.setValueFor("xml", "META-INF/spring/camel-context.xml");
@@ -184,7 +185,7 @@ public class NewNodeXmlTest {
         assertFalse("Should have loaded a camelContext", contexts.isEmpty());
 
         assertNoNodeWithKey(contexts, key);
-        assertNodeWithKey(contexts, "1/myNewRoute");
+        assertNodeWithKey(contexts, NEW_ROUTE_KEY);
     }
 
 
