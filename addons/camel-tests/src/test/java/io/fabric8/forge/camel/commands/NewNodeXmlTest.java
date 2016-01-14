@@ -146,7 +146,7 @@ public class NewNodeXmlTest {
     }
 
     protected void testDeleteRoute(Project project) throws Exception {
-        String key = "1/cbr-route";
+        String key = "1/cbr-route/3/1/2";
         CommandController command = testHarness.createCommandController(CamelDeleteNodeXmlCommand.class, project.getRoot());
         command.initialize();
         command.setValueFor("xml", "META-INF/spring/camel-context.xml");
@@ -167,17 +167,17 @@ public class NewNodeXmlTest {
 
         if (nodeInput.getValue() == null) {
             command.setValueFor("node", key);
+            System.out.println("Set value of node " + value + " currently has " + nodeInput.getValue());
         }
-        System.out.println("Set value of node " + value + " currently has " + nodeInput.getValue());
 
         List<UIMessage> validate = command.validate();
         for (UIMessage uiMessage : validate) {
             System.out.println("Invalid value of input: " + uiMessage.getSource().getName() + " message: " + uiMessage.getDescription());
         }
         Result result = command.execute();
-        assertFalse("Should not fail", result instanceof Failed);
-
         String message = result.getMessage();
+        assertFalse("Should not fail: " + message, result instanceof Failed);
+
         System.out.println(message);
 
         List<ContextDto> contexts = getRoutesXml(project);

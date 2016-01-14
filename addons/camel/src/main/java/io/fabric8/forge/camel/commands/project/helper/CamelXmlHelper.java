@@ -312,8 +312,17 @@ public final class CamelXmlHelper {
             if (camels != null) {
                 for (int i = 0, size = camels.getLength(); i < size; i++) {
                     Node node = camels.item(i);
+                    boolean first = true;
                     for (String path : paths) {
-                        node = findCamelNodeForPath(node, path);
+                        if (first) {
+                            first = false;
+                            String actual = getIdOrIndex(node, 0);
+                            if (!Objects.equal(actual, path)) {
+                                node = null;
+                            }
+                        } else {
+                            node = findCamelNodeForPath(node, path);
+                        }
                         if (node == null) {
                             break;
                         }
@@ -328,17 +337,13 @@ public final class CamelXmlHelper {
     }
 
     protected static Node findCamelNodeForPath(Node node, String path) {
-        String actual = getIdOrIndex(node, 0);
-        if (Objects.equal(actual, path)) {
-            return node;
-        }
         NodeList childNodes = node.getChildNodes();
         if (childNodes != null) {
             int elementCount = 0;
             for (int i = 0, size = childNodes.getLength(); i < size; i++) {
                 Node child = childNodes.item(i);
                 if (child instanceof Element) {
-                    actual = getIdOrIndex(child, elementCount);
+                    String actual = getIdOrIndex(child, elementCount++);
                     if (Objects.equal(actual, path)) {
                         return child;
                     }
