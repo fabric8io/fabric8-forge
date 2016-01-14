@@ -57,6 +57,7 @@ import static org.junit.Assert.assertTrue;
 @RunWith(Arquillian.class)
 public class NewNodeXmlTest {
 
+    public static final String NEW_ROUTE_KEY = "_camelContext1/myNewRoute";
     @Inject
     private UITestHarness testHarness;
 
@@ -142,11 +143,11 @@ public class NewNodeXmlTest {
         List<ContextDto> contexts = getRoutesXml(project);
         assertFalse("Should have loaded a camelContext", contexts.isEmpty());
 
-        assertNodeWithKey(contexts, "1/myNewRoute");
+        assertNodeWithKey(contexts, NEW_ROUTE_KEY);
     }
 
     protected void testDeleteRoute(Project project) throws Exception {
-        String key = "1/cbr-route";
+        String key = "_camelContext1/cbr-route/_choice1/_when1/_to1";
         CommandController command = testHarness.createCommandController(CamelDeleteNodeXmlCommand.class, project.getRoot());
         command.initialize();
         command.setValueFor("xml", "META-INF/spring/camel-context.xml");
@@ -167,24 +168,24 @@ public class NewNodeXmlTest {
 
         if (nodeInput.getValue() == null) {
             command.setValueFor("node", key);
+            System.out.println("Set value of node " + value + " currently has " + nodeInput.getValue());
         }
-        System.out.println("Set value of node " + value + " currently has " + nodeInput.getValue());
 
         List<UIMessage> validate = command.validate();
         for (UIMessage uiMessage : validate) {
             System.out.println("Invalid value of input: " + uiMessage.getSource().getName() + " message: " + uiMessage.getDescription());
         }
         Result result = command.execute();
-        assertFalse("Should not fail", result instanceof Failed);
-
         String message = result.getMessage();
+        assertFalse("Should not fail: " + message, result instanceof Failed);
+
         System.out.println(message);
 
         List<ContextDto> contexts = getRoutesXml(project);
         assertFalse("Should have loaded a camelContext", contexts.isEmpty());
 
         assertNoNodeWithKey(contexts, key);
-        assertNodeWithKey(contexts, "1/myNewRoute");
+        assertNodeWithKey(contexts, NEW_ROUTE_KEY);
     }
 
 
