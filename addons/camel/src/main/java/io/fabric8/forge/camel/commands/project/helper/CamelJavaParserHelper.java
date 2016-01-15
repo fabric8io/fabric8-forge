@@ -79,12 +79,16 @@ public class CamelJavaParserHelper {
         List<MethodSource<JavaClassSource>> answer = new ArrayList<>();
 
         List<MethodSource<JavaClassSource>> methods = clazz.getMethods();
-        for (MethodSource<JavaClassSource> method : methods) {
-            if (method.isPublic() && method.getParameters().isEmpty() && method.getReturnType().isType("void")) {
-                // maybe the method contains an inlined createRouteBuilder usually from an unit test method
-                MethodSource<JavaClassSource> builder = findConfigureMethodInCreateRouteBuilder(clazz, method);
-                if (builder != null) {
-                    answer.add(builder);
+        if (methods != null) {
+            for (MethodSource<JavaClassSource> method : methods) {
+                if (method.isPublic()
+                        && (method.getParameters() == null || method.getParameters().isEmpty())
+                        && (method.getReturnType() == null || method.getReturnType().isType("void"))) {
+                    // maybe the method contains an inlined createRouteBuilder usually from an unit test method
+                    MethodSource<JavaClassSource> builder = findConfigureMethodInCreateRouteBuilder(clazz, method);
+                    if (builder != null) {
+                        answer.add(builder);
+                    }
                 }
             }
         }
