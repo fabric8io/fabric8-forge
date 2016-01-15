@@ -67,24 +67,37 @@ public class CamelJavaParserHelper {
 
         // maybe the route builder is from unit testing with camel-test as an anonymous inner class
         // there is a bit of code to dig out this using the eclipse jdt api
-        List<MethodSource<JavaClassSource>> methods = findCreateRouteBuilderMethods(clazz);
-        if (methods.size() == 1) {
-            method = methods.get(0);
+        method = findCreateRouteBuilderMethod(clazz);
+        if (method != null) {
             return findConfigureMethodInCreateRouteBuilder(clazz, method);
         }
 
         return null;
     }
 
-    private static List<MethodSource<JavaClassSource>> findCreateRouteBuilderMethods(JavaClassSource clazz) {
+    public static List<MethodSource<JavaClassSource>> findInlinedConfigureMethods(JavaClassSource clazz) {
         List<MethodSource<JavaClassSource>> answer = new ArrayList<>();
 
-        MethodSource method = clazz.getMethod("createRouteBuilder");
-        if (method != null && (method.isPublic() || method.isProtected()) && method.getParameters().isEmpty()) {
-            answer.add(method);
+        List<MethodSource<JavaClassSource>> methods = clazz.getMethods();
+        for (MethodSource<JavaClassSource> method : methods) {
+            if (method.isPublic() && method.getParameters().isEmpty() && method.getReturnType().isType("void")) {
+                // maybe the method contains an inlined createRouteBuilder usually from an unit test method
+                MethodSource<JavaClassSource> builder = findConfigureMethodInCreateRouteBuilder(clazz, method);
+                if (builder != null) {
+                    answer.add(builder);
+                }
+            }
         }
 
         return answer;
+    }
+
+    private static MethodSource<JavaClassSource> findCreateRouteBuilderMethod(JavaClassSource clazz) {
+        MethodSource method = clazz.getMethod("createRouteBuilder");
+        if (method != null && (method.isPublic() || method.isProtected()) && method.getParameters().isEmpty()) {
+            return method;
+        }
+        return null;
     }
 
     private static MethodSource<JavaClassSource> findConfigureMethodInCreateRouteBuilder(JavaClassSource clazz, MethodSource<JavaClassSource> method) {
@@ -95,25 +108,39 @@ public class CamelJavaParserHelper {
             List statements = block.statements();
             for (int i = 0; i < statements.size(); i++) {
                 Statement stmt = (Statement) statements.get(i);
+                Expression exp = null;
+                String methodName = null;
                 if (stmt instanceof ReturnStatement) {
                     ReturnStatement rs = (ReturnStatement) stmt;
-                    Expression exp = rs.getExpression();
-                    if (exp != null && exp instanceof ClassInstanceCreation) {
-                        ClassInstanceCreation cic = (ClassInstanceCreation) exp;
-                        boolean isRouteBuilder = false;
-                        if (cic.getType() instanceof SimpleType) {
-                            SimpleType st = (SimpleType) cic.getType();
-                            isRouteBuilder = "RouteBuilder".equals(st.getName().toString());
+                    exp = rs.getExpression();
+                } else if (stmt instanceof ExpressionStatement) {
+                    ExpressionStatement es = (ExpressionStatement) stmt;
+                    exp = es.getExpression();
+                    if (exp instanceof MethodInvocation) {
+                        MethodInvocation mi = (MethodInvocation) exp;
+                        for (Object arg : mi.arguments()) {
+                            if (arg instanceof ClassInstanceCreation) {
+                                exp = (Expression) arg;
+                                break;
+                            }
                         }
-                        if (isRouteBuilder && cic.getAnonymousClassDeclaration() != null) {
-                            List body = cic.getAnonymousClassDeclaration().bodyDeclarations();
-                            for (int j = 0; j < body.size(); j++) {
-                                Object line = body.get(j);
-                                if (line instanceof MethodDeclaration) {
-                                    MethodDeclaration amd = (MethodDeclaration) line;
-                                    if ("configure".equals(amd.getName().toString())) {
-                                        return new AnonymousMethodSource(clazz, amd);
-                                    }
+                    }
+                }
+                if (exp != null && exp instanceof ClassInstanceCreation) {
+                    ClassInstanceCreation cic = (ClassInstanceCreation) exp;
+                    boolean isRouteBuilder = false;
+                    if (cic.getType() instanceof SimpleType) {
+                        SimpleType st = (SimpleType) cic.getType();
+                        isRouteBuilder = "RouteBuilder".equals(st.getName().toString());
+                    }
+                    if (isRouteBuilder && cic.getAnonymousClassDeclaration() != null) {
+                        List body = cic.getAnonymousClassDeclaration().bodyDeclarations();
+                        for (int j = 0; j < body.size(); j++) {
+                            Object line = body.get(j);
+                            if (line instanceof MethodDeclaration) {
+                                MethodDeclaration amd = (MethodDeclaration) line;
+                                if ("configure".equals(amd.getName().toString())) {
+                                    return new AnonymousMethodSource(clazz, amd);
                                 }
                             }
                         }

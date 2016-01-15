@@ -23,6 +23,7 @@ import io.fabric8.forge.camel.commands.project.helper.ParserResult;
 import org.jboss.forge.roaster.Roaster;
 import org.jboss.forge.roaster.model.source.JavaClassSource;
 import org.jboss.forge.roaster.model.source.MethodSource;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class RoasterMyLocalAddRouteBuilderTest {
@@ -31,6 +32,11 @@ public class RoasterMyLocalAddRouteBuilderTest {
     public void parse() throws Exception {
         JavaClassSource clazz = (JavaClassSource) Roaster.parse(new File("src/test/java/io/fabric8/forge/camel/java/MyLocalAddRouteBuilderTest.java"));
         MethodSource<JavaClassSource> method = CamelJavaParserHelper.findConfigureMethod(clazz);
+        Assert.assertNull(method);
+
+        List<MethodSource<JavaClassSource>> methods = CamelJavaParserHelper.findInlinedConfigureMethods(clazz);
+        Assert.assertEquals(1, methods.size());
+        method = methods.get(0);
 
         List<ParserResult> list = CamelJavaParserHelper.parseCamelConsumerUris(method, true, true);
         for (ParserResult result : list) {
