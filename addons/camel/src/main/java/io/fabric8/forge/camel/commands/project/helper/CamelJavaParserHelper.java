@@ -67,34 +67,52 @@ public class CamelJavaParserHelper {
 
         // maybe the route builder is from unit testing with camel-test as an anonymous inner class
         // there is a bit of code to dig out this using the eclipse jdt api
-        method = clazz.getMethod("createRouteBuilder");
+        List<MethodSource<JavaClassSource>> methods = findCreateRouteBuilderMethods(clazz);
+        if (methods.size() == 1) {
+            method = methods.get(0);
+            return findConfigureMethodInCreateRouteBuilder(clazz, method);
+        }
+
+        return null;
+    }
+
+    private static List<MethodSource<JavaClassSource>> findCreateRouteBuilderMethods(JavaClassSource clazz) {
+        List<MethodSource<JavaClassSource>> answer = new ArrayList<>();
+
+        MethodSource method = clazz.getMethod("createRouteBuilder");
         if (method != null && (method.isPublic() || method.isProtected()) && method.getParameters().isEmpty()) {
-            // find configure inside the code
-            MethodDeclaration md = (MethodDeclaration) method.getInternal();
-            Block block = md.getBody();
-            if (block != null) {
-                List statements = block.statements();
-                for (int i = 0; i < statements.size(); i++) {
-                    Statement stmt = (Statement) statements.get(i);
-                    if (stmt instanceof ReturnStatement) {
-                        ReturnStatement rs = (ReturnStatement) stmt;
-                        Expression exp = rs.getExpression();
-                        if (exp != null && exp instanceof ClassInstanceCreation) {
-                            ClassInstanceCreation cic = (ClassInstanceCreation) exp;
-                            boolean isRouteBuilder = false;
-                            if (cic.getType() instanceof SimpleType) {
-                                SimpleType st = (SimpleType) cic.getType();
-                                isRouteBuilder = "RouteBuilder".equals(st.getName().toString());
-                            }
-                            if (isRouteBuilder && cic.getAnonymousClassDeclaration() != null) {
-                                List body = cic.getAnonymousClassDeclaration().bodyDeclarations();
-                                for (int j = 0; j < body.size(); j++) {
-                                    Object line = body.get(j);
-                                    if (line instanceof MethodDeclaration) {
-                                        MethodDeclaration amd = (MethodDeclaration) line;
-                                        if ("configure".equals(amd.getName().toString())) {
-                                            return new AnonymousMethodSource(clazz, amd);
-                                        }
+            answer.add(method);
+        }
+
+        return answer;
+    }
+
+    private static MethodSource<JavaClassSource> findConfigureMethodInCreateRouteBuilder(JavaClassSource clazz, MethodSource<JavaClassSource> method) {
+        // find configure inside the code
+        MethodDeclaration md = (MethodDeclaration) method.getInternal();
+        Block block = md.getBody();
+        if (block != null) {
+            List statements = block.statements();
+            for (int i = 0; i < statements.size(); i++) {
+                Statement stmt = (Statement) statements.get(i);
+                if (stmt instanceof ReturnStatement) {
+                    ReturnStatement rs = (ReturnStatement) stmt;
+                    Expression exp = rs.getExpression();
+                    if (exp != null && exp instanceof ClassInstanceCreation) {
+                        ClassInstanceCreation cic = (ClassInstanceCreation) exp;
+                        boolean isRouteBuilder = false;
+                        if (cic.getType() instanceof SimpleType) {
+                            SimpleType st = (SimpleType) cic.getType();
+                            isRouteBuilder = "RouteBuilder".equals(st.getName().toString());
+                        }
+                        if (isRouteBuilder && cic.getAnonymousClassDeclaration() != null) {
+                            List body = cic.getAnonymousClassDeclaration().bodyDeclarations();
+                            for (int j = 0; j < body.size(); j++) {
+                                Object line = body.get(j);
+                                if (line instanceof MethodDeclaration) {
+                                    MethodDeclaration amd = (MethodDeclaration) line;
+                                    if ("configure".equals(amd.getName().toString())) {
+                                        return new AnonymousMethodSource(clazz, amd);
                                     }
                                 }
                             }
