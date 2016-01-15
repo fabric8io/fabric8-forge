@@ -135,23 +135,26 @@ public class CamelJavaParserHelper {
 
     private static List<ParserResult> doParseCamelUris(MethodSource<JavaClassSource> method, boolean consumers, boolean producers,
                                                        boolean strings, boolean fields) {
+
         List<ParserResult> answer = new ArrayList<ParserResult>();
 
-        MethodDeclaration md = (MethodDeclaration) method.getInternal();
-        Block block = md.getBody();
-        if (block != null) {
-            for (Object statement : md.getBody().statements()) {
-                // must be a method call expression
-                if (statement instanceof ExpressionStatement) {
-                    ExpressionStatement es = (ExpressionStatement) statement;
-                    Expression exp = es.getExpression();
+        if (method != null) {
+            MethodDeclaration md = (MethodDeclaration) method.getInternal();
+            Block block = md.getBody();
+            if (block != null) {
+                for (Object statement : md.getBody().statements()) {
+                    // must be a method call expression
+                    if (statement instanceof ExpressionStatement) {
+                        ExpressionStatement es = (ExpressionStatement) statement;
+                        Expression exp = es.getExpression();
 
-                    List<ParserResult> uris = new ArrayList<ParserResult>();
-                    parseExpression(method.getOrigin(), block, exp, uris, consumers, producers, strings, fields);
-                    if (!uris.isEmpty()) {
-                        // reverse the order as we will grab them from last->first
-                        Collections.reverse(uris);
-                        answer.addAll(uris);
+                        List<ParserResult> uris = new ArrayList<ParserResult>();
+                        parseExpression(method.getOrigin(), block, exp, uris, consumers, producers, strings, fields);
+                        if (!uris.isEmpty()) {
+                            // reverse the order as we will grab them from last->first
+                            Collections.reverse(uris);
+                            answer.addAll(uris);
+                        }
                     }
                 }
             }
@@ -159,7 +162,6 @@ public class CamelJavaParserHelper {
 
         return answer;
     }
-
 
     private static void parseExpression(JavaClassSource clazz, Block block, Expression exp, List<ParserResult> uris,
                                         boolean consumers, boolean producers, boolean strings, boolean fields) {
