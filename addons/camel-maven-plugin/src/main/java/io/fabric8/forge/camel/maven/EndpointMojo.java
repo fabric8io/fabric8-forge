@@ -169,7 +169,7 @@ public class EndpointMojo extends AbstractMojo {
                     // we should only parse java classes (not interfaces and enums etc)
                     if (out != null && out instanceof JavaClassSource) {
                         JavaClassSource clazz = (JavaClassSource) out;
-                        RouteBuilderParser.parseRouteBuilderEndpoints(clazz, baseDir, fqn, fileEndpoints, unparsable);
+                        RouteBuilderParser.parseRouteBuilderEndpoints(clazz, baseDir, fqn, fileEndpoints, unparsable, includeTest);
                         RouteBuilderParser.parseRouteBuilderSimpleExpressions(clazz, baseDir, fqn, fileSimpleExpressions);
 
                         // add what we found in this file to the total list

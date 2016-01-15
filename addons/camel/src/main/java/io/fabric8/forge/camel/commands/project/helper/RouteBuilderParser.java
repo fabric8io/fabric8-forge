@@ -18,6 +18,7 @@ package io.fabric8.forge.camel.commands.project.helper;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.util.ArrayList;
 import java.util.List;
 
 import io.fabric8.forge.camel.commands.project.model.CamelEndpointDetails;
@@ -43,11 +44,11 @@ public class RouteBuilderParser {
 
     public static void parseRouteBuilderEndpoints(JavaClassSource clazz, String baseDir, String fullyQualifiedFileName,
                                                   List<CamelEndpointDetails> endpoints) {
-        parseRouteBuilderEndpoints(clazz, baseDir, fullyQualifiedFileName, endpoints, null);
+        parseRouteBuilderEndpoints(clazz, baseDir, fullyQualifiedFileName, endpoints, null, false);
     }
 
     public static void parseRouteBuilderEndpoints(JavaClassSource clazz, String baseDir, String fullyQualifiedFileName,
-                                                  List<CamelEndpointDetails> endpoints, List<String> unparsable) {
+                                                  List<CamelEndpointDetails> endpoints, List<String> unparsable, boolean includeInlinedRouteBuilders) {
 
         // look for fields which are not used in the route
         for (FieldSource<JavaClassSource> field : clazz.getFields()) {
@@ -105,12 +106,24 @@ public class RouteBuilderParser {
             }
         }
 
-        // look if any of these fields are used in the route only as consumer or producer, as then we can
-        // determine this to ensure when we edit the endpoint we should only the options accordingly
+        // find all the configure methods
+        List<MethodSource<JavaClassSource>> methods = new ArrayList<>();
         MethodSource<JavaClassSource> method = CamelJavaParserHelper.findConfigureMethod(clazz);
         if (method != null) {
+            methods.add(method);
+        }
+        if (includeInlinedRouteBuilders) {
+            List<MethodSource<JavaClassSource>> inlinedMethods = CamelJavaParserHelper.findInlinedConfigureMethods(clazz);
+            if (!inlinedMethods.isEmpty()) {
+                methods.addAll(inlinedMethods);
+            }
+        }
+
+        // look if any of these fields are used in the route only as consumer or producer, as then we can
+        // determine this to ensure when we edit the endpoint we should only the options accordingly
+        for (MethodSource<JavaClassSource> configureMethod : methods) {
             // consumers only
-            List<ParserResult> uris = CamelJavaParserHelper.parseCamelConsumerUris(method, true, true);
+            List<ParserResult> uris = CamelJavaParserHelper.parseCamelConsumerUris(configureMethod, true, true);
             for (ParserResult result : uris) {
                 if (!result.isParsed() && unparsable != null) {
                     unparsable.add(result.getElement());
@@ -128,7 +141,7 @@ public class RouteBuilderParser {
                         detail = new CamelEndpointDetails();
                         detail.setFileName(fileName);
                         detail.setClassName(clazz.getQualifiedName());
-                        detail.setMethodName("configure");
+                        detail.setMethodName(configureMethod.getName());
                         detail.setEndpointInstance(null);
                         detail.setEndpointUri(result.getElement());
                         int line = findLineNumber(fullyQualifiedFileName, result.getPosition());
@@ -143,7 +156,7 @@ public class RouteBuilderParser {
                 }
             }
             // producer only
-            uris = CamelJavaParserHelper.parseCamelProducerUris(method, true, true);
+            uris = CamelJavaParserHelper.parseCamelProducerUris(configureMethod, true, true);
             for (ParserResult result : uris) {
                 if (!result.isParsed() && unparsable != null) {
                     unparsable.add(result.getElement());
@@ -169,7 +182,7 @@ public class RouteBuilderParser {
                     detail = new CamelEndpointDetails();
                     detail.setFileName(fileName);
                     detail.setClassName(clazz.getQualifiedName());
-                    detail.setMethodName("configure");
+                    detail.setMethodName(configureMethod.getName());
                     detail.setEndpointInstance(null);
                     detail.setEndpointUri(result.getElement());
                     int line = findLineNumber(fullyQualifiedFileName, result.getPosition());
