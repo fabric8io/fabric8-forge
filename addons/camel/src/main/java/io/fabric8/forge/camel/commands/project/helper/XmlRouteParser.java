@@ -35,7 +35,12 @@ public class XmlRouteParser {
 
         // find all the endpoints (currently only <endpoint> and within <route>)
         // try parse it as dom
-        Document dom = XmlLineNumberParser.parseXml(xml);
+        Document dom = null;
+        try {
+            dom = XmlLineNumberParser.parseXml(xml);
+        } catch (Exception e) {
+            // ignore as the xml file may not be valid at this point
+        }
         if (dom != null) {
             List<Node> nodes = CamelXmlHelper.findAllEndpoints(dom);
             for (Node node : nodes) {
@@ -80,7 +85,12 @@ public class XmlRouteParser {
 
         // find all the simple expressions
         // try parse it as dom
-        Document dom = XmlLineNumberParser.parseXml(xml);
+        Document dom = null;
+        try {
+            dom = XmlLineNumberParser.parseXml(xml);
+        } catch (Exception e) {
+            // ignore as the xml file may not be valid at this point
+        }
         if (dom != null) {
             List<Node> nodes = CamelXmlHelper.findAllSimpleExpressions(dom);
             for (Node node : nodes) {
