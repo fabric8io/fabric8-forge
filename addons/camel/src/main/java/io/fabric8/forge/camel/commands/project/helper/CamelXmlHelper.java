@@ -29,6 +29,7 @@ import org.apache.camel.model.FromDefinition;
 import org.apache.camel.model.OptionalIdentifiedDefinition;
 import org.apache.camel.model.ProcessorDefinition;
 import org.apache.camel.model.RouteDefinition;
+import org.apache.camel.model.ToDefinition;
 import org.apache.camel.spring.CamelContextFactoryBean;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.ui.context.UIContext;
@@ -301,6 +302,14 @@ public final class CamelXmlHelper {
         owner.addChild(node);
         node.defaultKey(owner, nodeCounts);
 
+        if (definition instanceof FromDefinition) {
+            FromDefinition endpointDef = (FromDefinition) definition;
+            node.setProperty("uri", endpointDef.getUri());
+        }
+        if (definition instanceof ToDefinition) {
+            ToDefinition endpointDef = (ToDefinition) definition;
+            node.setProperty("uri", endpointDef.getUri());
+        }
         if (definition instanceof ProcessorDefinition) {
             ProcessorDefinition processorDefinition = (ProcessorDefinition) definition;
             addOutputs(node, processorDefinition.getOutputs());

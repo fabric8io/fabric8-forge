@@ -19,12 +19,16 @@ package io.fabric8.forge.camel.commands.project.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  */
 public class NodeDto extends NodeDtoSupport {
     private List<NodeDto> children = new ArrayList<>();
+
+    private Map<String,String> properties;
 
     public NodeDto() {
     }
@@ -53,4 +57,26 @@ public class NodeDto extends NodeDtoSupport {
         this.children = children;
     }
 
+
+    public String getProperty(String name) {
+        if (properties != null) {
+            return properties.get(name);
+        }
+        return null;
+    }
+
+    public void setProperty(String name, String value) {
+        if (properties == null) {
+            properties = new HashMap<>();
+        }
+        properties.put(name, value);
+    }
+
+    public Map<String, String> getProperties() {
+        return properties;
+    }
+
+    public void setProperties(Map<String, String> properties) {
+        this.properties = properties;
+    }
 }

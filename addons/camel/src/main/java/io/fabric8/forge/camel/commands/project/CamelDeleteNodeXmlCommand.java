@@ -16,12 +16,8 @@
 package io.fabric8.forge.camel.commands.project;
 
 import io.fabric8.forge.addon.utils.XmlLineNumberParser;
-import io.fabric8.forge.camel.commands.project.completer.XmlFileCompleter;
-import io.fabric8.forge.camel.commands.project.converter.NodeDtoConverter;
-import io.fabric8.forge.camel.commands.project.converter.NodeDtoLabelConverter;
 import io.fabric8.forge.camel.commands.project.dto.ContextDto;
 import io.fabric8.forge.camel.commands.project.dto.NodeDto;
-import io.fabric8.forge.camel.commands.project.dto.NodeDtos;
 import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
 import io.fabric8.forge.camel.commands.project.helper.CamelXmlHelper;
 import io.fabric8.utils.DomHelper;
@@ -41,11 +37,6 @@ import org.w3c.dom.Node;
 
 import javax.inject.Inject;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-
-import static io.fabric8.forge.camel.commands.project.helper.CollectionHelper.first;
 
 public class CamelDeleteNodeXmlCommand extends AbstractCamelProjectCommand {
     @Inject
@@ -73,33 +64,11 @@ public class CamelDeleteNodeXmlCommand extends AbstractCamelProjectCommand {
 
     @Override
     public void initializeUI(UIBuilder builder) throws Exception {
-        final UIContext context = builder.getUIContext();
-        final Project project = getSelectedProject(context);
+        UIContext context = builder.getUIContext();
+        Project project = getSelectedProject(context);
 
-        XmlFileCompleter xmlFileCompleter = createXmlFileCompleter(project);
-        Set<String> files = xmlFileCompleter.getFiles();
-
-        // use value choices instead of completer as that works better in web console
-        final String first = first(files);
-        xml.setValueChoices(files);
-        if (files.size() == 1) {
-            // lets default the value if there's only one choice
-            xml.setDefaultValue(first);
-        }
-
-        node.setValueConverter(new NodeDtoConverter(project, context, xml));
-        node.setItemLabelConverter(new NodeDtoLabelConverter());
-        node.setValueChoices(new Callable<Iterable<NodeDto>>() {
-            @Override
-            public Iterable<NodeDto> call() throws Exception {
-                String xmlResourceName = xml.getValue();
-                if (Strings.isNullOrBlank(xmlResourceName)) {
-                    xmlResourceName = first;
-                }
-                List<ContextDto> camelContexts = CamelXmlHelper.loadCamelContext(context, project, xmlResourceName);
-                return NodeDtos.toNodeList(camelContexts);
-            }
-        });
+        String first = configureXml(project, xml);
+        configureNode(context, project, first, xml, node);
         builder.add(xml).add(node);
     }
 

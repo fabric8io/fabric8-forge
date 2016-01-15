@@ -97,6 +97,10 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
         this.total = total;
     }
 
+    protected static void appendText(Node element, String text) {
+        element.appendChild(element.getOwnerDocument().createTextNode(text));
+    }
+
     public String getGroup() {
         return group;
     }

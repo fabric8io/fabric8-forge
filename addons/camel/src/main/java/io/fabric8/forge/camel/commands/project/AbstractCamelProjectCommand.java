@@ -16,14 +16,27 @@
 package io.fabric8.forge.camel.commands.project;
 
 import java.io.PrintStream;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import javax.inject.Inject;
 
 import io.fabric8.forge.addon.utils.CamelProjectHelper;
+import io.fabric8.forge.addon.utils.XmlLineNumberParser;
 import io.fabric8.forge.camel.commands.project.completer.RouteBuilderEndpointsCompleter;
 import io.fabric8.forge.camel.commands.project.completer.XmlEndpointsCompleter;
 import io.fabric8.forge.camel.commands.project.completer.XmlFileCompleter;
+import io.fabric8.forge.camel.commands.project.converter.NodeDtoConverter;
+import io.fabric8.forge.camel.commands.project.converter.NodeDtoLabelConverter;
+import io.fabric8.forge.camel.commands.project.dto.ComponentDto;
+import io.fabric8.forge.camel.commands.project.dto.ContextDto;
+import io.fabric8.forge.camel.commands.project.dto.NodeDto;
+import io.fabric8.forge.camel.commands.project.dto.NodeDtos;
+import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
+import io.fabric8.forge.camel.commands.project.helper.CamelXmlHelper;
+import io.fabric8.utils.Strings;
 import org.apache.camel.catalog.CamelCatalog;
+import org.jboss.forge.addon.convert.Converter;
 import org.jboss.forge.addon.convert.ConverterFactory;
 import org.jboss.forge.addon.dependencies.Coordinate;
 import org.jboss.forge.addon.dependencies.Dependency;
@@ -38,9 +51,18 @@ import org.jboss.forge.addon.projects.ui.AbstractProjectCommand;
 import org.jboss.forge.addon.resource.FileResource;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
+import org.jboss.forge.addon.ui.input.UISelectOne;
+import org.jboss.forge.addon.ui.input.ValueChangeListener;
+import org.jboss.forge.addon.ui.input.events.ValueChangeEvent;
 import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
 import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+
+import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.createComponentDto;
+import static io.fabric8.forge.camel.commands.project.helper.CollectionHelper.first;
 
 public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand {
 
@@ -54,6 +76,22 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
 
     @Inject
     private CamelCatalog camelCatalog;
+
+    protected static void configureNode(final UIContext context, final Project project, final String first, final UISelectOne<String> xml, UISelectOne<NodeDto> node) {
+        node.setValueConverter(new NodeDtoConverter(project, context, xml));
+        node.setItemLabelConverter(new NodeDtoLabelConverter());
+        node.setValueChoices(new Callable<Iterable<NodeDto>>() {
+            @Override
+            public Iterable<NodeDto> call() throws Exception {
+                String xmlResourceName = xml.getValue();
+                if (Strings.isNullOrBlank(xmlResourceName)) {
+                    xmlResourceName = first;
+                }
+                List<ContextDto> camelContexts = CamelXmlHelper.loadCamelContext(context, project, xmlResourceName);
+                return NodeDtos.toNodeList(camelContexts);
+            }
+        });
+    }
 
     @Override
     protected boolean isProjectRequired() {
@@ -180,5 +218,62 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
             file = webResourcesFacet != null ? webResourcesFacet.getWebResource(xmlResourceName) : null;
         }
         return file;
+    }
+
+    protected String configureXml(Project project, UISelectOne<String> xml) {
+        XmlFileCompleter xmlFileCompleter = createXmlFileCompleter(project);
+        Set<String> files = xmlFileCompleter.getFiles();
+
+        // use value choices instead of completer as that works better in web console
+        final String first = first(files);
+        xml.setValueChoices(files);
+        if (files.size() == 1) {
+            // lets default the value if there's only one choice
+            xml.setDefaultValue(first);
+        }
+        return first;
+    }
+
+    protected void configureComponentName(Project project, final UISelectOne<ComponentDto> componentName) {
+        componentName.setValueChoices(CamelCommandsHelper.createComponentDtoValues(project, getCamelCatalog(), null, false));
+        // include converter from string->dto
+        componentName.setValueConverter(new Converter<String, ComponentDto>() {
+            @Override
+            public ComponentDto convert(String text) {
+                return createComponentDto(getCamelCatalog(), text);
+            }
+        });
+        componentName.setValueConverter(new Converter<String, ComponentDto>() {
+            @Override
+            public ComponentDto convert(String name) {
+                return createComponentDto(getCamelCatalog(), name);
+            }
+        });
+        // show note about the chosen component
+        componentName.addValueChangeListener(new ValueChangeListener() {
+            @Override
+            public void valueChanged(ValueChangeEvent event) {
+                ComponentDto component = (ComponentDto) event.getNewValue();
+                if (component != null) {
+                    String description = component.getDescription();
+                    componentName.setNote(description != null ? description : "");
+                } else {
+                    componentName.setNote("");
+                }
+            }
+        });
+    }
+
+    protected Element getSelectedElementNode(Project project, String xmlResourceName, String key) throws Exception {
+        FileResource file = getXmlResourceFile(project, xmlResourceName);
+        Document root = XmlLineNumberParser.parseXml(file.getResourceInputStream());
+        Element selectedElement = null;
+        if (root != null) {
+            Node selectedNode = CamelXmlHelper.findCamelNodeInDocument(root, key);
+            if (selectedNode instanceof Element) {
+                selectedElement = (Element) selectedNode;
+            }
+        }
+        return selectedElement;
     }
 }

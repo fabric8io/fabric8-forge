@@ -15,11 +15,10 @@
  */
 package io.fabric8.forge.camel.commands.project;
 
-import io.fabric8.forge.camel.commands.project.completer.XmlFileCompleter;
 import io.fabric8.forge.camel.commands.project.dto.ComponentDto;
+import io.fabric8.forge.camel.commands.project.dto.NodeDto;
 import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
 import io.fabric8.forge.camel.commands.project.model.EndpointOptionByGroup;
-import org.jboss.forge.addon.convert.Converter;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
 import org.jboss.forge.addon.ui.context.UIBuilder;
@@ -30,8 +29,6 @@ import org.jboss.forge.addon.ui.input.InputComponent;
 import org.jboss.forge.addon.ui.input.InputComponentFactory;
 import org.jboss.forge.addon.ui.input.UIInput;
 import org.jboss.forge.addon.ui.input.UISelectOne;
-import org.jboss.forge.addon.ui.input.ValueChangeListener;
-import org.jboss.forge.addon.ui.input.events.ValueChangeEvent;
 import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
 import org.jboss.forge.addon.ui.metadata.WithAttributes;
 import org.jboss.forge.addon.ui.result.NavigationResult;
@@ -46,11 +43,8 @@ import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.createComponentDto;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.createUIInputsForCamelComponent;
-import static io.fabric8.forge.camel.commands.project.helper.CollectionHelper.first;
 
 public class CamelAddRouteXmlCommand extends AbstractCamelProjectCommand implements UIWizard {
     @Inject
@@ -58,16 +52,16 @@ public class CamelAddRouteXmlCommand extends AbstractCamelProjectCommand impleme
     private UISelectOne<String> xml;
 
     @Inject
-    @WithAttributes(label = "Route ID", required = false, description = "The ID of the route to add")
+    @WithAttributes(label = "Node", required = true, description = "Node to delete")
+    private UISelectOne<NodeDto> node;
+
+    @Inject
+    @WithAttributes(label = "Name", required = false, description = "The name of the new route")
     private UIInput<String> id;
 
     @Inject
-    @WithAttributes(label = "Route Description", required = false, description = "The description of the route to add")
+    @WithAttributes(label = "Description", required = false, description = "The description of the new route")
     private UIInput<String> description;
-
-    @Inject
-    @WithAttributes(label = "Filter", required = false, description = "To filter components")
-    private UISelectOne<String> componentNameFilter;
 
     @Inject
     @WithAttributes(label = "Name", required = true, description = "Name of component to use for the endpoint")
@@ -106,47 +100,10 @@ public class CamelAddRouteXmlCommand extends AbstractCamelProjectCommand impleme
         Project project = getSelectedProject(builder.getUIContext());
 
         // TODO limit the components to consumer endpoints only?
+        configureComponentName(project, componentName);
+        configureXml(project, xml);
 
-        componentNameFilter.setValueChoices(CamelCommandsHelper.createComponentLabelValues(project, getCamelCatalog()));
-        componentNameFilter.setDefaultValue("<all>");
-        componentName.setValueChoices(CamelCommandsHelper.createComponentDtoValues(project, getCamelCatalog(), componentNameFilter, false));
-        // include converter from string->dto
-        componentName.setValueConverter(new Converter<String, ComponentDto>() {
-            @Override
-            public ComponentDto convert(String text) {
-                return createComponentDto(getCamelCatalog(), text);
-            }
-        });
-        componentName.setValueConverter(new Converter<String, ComponentDto>() {
-            @Override
-            public ComponentDto convert(String name) {
-                return createComponentDto(getCamelCatalog(), name);
-            }
-        });
-        // show note about the chosen component
-        componentName.addValueChangeListener(new ValueChangeListener() {
-            @Override
-            public void valueChanged(ValueChangeEvent event) {
-                ComponentDto component = (ComponentDto) event.getNewValue();
-                if (component != null) {
-                    String description = component.getDescription();
-                    componentName.setNote(description != null ? description : "");
-                } else {
-                    componentName.setNote("");
-                }
-            }
-        });
-
-        XmlFileCompleter xmlFileCompleter = createXmlFileCompleter(project);
-        Set<String> files = xmlFileCompleter.getFiles();
-
-        // use value choices instead of completer as that works better in web console
-        xml.setValueChoices(files);
-        if (files.size() == 1) {
-            // lets default the value if there's only one choice
-            xml.setDefaultValue(first(files));
-        }
-        builder.add(xml).add(id).add(description).add(componentNameFilter).add(componentName);
+        builder.add(xml).add(id).add(description).add(componentName);
     }
 
     @Override
@@ -179,7 +136,7 @@ public class CamelAddRouteXmlCommand extends AbstractCamelProjectCommand impleme
             boolean producerOnly = false;
 
             UIContext ui = context.getUIContext();
-            List<EndpointOptionByGroup> groups = createUIInputsForCamelComponent(camelComponentName, null, CamelAddEndpointXmlCommand.MAX_OPTIONS, consumerOnly, producerOnly,
+            List<EndpointOptionByGroup> groups = createUIInputsForCamelComponent(camelComponentName, null, CamelAddEndpointDefinitionXmlCommand.MAX_OPTIONS, consumerOnly, producerOnly,
                     getCamelCatalog(), componentFactory, converterFactory, ui);
 
             // need all inputs in a list as well

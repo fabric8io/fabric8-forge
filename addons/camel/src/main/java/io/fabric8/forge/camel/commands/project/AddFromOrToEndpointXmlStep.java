@@ -17,6 +17,8 @@
 package io.fabric8.forge.camel.commands.project;
 
 import io.fabric8.forge.addon.utils.XmlLineNumberParser;
+import io.fabric8.forge.camel.commands.project.dto.NodeDto;
+import io.fabric8.forge.camel.commands.project.helper.CamelXmlHelper;
 import io.fabric8.utils.DomHelper;
 import io.fabric8.utils.Strings;
 import org.apache.camel.catalog.CamelCatalog;
@@ -33,80 +35,71 @@ import org.jboss.forge.addon.ui.util.Metadata;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 import java.util.List;
 
 /**
- * A wizard step to add a from endpoint for a newly created route
+ * A wizard step to add a from or to endpoint to a node
  */
-public class AddRouteFromEndpointXmlStep extends ConfigureEndpointPropertiesStep {
-    private final String routeId;
-    private final String routeDescription;
+public class AddFromOrToEndpointXmlStep extends ConfigureEndpointPropertiesStep {
+    private final String id;
+    private final String description;
+    private final NodeDto parentNode;
+    private final boolean isFrom;
 
-    public AddRouteFromEndpointXmlStep(ProjectFactory projectFactory, DependencyInstaller dependencyInstaller, CamelCatalog camelCatalog, String componentName, String group, List<InputComponent> allInputs, List<InputComponent> inputs, boolean last, int index, int total, String routeId, String routeDescription) {
+    public AddFromOrToEndpointXmlStep(ProjectFactory projectFactory, DependencyInstaller dependencyInstaller, CamelCatalog camelCatalog, String componentName, String group, List<InputComponent> allInputs, List<InputComponent> inputs, boolean last, int index, int total, String id, String description, NodeDto parentNode, boolean isFrom) {
         super(projectFactory, dependencyInstaller, camelCatalog, componentName, group, allInputs, inputs, last, index, total);
-        this.routeId = routeId;
-        this.routeDescription = routeDescription;
+        this.id = id;
+        this.description = description;
+        this.parentNode = parentNode;
+        this.isFrom = isFrom;
     }
 
     @Override
     public UICommandMetadata getMetadata(UIContext context) {
         return Metadata.forCommand(ConfigureEndpointPropertiesStep.class).name(
-                "Camel: Add Route").category(Categories.create(CATEGORY))
+                "Camel: Add Endpoint").category(Categories.create(CATEGORY))
                 .description(String.format("Configure %s options (%s of %s)", getGroup(), getIndex(), getTotal()));
     }
 
     @Override
     protected Result addOrEditEndpointXml(FileResource file, String uri, String endpointUrl, String endpointInstanceName, String xml, String lineNumber) throws Exception {
 
+        String key = parentNode.getKey();
+        if (Strings.isNullOrBlank(key)) {
+            return Results.fail("Parent node has no key! " + parentNode + " in file " + file.getName());
+        }
         Document root = XmlLineNumberParser.parseXml(file.getResourceInputStream());
         if (root != null) {
-            NodeList camels = root.getElementsByTagName("camelContext");
-            // TODO: what about 2+ camel's ?
-            if (camels != null && camels.getLength() == 1) {
-                Node camel = camels.item(0);
-                Node camelContext = null;
-
-                for (int i = 0; i < camel.getChildNodes().getLength(); i++) {
-                    if ("camelContext".equals(camel.getNodeName())) {
-                        camelContext = camel;
-                    }
-
-                    Node child = camel.getChildNodes().item(i);
-                    if ("camelContext".equals(child.getNodeName())) {
-                        camelContext = child;
-                    }
+            Node selectedNode = CamelXmlHelper.findCamelNodeInDocument(root, key);
+            if (selectedNode != null) {
+                String indent0 = "\n";
+                String[] paths = key.split("/");
+                for (String path : paths) {
+                    indent0 += "  ";
                 }
-
-                if (camelContext == null) {
-                    return Results.fail("Cannot find <camelContext> in XML file " + xml);
+                String indent1 = indent0 + "  ";
+                String indent2 = indent1 + "  ";
+                appendText(selectedNode, indent1);
+                Element endpointElement = DomHelper.addChildElement(selectedNode, isFrom ? "from" : "to", Strings.isNotBlank(description) ? indent2 : "");
+                if (Strings.isNotBlank(id)) {
+                    endpointElement.setAttribute("id", id);
                 }
-
-                String indent0 = "\n  ";
-                String indent1 = "\n    ";
-                String indent2 = "\n      ";
-                ConfigureEndpointPropertiesStep.appendText(camelContext, indent1);
-                Element route = DomHelper.addChildElement(camelContext, "route", indent2);
-                if (Strings.isNotBlank(routeId)) {
-                    route.setAttribute("id", routeId);
+                endpointElement.setAttribute("uri", uri);
+                if (Strings.isNotBlank(description)) {
+                    DomHelper.addChildElement(endpointElement, "description", description);
+                    appendText(endpointElement, indent1);
                 }
-                if (Strings.isNotBlank(routeDescription)) {
-                    DomHelper.addChildElement(route, "description", routeDescription);
-                    ConfigureEndpointPropertiesStep.appendText(route, indent2);
-                }
+                appendText(selectedNode, indent0);
 
-                Element from = DomHelper.addChildElement(route, "from");
-                from.setAttribute("uri", uri);
-                ConfigureEndpointPropertiesStep.appendText(route, indent1);
-
-                ConfigureEndpointPropertiesStep.appendText(camelContext, indent0);
                 String content = DomHelper.toXml(root);
                 file.setContents(content);
+                return Results.success("Node deleted");
             }
-            return Results.success("Added route");
+            return Results.fail("Cannot find Camel node in XML file " + key);
         } else {
-            return Results.fail("Could not load camel XML");
+            return Results.fail("Could not load camel XML " + file.getName());
         }
     }
+
 }

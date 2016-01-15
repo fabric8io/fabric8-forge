@@ -76,7 +76,7 @@ public final class CamelCommandsHelper {
         return new Callable<Iterable<ComponentDto>>() {
             @Override
             public Iterable<ComponentDto> call() throws Exception {
-                String label = componentCategoryFilter.getValue();
+                String label = componentCategoryFilter != null ? componentCategoryFilter.getValue() : null;
                 return new CamelComponentsCompleter(project, camelCatalog, null, excludeComponentsOnClasspath, false).getValueChoices(label);
             }
         };

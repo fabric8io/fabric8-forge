@@ -47,7 +47,7 @@ import org.jboss.forge.addon.ui.wizard.UIWizard;
 
 import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.createUIInputsForCamelComponent;
 
-public class CamelEditEndpointXmlCommand extends AbstractCamelProjectCommand implements UIWizard {
+public class CamelEditEndpointDefinitionXmlCommand extends AbstractCamelProjectCommand implements UIWizard {
 
     private static final int MAX_OPTIONS = 20;
 
@@ -65,9 +65,9 @@ public class CamelEditEndpointXmlCommand extends AbstractCamelProjectCommand imp
 
     @Override
     public UICommandMetadata getMetadata(UIContext context) {
-        return Metadata.forCommand(CamelEditEndpointXmlCommand.class).name(
-                "Camel: Edit Endpoint XML").category(Categories.create(CATEGORY))
-                .description("Edit Camel endpoint from an existing XML file");
+        return Metadata.forCommand(CamelEditEndpointDefinitionXmlCommand.class).name(
+                "Camel: Edit Endpoint Definition XML").category(Categories.create(CATEGORY))
+                .description("Edit Camel endpoint definition in an existing XML file");
     }
 
     @Override
