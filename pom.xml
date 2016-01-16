@@ -74,7 +74,7 @@
     <maven.compiler.target>1.7</maven.compiler.target>
 
     <fabric8.version>2.2.88</fabric8.version>
-    <fabric8.archetypes.release.version>2.2.92</fabric8.archetypes.release.version>
+    <fabric8.archetypes.release.version>2.2.93</fabric8.archetypes.release.version>
     <furnace.version>2.22.10.Final</furnace.version>
     <!--
     <jboss.forge.version>2.20.1.Final</jboss.forge.version>
