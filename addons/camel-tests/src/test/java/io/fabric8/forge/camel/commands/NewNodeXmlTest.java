@@ -16,6 +16,7 @@
 package io.fabric8.forge.camel.commands;
 
 import com.google.common.base.Objects;
+import io.fabric8.forge.camel.commands.project.CamelAddEndpointXmlCommand;
 import io.fabric8.forge.camel.commands.project.CamelAddRouteXmlCommand;
 import io.fabric8.forge.camel.commands.project.CamelDeleteNodeXmlCommand;
 import io.fabric8.forge.camel.commands.project.CamelGetRoutesXmlCommand;
@@ -116,8 +117,9 @@ public class NewNodeXmlTest {
         testAddRoute(project);
 
         testDeleteRoute(project);
-    }
 
+        testAddEndpoint(project);
+    }
 
     protected void testAddRoute(Project project) throws Exception {
         WizardCommandController command = testHarness.createWizardController(CamelAddRouteXmlCommand.class, project.getRoot());
@@ -132,18 +134,21 @@ public class NewNodeXmlTest {
         command.initialize();
         command.setValueFor("name", "cheese");
 
+        assertExecutes(command);
+
+        List<ContextDto> contexts = getRoutesXml(project);
+        assertFalse("Should have loaded a camelContext", contexts.isEmpty());
+
+        assertNodeWithKey(contexts, NEW_ROUTE_KEY);
+    }
+
+    protected void assertExecutes(WizardCommandController command) throws Exception {
         Result result = command.execute();
         assertFalse("Should not fail", result instanceof Failed);
         System.out.println();
         String message = getResultMessage(result);
         System.out.println("Add route result: " + message);
         System.out.println();
-
-
-        List<ContextDto> contexts = getRoutesXml(project);
-        assertFalse("Should have loaded a camelContext", contexts.isEmpty());
-
-        assertNodeWithKey(contexts, NEW_ROUTE_KEY);
     }
 
     protected void testDeleteRoute(Project project) throws Exception {
@@ -152,6 +157,58 @@ public class NewNodeXmlTest {
         command.initialize();
         command.setValueFor("xml", "META-INF/spring/camel-context.xml");
 
+        setNodeValue(key, command);
+
+        assertValidAndExecutes(command);
+
+        List<ContextDto> contexts = getRoutesXml(project);
+        assertFalse("Should have loaded a camelContext", contexts.isEmpty());
+
+        assertNoNodeWithKey(contexts, key);
+        assertNodeWithKey(contexts, NEW_ROUTE_KEY);
+    }
+
+    protected void testAddEndpoint(Project project) throws Exception {
+        String key = NEW_ROUTE_KEY;
+        WizardCommandController command = testHarness.createWizardController(CamelAddEndpointXmlCommand.class, project.getRoot());
+        command.initialize();
+        command.setValueFor("xml", "META-INF/spring/camel-context.xml");
+
+        setNodeValue(key, command);
+
+        String id = "myNewEndpoint";
+        command.setValueFor("id", id);
+        command.setValueFor("description", "This is a description");
+        command.setValueFor("componentName", "ref");
+
+        command = command.next();
+
+        command.initialize();
+        command.setValueFor("name", "someRefName");
+
+        assertExecutes(command);
+
+        List<ContextDto> contexts = getRoutesXml(project);
+        assertFalse("Should have loaded a camelContext", contexts.isEmpty());
+
+        String expectedKey = NEW_ROUTE_KEY + "/" + id;
+        assertNodeWithKey(contexts, expectedKey);
+
+    }
+
+    protected static void assertValidAndExecutes(CommandController command) throws Exception {
+        List<UIMessage> validate = command.validate();
+        for (UIMessage uiMessage : validate) {
+            System.out.println("Invalid value of input: " + uiMessage.getSource().getName() + " message: " + uiMessage.getDescription());
+        }
+        Result result = command.execute();
+        String message = result.getMessage();
+        assertFalse("Should not fail: " + message, result instanceof Failed);
+
+        System.out.println(message);
+    }
+
+    protected void setNodeValue(String key, CommandController command) {
         Object value = key;
         SelectComponent nodeInput = (SelectComponent) command.getInput("node");
         Iterable<NodeDto> valueChoices = nodeInput.getValueChoices();
@@ -170,22 +227,6 @@ public class NewNodeXmlTest {
             command.setValueFor("node", key);
             System.out.println("Set value of node " + value + " currently has " + nodeInput.getValue());
         }
-
-        List<UIMessage> validate = command.validate();
-        for (UIMessage uiMessage : validate) {
-            System.out.println("Invalid value of input: " + uiMessage.getSource().getName() + " message: " + uiMessage.getDescription());
-        }
-        Result result = command.execute();
-        String message = result.getMessage();
-        assertFalse("Should not fail: " + message, result instanceof Failed);
-
-        System.out.println(message);
-
-        List<ContextDto> contexts = getRoutesXml(project);
-        assertFalse("Should have loaded a camelContext", contexts.isEmpty());
-
-        assertNoNodeWithKey(contexts, key);
-        assertNodeWithKey(contexts, NEW_ROUTE_KEY);
     }
 
 
