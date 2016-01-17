@@ -27,8 +27,8 @@
     <version>2.2.113-SNAPSHOT</version>
   </parent>
 
-  <artifactId>camel-maven-plugin</artifactId>
-  <name>Fabric8 :: Forge Addons :: Camel Maven Plugin</name>
+  <artifactId>fabric8-camel-maven-plugin</artifactId>
+  <name>Fabric8 :: Camel Maven Plugin</name>
   <packaging>maven-plugin</packaging>
 
   <!-- TODO: need Camel 2.16.2 -->

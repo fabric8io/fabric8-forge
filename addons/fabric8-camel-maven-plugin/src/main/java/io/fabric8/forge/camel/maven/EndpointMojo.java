@@ -58,57 +58,57 @@ public class EndpointMojo extends AbstractMojo {
     /**
      * Whether to fail if invalid Camel endpoints was found. By default the plugin logs the errors at WARN level
      */
-    @Parameter(property = "camel.failOnError", defaultValue = "false", readonly = true, required = false)
+    @Parameter(property = "failOnError", defaultValue = "false", readonly = true, required = false)
     private boolean failOnError;
 
     /**
      * Whether to log endpoint URIs which was un-parsable and therefore not possible to validate
      */
-    @Parameter(property = "camel.logUnparseable", defaultValue = "false", readonly = true, required = false)
+    @Parameter(property = "logUnparseable", defaultValue = "false", readonly = true, required = false)
     private boolean logUnparseable;
 
     /**
      * Whether to include Java files to be validated for invalid Camel endpoints
      */
-    @Parameter(property = "camel.includeJava", defaultValue = "true", readonly = true, required = false)
+    @Parameter(property = "includeJava", defaultValue = "true", readonly = true, required = false)
     private boolean includeJava;
 
     /**
      * Whether to include XML files to be validated for invalid Camel endpoints
      */
-    @Parameter(property = "camel.includeXml", defaultValue = "true", readonly = true, required = false)
+    @Parameter(property = "includeXml", defaultValue = "true", readonly = true, required = false)
     private boolean includeXml;
 
     /**
      * Whether to include test source code
      */
-    @Parameter(property = "camel.includeTest", defaultValue = "false", readonly = true, required = false)
+    @Parameter(property = "includeTest", defaultValue = "false", readonly = true, required = false)
     private boolean includeTest;
 
     /**
      * To filter the names of java and xml files to only include files matching any of the given list of patterns (wildcard and regular expression).
      * Multiple values can be separated by comma.
      */
-    @Parameter(property = "camel.includes", readonly = true, required = false)
+    @Parameter(property = "includes", readonly = true, required = false)
     private String includes;
 
     /**
      * To filter the names of java and xml files to exclude files matching any of the given list of patterns (wildcard and regular expression).
      * Multiple values can be separated by comma.
      */
-    @Parameter(property = "camel.excludes", readonly = true, required = false)
+    @Parameter(property = "excludes", readonly = true, required = false)
     private String excludes;
 
     /**
      * Whether to ignore unknown components
      */
-    @Parameter(property = "camel.ignoreUnknownComponent", defaultValue = "true", readonly = true, required = false)
+    @Parameter(property = "ignoreUnknownComponent", defaultValue = "true", readonly = true, required = false)
     private boolean ignoreUnknownComponent;
 
     /**
      * Whether to ignore incapable of parsing the endpoint uri
      */
-    @Parameter(property = "camel.ignoreIncapable", defaultValue = "true", readonly = true, required = false)
+    @Parameter(property = "ignoreIncapable", defaultValue = "true", readonly = true, required = false)
     private boolean ignoreIncapable;
 
     /**
@@ -116,7 +116,7 @@ public class EndpointMojo extends AbstractMojo {
      * but would fail on properties that are not part of the component but in the uri because of using lenient properties.
      * For example using the HTTP components to provide query parameters in the endpoint uri.
      */
-    @Parameter(property = "camel.ignoreLenientProperties", defaultValue = "true", readonly = true, required = false)
+    @Parameter(property = "ignoreLenientProperties", defaultValue = "true", readonly = true, required = false)
     private boolean ignoreLenientProperties;
 
     @Override
