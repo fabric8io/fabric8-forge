@@ -37,6 +37,7 @@ import org.jboss.forge.addon.dependencies.Dependency;
 import org.jboss.forge.addon.dependencies.builder.DependencyBuilder;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
+import org.jboss.forge.addon.shell.ui.ShellContext;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.input.InputComponent;
 import org.jboss.forge.addon.ui.input.InputComponentFactory;
@@ -356,6 +357,15 @@ public final class CamelCommandsHelper {
         Map<String, String> currentValues = uri != null ? camelCatalog.endpointProperties(uri) : Collections.EMPTY_MAP;
 
         if (data != null) {
+
+            // whether to prompt for all fields or not in the interactive mode
+            boolean promptInInteractiveMode = false;
+            if (ui instanceof ShellContext) {
+                // we want to prompt if the command was executed without any arguments
+                boolean params = ((ShellContext) ui).getCommandLine().hasParameters();
+                promptInInteractiveMode = !params;
+            }
+
             List<InputComponent> inputs = new ArrayList<>();
             EndpointOptionByGroup current = new EndpointOptionByGroup();
             current.setGroup(null);
@@ -429,7 +439,7 @@ public final class CamelCommandsHelper {
                                 }
                             }
 
-                            InputComponent input = createUIInput(componentFactory, converterFactory, name, inputClazz, required, currentValue, defaultValue, enums, description);
+                            InputComponent input = createUIInput(componentFactory, converterFactory, name, inputClazz, required, currentValue, defaultValue, enums, description, promptInInteractiveMode);
                             if (input != null) {
                                 inputs.add(input);
 

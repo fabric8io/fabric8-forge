@@ -37,7 +37,8 @@ public final class UIHelper {
      */
     @SuppressWarnings("unchecked")
     public static InputComponent createUIInput(InputComponentFactory factory, ConverterFactory converterFactory, String name, Class inputClazz,
-                                               String required, String currentValue, String defaultValue, String enums, String description) {
+                                               String required, String currentValue, String defaultValue, String enums, String description,
+                                               boolean promptInInteractiveMode) {
 
         // is the current value a property placeholder, then we need to use a regular text based UI
         if (currentValue != null && currentValue.startsWith("{{") && currentValue.endsWith("}}")) {
@@ -80,7 +81,7 @@ public final class UIHelper {
                 ui.setValue(value);
             }
 
-            if ("true".equals(required)) {
+            if ("true".equals(required) || promptInInteractiveMode) {
                 // This will always prompt, regardless if there is a value set
                 Iterator it = ui.getFacets().iterator();
                 while (it.hasNext()) {
@@ -111,7 +112,7 @@ public final class UIHelper {
                 ui.setValue(value);
             }
 
-            if ("true".equals(required)) {
+            if ("true".equals(required) || promptInInteractiveMode) {
                 // This will always prompt, regardless if there is a value set
                 Iterator it = ui.getFacets().iterator();
                 while (it.hasNext()) {

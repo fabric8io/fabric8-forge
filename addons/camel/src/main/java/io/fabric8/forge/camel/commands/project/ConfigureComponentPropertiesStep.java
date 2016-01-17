@@ -33,6 +33,7 @@ import org.jboss.forge.addon.parser.java.facets.JavaSourceFacet;
 import org.jboss.forge.addon.parser.java.resources.JavaResource;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
+import org.jboss.forge.addon.shell.ui.ShellContext;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
@@ -107,7 +108,15 @@ public class ConfigureComponentPropertiesStep extends AbstractCamelProjectComman
                     Class<Object> inputClazz = loadValidInputTypes(javaType, type);
                     if (inputClazz != null) {
                         if (namesAdded.add(name)) {
-                            InputComponent input = createUIInput(componentFactory, getConverterFactory(), name, inputClazz, required, currentValue, defaultValue, enums, description);
+
+                            boolean promptInInteractiveMode = false;
+                            if (builder.getUIContext() instanceof ShellContext) {
+                                // we want to prompt if the command was executed without any arguments
+                                boolean params = ((ShellContext) builder.getUIContext()).getCommandLine().hasParameters();
+                                promptInInteractiveMode = !params;
+                            }
+
+                            InputComponent input = createUIInput(componentFactory, getConverterFactory(), name, inputClazz, required, currentValue, defaultValue, enums, description, promptInInteractiveMode);
                             if (input != null) {
                                 builder.add(input);
                                 inputs.add(input);
