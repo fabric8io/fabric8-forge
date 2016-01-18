@@ -72,10 +72,21 @@
       <groupId>org.jboss.forge.addon</groupId>
       <artifactId>core</artifactId>
       <classifier>forge-addon</classifier>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>io.fabric8</groupId>
       <artifactId>kubernetes-api</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>jul-to-slf4j</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
   </dependencies>
 
@@ -127,5 +138,5 @@
       </build>
     </profile>
   </profiles>
-  
+
 </project>
