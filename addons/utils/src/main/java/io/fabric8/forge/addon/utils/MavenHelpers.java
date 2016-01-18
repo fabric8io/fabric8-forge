@@ -246,7 +246,7 @@ public class MavenHelpers {
         if (value != null) {
             Object oldValue = properties.get(name);
             if (!Objects.equal(oldValue, value)) {
-                getLOG().info("Updating pom.xml property: " + name + " to " + value);
+                getLOG().debug("Updating pom.xml property: " + name + " to " + value);
                 properties.put(name, value);
                 return true;
             }

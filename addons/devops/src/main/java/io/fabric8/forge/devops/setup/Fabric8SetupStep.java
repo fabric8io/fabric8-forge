@@ -149,10 +149,7 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
         organization.setDefaultValue("fabric8");
         builder.add(organization);
 
-        LOG.info("Getting the current project");
         final Project project = getSelectedProject(builder.getUIContext());
-
-        LOG.info("Got the current project");
 
         String packaging = getProjectPackaging(project);
         boolean springBoot = hasSpringBootMavenPlugin(project);
@@ -225,7 +222,6 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
             builder.add(main);
         }
 
-
         container.setDefaultValue(new Callable<String>() {
             @Override
             public String call() throws Exception {
@@ -289,7 +285,8 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
 
     @Override
     public Result execute(UIExecutionContext context) throws Exception {
-        LOG.info("starting to setup fabric8 project");
+        LOG.debug("Starting to setup fabric8 project");
+
         Project project = getSelectedProject(context.getUIContext());
         if (project == null) {
             return Results.fail("No pom.xml available so cannot edit the project!");
@@ -297,27 +294,27 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
 
         // setup docker-maven-plugin and fabric8-maven-plugin
         setupDocker(project, organization.getValue(), from.getValue(), main.getValue());
-        LOG.info("docker-maven-plugin now setup");
+        LOG.debug("docker-maven-plugin now setup");
         setupFabricMavenPlugin(project);
-        LOG.info("fabric8-maven-plugin now setup");
+        LOG.debug("fabric8-maven-plugin now setup");
 
         MavenFacet maven = project.getFacet(MavenFacet.class);
         Model pom = maven.getModel();
 
         // import fabric8 bom
-        LOG.info("importing fabric8 bom");
+        LOG.debug("importing fabric8 bom");
         importFabricBom(project, pom);
 
         // make sure we have resources as we need it later
         facetFactory.install(project, ResourcesFacet.class);
 
-        LOG.info("setting up arquillian test");
+        LOG.debug("setting up arquillian test");
         setupArguillianTest(project, pom);
 
-        LOG.info("setting up fabric8 properties");
+        LOG.debug("setting up fabric8 properties");
         setupFabricProperties(project, maven, pom);
 
-        LOG.info("setting up fabric8 maven profiles");
+        LOG.debug("setting up fabric8 maven profiles");
         boolean f8profiles = setupFabricMavenProfiles(project, maven, pom);
 
         String msg = "Added Fabric8 Maven support with base Docker image: " + from.getValue();
@@ -398,7 +395,7 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
         // to save then set the model
         if (updated) {
             maven.setModel(pom);
-            LOG.info("updated pom.xml");
+            LOG.debug("updated pom.xml");
         }
     }
 
@@ -410,7 +407,6 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
         boolean updated = false;
         Profile profile = MavenHelpers.findProfile(pom, "f8-build");
         if (profile == null) {
-            LOG.info("Adding f8-build profile");
             profile = new Profile();
             profile.setId("f8-build");
             Build build = new Build();
@@ -421,7 +417,6 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
         }
         profile = MavenHelpers.findProfile(pom, "f8-deploy");
         if (profile == null) {
-            LOG.info("Adding f8-deploy profile");
             profile = new Profile();
             profile.setId("f8-deploy");
             Properties prop = new Properties();
@@ -436,7 +431,6 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
         }
         profile = MavenHelpers.findProfile(pom, "f8-local-deploy");
         if (profile == null) {
-            LOG.info("Adding f8-local-deploy profile");
             profile = new Profile();
             profile.setId("f8-local-deploy");
             Properties prop = new Properties();
@@ -452,7 +446,7 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
         // to save then set the model
         if (updated) {
             maven.setModel(pom);
-            LOG.info("updated pom.xml");
+            LOG.debug("updated pom.xml");
         }
 
         return true;

@@ -109,29 +109,21 @@ public class DockerSetupHelper {
     protected static void setupDockerConfiguration(ConfigurationBuilder config, Map<String, String> envs, String commandShell,
                                                    boolean springBoot, boolean war, boolean bundle, boolean jar) {
         ConfigurationElement images = MavenHelpers.getOrCreateElement(config, "images");
+        // images/image
         ConfigurationElement image = MavenHelpers.getOrCreateElement(images, "image");
-        ConfigurationElement build = MavenHelpers.getOrCreateElement(image, "build");
-        ConfigurationElement env = MavenHelpers.getOrCreateElement(build, "env");
-        for (Map.Entry<String, String> entry : envs.entrySet()) {
-            ConfigurationElement cfg = ConfigurationElementBuilder.create().setName(entry.getKey()).setText(entry.getValue());
-            env.getChildren().add(cfg);
-        }
-        if (Strings.isNotBlank(commandShell)) {
-            ConfigurationElementBuilder shell = MavenHelpers.getOrCreateElementBuilder(build, "cmd", "shell");
-            if (Strings.isNullOrBlank(shell.getText())) {
-                MavenHelpers.asConfigurationElementBuilder(shell).setText(commandShell);
-            }
-        }
-
-        ConfigurationElementBuilder from = MavenHelpers.getOrCreateElementBuilder(build, "from");
-        if (Strings.isNullOrBlank(from.getText())) {
-            from.setText("${docker.from}");
-        }
+        // images/image/name
         ConfigurationElementBuilder name = MavenHelpers.getOrCreateElementBuilder(image, "name");
         if (Strings.isNullOrBlank(name.getText())) {
             name.setText("${docker.image}");
         }
-
+        // images/image/build
+        ConfigurationElement build = MavenHelpers.getOrCreateElement(image, "build");
+        // images/image/build/from
+        ConfigurationElementBuilder from = MavenHelpers.getOrCreateElementBuilder(build, "from");
+        if (Strings.isNullOrBlank(from.getText())) {
+            from.setText("${docker.from}");
+        }
+        // images/image/build/assembly
         ConfigurationElementBuilder assembly = MavenHelpers.getOrCreateElementBuilder(build, "assembly");
         if (springBoot || jar) {
             if (!assembly.hasChildByName("basedir")) {
@@ -143,6 +135,19 @@ public class DockerSetupHelper {
             ConfigurationElementBuilder descriptorRef = MavenHelpers.getOrCreateElementBuilder(assembly, "descriptorRef");
             if (Strings.isNullOrBlank(descriptorRef.getText())) {
                 descriptorRef.setText("${docker.assemblyDescriptorRef}");
+            }
+        }
+        // images/image/build/env
+        ConfigurationElement env = MavenHelpers.getOrCreateElement(build, "env");
+        for (Map.Entry<String, String> entry : envs.entrySet()) {
+            ConfigurationElement cfg = ConfigurationElementBuilder.create().setName(entry.getKey()).setText(entry.getValue());
+            env.getChildren().add(cfg);
+        }
+        // images/image/build/cmd
+        if (Strings.isNotBlank(commandShell)) {
+            ConfigurationElementBuilder shell = MavenHelpers.getOrCreateElementBuilder(build, "cmd", "shell");
+            if (Strings.isNullOrBlank(shell.getText())) {
+                MavenHelpers.asConfigurationElementBuilder(shell).setText(commandShell);
             }
         }
     }
