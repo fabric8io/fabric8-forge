@@ -813,7 +813,7 @@ public class RepositoryResource {
 
     protected boolean hasGitChanges(Git git) throws GitAPIException {
         Status status = git.status().call();
-        return anySetsNotEmpty(status.getAdded(), status.getChanged(), status.getModified(), status.getRemoved());
+        return anySetsNotEmpty(status.getAdded(), status.getChanged(), status.getModified(), status.getRemoved(), status.getUntracked());
     }
 
     protected boolean anySetsNotEmpty(Set<String>... sets) {
