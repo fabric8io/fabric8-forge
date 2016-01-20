@@ -82,7 +82,7 @@ public class CamelGetComponentsCommand extends AbstractCamelProjectCommand {
     public Result execute(UIExecutionContext context) throws Exception {
         Project project = getSelectedProject(context);
         boolean excludeProjectComponents = isValueTrue(excludeProject);
-        Callable<Iterable<ComponentDto>> callable = CamelCommandsHelper.createComponentDtoValues(project, getCamelCatalog(), filter, excludeProjectComponents);
+        Callable<Iterable<ComponentDto>> callable = CamelCommandsHelper.createAllComponentDtoValues(project, getCamelCatalog(), filter, excludeProjectComponents);
         Iterable<ComponentDto> results = callable.call();
         String result = formatResult(results);
         return Results.success(result);
