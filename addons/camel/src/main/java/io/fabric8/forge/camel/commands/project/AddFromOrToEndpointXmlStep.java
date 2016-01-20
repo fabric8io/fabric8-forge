@@ -71,10 +71,10 @@ public class AddFromOrToEndpointXmlStep extends ConfigureEndpointPropertiesStep 
             if (selectedNode != null) {
 
                 // we need to add after the parent node, so use line number information from the parent
-                lineNumber = (String) selectedNode.getUserData(XmlLineNumberParser.LINE_NUMBER_END);
+                lineNumber = (String) selectedNode.getUserData(XmlLineNumberParser.LINE_NUMBER);
                 lineNumberEnd = (String) selectedNode.getUserData(XmlLineNumberParser.LINE_NUMBER_END);
 
-                if (lineNumberEnd != null) {
+                if (lineNumber != null && lineNumberEnd != null) {
 
                     String line;
                     if (isFrom) {
@@ -87,7 +87,8 @@ public class AddFromOrToEndpointXmlStep extends ConfigureEndpointPropertiesStep 
                     List<String> lines = LineNumberHelper.readLines(file.getResourceInputStream());
 
                     // the list is 0-based, and line number is 1-based
-                    int idx = Integer.valueOf(lineNumberEnd);
+                    // if from then use the start line number, otherwise use the end line number
+                    int idx = isFrom ? Integer.valueOf(lineNumber) : Integer.valueOf(lineNumberEnd);
                     // use the same indent from the parent line
                     int spaces = LineNumberHelper.leadingSpaces(lines, idx - 1);
                     if (isFrom) {
