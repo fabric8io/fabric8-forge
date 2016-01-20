@@ -50,6 +50,7 @@ public class XmlRouteParser {
                     uri = trimEndpointUri(uri);
                     String id = getSafeAttribute(node, "id");
                     String lineNumber = (String) node.getUserData(XmlLineNumberParser.LINE_NUMBER);
+                    String lineNumberEnd = (String) node.getUserData(XmlLineNumberParser.LINE_NUMBER_END);
 
                     // we only want the relative dir name from the resource directory, eg META-INF/spring/foo.xml
                     String fileName = fullyQualifiedFileName;
@@ -69,6 +70,7 @@ public class XmlRouteParser {
                     CamelEndpointDetails detail = new CamelEndpointDetails();
                     detail.setFileName(fileName);
                     detail.setLineNumber(lineNumber);
+                    detail.setLineNumberEnd(lineNumberEnd);
                     detail.setEndpointInstance(id);
                     detail.setEndpointUri(uri);
                     detail.setEndpointComponentName(endpointComponentName(uri));
@@ -96,6 +98,7 @@ public class XmlRouteParser {
             for (Node node : nodes) {
                 String simple = node.getTextContent();
                 String lineNumber = (String) node.getUserData(XmlLineNumberParser.LINE_NUMBER);
+                String lineNumberEnd = (String) node.getUserData(XmlLineNumberParser.LINE_NUMBER_END);
 
                 // we only want the relative dir name from the resource directory, eg META-INF/spring/foo.xml
                 String fileName = fullyQualifiedFileName;
@@ -106,6 +109,7 @@ public class XmlRouteParser {
                 CamelSimpleDetails detail = new CamelSimpleDetails();
                 detail.setFileName(fileName);
                 detail.setLineNumber(lineNumber);
+                detail.setLineNumberEnd(lineNumberEnd);
                 detail.setSimple(simple);
                 simpleExpressions.add(detail);
             }

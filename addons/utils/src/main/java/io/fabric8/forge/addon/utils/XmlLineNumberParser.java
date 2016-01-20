@@ -46,6 +46,8 @@ public final class XmlLineNumberParser {
 
     public static final String LINE_NUMBER = "lineNumber";
     public static final String COLUMN_NUMBER = "colNumber";
+    public static final String LINE_NUMBER_END = "lineNumberEnd";
+    public static final String COLUMN_NUMBER_END = "colNumberEnd";
 
     /**
      * Parses the XML.
@@ -107,6 +109,9 @@ public final class XmlLineNumberParser {
                     final Element parentEl = elementStack.peek();
                     parentEl.appendChild(closedEl);
                 }
+
+                closedEl.setUserData(LINE_NUMBER_END, String.valueOf(this.locator.getLineNumber()), null);
+                closedEl.setUserData(COLUMN_NUMBER_END, String.valueOf(this.locator.getColumnNumber()), null);
             }
 
             @Override
