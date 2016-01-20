@@ -55,6 +55,12 @@ import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.
 import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.createUIInputsForCamelComponent;
 import static io.fabric8.forge.camel.commands.project.helper.CollectionHelper.first;
 
+/**
+ * @deprecated it would be better to use the other add endpoint that adds to an existing route
+ * this one makes less sense to support anymore as it adds this outside a route as <endpoint> which
+ * is not so often used by Camel end users
+ */
+@Deprecated
 public class CamelAddEndpointDefinitionXmlCommand extends AbstractCamelProjectCommand implements UIWizard {
 
     public static final int MAX_OPTIONS = 20;
