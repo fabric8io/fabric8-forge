@@ -94,7 +94,7 @@ public class AddFromOrToEndpointXmlStep extends ConfigureEndpointPropertiesStep 
 
                 String content = DomHelper.toXml(root);
                 file.setContents(content);
-                return Results.success("Node deleted");
+                return Results.success("Endpoint added");
             }
             return Results.fail("Cannot find Camel node in XML file " + key);
         } else {
