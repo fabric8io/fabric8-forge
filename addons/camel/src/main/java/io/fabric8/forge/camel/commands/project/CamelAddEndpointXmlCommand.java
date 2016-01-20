@@ -15,6 +15,11 @@
  */
 package io.fabric8.forge.camel.commands.project;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import javax.inject.Inject;
+
 import io.fabric8.forge.camel.commands.project.dto.ComponentDto;
 import io.fabric8.forge.camel.commands.project.dto.NodeDto;
 import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
@@ -27,7 +32,6 @@ import org.jboss.forge.addon.ui.context.UIExecutionContext;
 import org.jboss.forge.addon.ui.context.UINavigationContext;
 import org.jboss.forge.addon.ui.input.InputComponent;
 import org.jboss.forge.addon.ui.input.InputComponentFactory;
-import org.jboss.forge.addon.ui.input.UIInput;
 import org.jboss.forge.addon.ui.input.UISelectOne;
 import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
 import org.jboss.forge.addon.ui.metadata.WithAttributes;
@@ -39,36 +43,24 @@ import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
 import org.jboss.forge.addon.ui.wizard.UIWizard;
 
-import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.createUIInputsForCamelComponent;
 
 /**
  * Adds a from/to endpoint into chosen node in the route
  */
 public class CamelAddEndpointXmlCommand extends AbstractCamelProjectCommand implements UIWizard {
+
     @Inject
     @WithAttributes(label = "XML File", required = true, description = "The XML file to use (either Spring or Blueprint)")
     private UISelectOne<String> xml;
 
     @Inject
-    @WithAttributes(label = "Node", required = true, description = "Parent node")
+    @WithAttributes(label = "Node", required = true, description = "Parent node (where to add the endpoint)")
     private UISelectOne<NodeDto> node;
 
     @Inject
     @WithAttributes(label = "Name", required = true, description = "Name of component to use for the endpoint")
     private UISelectOne<ComponentDto> componentName;
-
-    @Inject
-    @WithAttributes(label = "Name", required = false, description = "The name of the endpoint")
-    private UIInput<String> id;
-
-    @Inject
-    @WithAttributes(label = "Description", required = false, description = "The description of the endpoint")
-    private UIInput<String> description;
 
     @Inject
     private InputComponentFactory componentFactory;
@@ -80,7 +72,7 @@ public class CamelAddEndpointXmlCommand extends AbstractCamelProjectCommand impl
     public UICommandMetadata getMetadata(UIContext context) {
         return Metadata.forCommand(CamelAddEndpointXmlCommand.class).name(
                 "Camel: Add Endpoint XML").category(Categories.create(CATEGORY))
-                .description("Adds an Endpoint to an existing XML file");
+                .description("Adds an Endpoint to an existing route in an XML file");
     }
 
     @Override
@@ -108,8 +100,8 @@ public class CamelAddEndpointXmlCommand extends AbstractCamelProjectCommand impl
 
         String first = configureXml(project, xml);
         configureNode(context, project, first, xml, node);
-        builder.add(xml).add(node);
-        builder.add(xml).add(componentName).add(id).add(description);
+
+        builder.add(xml).add(node).add(componentName);
     }
 
     @Override
@@ -135,12 +127,13 @@ public class CamelAddEndpointXmlCommand extends AbstractCamelProjectCommand impl
 
         attributeMap.put("componentName", camelComponentName);
 
+        NodeDto parentNode = node.getValue();
+        boolean isFrom = parentNode == null || "route".equals(parentNode.getKey()) || "routes".equals(parentNode.getKey());
+        // its either from or to
+        boolean consumerOnly = isFrom;
+        boolean producerOnly = !isFrom;
+
         // we need to figure out how many options there is so we can as many steps we need
-
-        // producer vs consumer only if selected
-        boolean consumerOnly = false;
-        boolean producerOnly = false;
-
         UIContext ui = context.getUIContext();
         List<EndpointOptionByGroup> groups = createUIInputsForCamelComponent(camelComponentName, null, CamelAddEndpointDefinitionXmlCommand.MAX_OPTIONS, consumerOnly, producerOnly,
                 getCamelCatalog(), componentFactory, converterFactory, ui);
@@ -151,9 +144,6 @@ public class CamelAddEndpointXmlCommand extends AbstractCamelProjectCommand impl
             allInputs.addAll(group.getInputs());
         }
 
-        NodeDto parentNode = node.getValue();
-        boolean isFrom = parentNode.getChildren().isEmpty();
-
         NavigationResultBuilder builder = Results.navigationBuilder();
         int pages = groups.size();
         for (int i = 0; i < pages; i++) {
@@ -162,7 +152,7 @@ public class CamelAddEndpointXmlCommand extends AbstractCamelProjectCommand impl
             AddFromOrToEndpointXmlStep step = new AddFromOrToEndpointXmlStep(projectFactory, dependencyInstaller,
                     getCamelCatalog(),
                     camelComponentName, current.getGroup(), allInputs, current.getInputs(), last, i, pages,
-                    id.getValue(), description.getValue(), parentNode, isFrom);
+                    parentNode, isFrom);
             builder.add(step);
         }
 
