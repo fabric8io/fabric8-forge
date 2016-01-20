@@ -88,7 +88,12 @@ public class AddFromOrToEndpointXmlStep extends ConfigureEndpointPropertiesStep 
 
                     // the list is 0-based, and line number is 1-based
                     int idx = Integer.valueOf(lineNumberEnd);
-                    int spaces = LineNumberHelper.leadingSpaces(lines, idx);
+                    // use the same indent from the parent line
+                    int spaces = LineNumberHelper.leadingSpaces(lines, idx - 1);
+                    if (isFrom) {
+                        // and append 2 if we are starting a new route with <from>
+                        spaces += 2;
+                    }
                     line = LineNumberHelper.padString(line, spaces);
                     // add the line at the position
                     lines.add(idx, line);
@@ -96,7 +101,7 @@ public class AddFromOrToEndpointXmlStep extends ConfigureEndpointPropertiesStep 
                     // and save the file back
                     String content = LineNumberHelper.linesToString(lines);
                     file.setContents(content);
-                    return Results.success("Endpoint added: " + uri);
+                    return Results.success("Added: " + line.trim());
                 }
             }
             return Results.fail("Cannot find Camel node in XML file: " + key);
