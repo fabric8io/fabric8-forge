@@ -128,7 +128,7 @@ public class CamelAddEndpointXmlCommand extends AbstractCamelProjectCommand impl
         attributeMap.put("componentName", camelComponentName);
 
         NodeDto parentNode = node.getValue();
-        boolean isFrom = parentNode == null || "route".equals(parentNode.getKey()) || "routes".equals(parentNode.getKey());
+        boolean isFrom = parentNode == null || "route".equals(parentNode.getPattern()) || "routes".equals(parentNode.getPattern());
         // its either from or to
         boolean consumerOnly = isFrom;
         boolean producerOnly = !isFrom;
