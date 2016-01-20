@@ -19,6 +19,7 @@ public class CamelSimpleDetails {
 
     private String fileName;
     private String lineNumber;
+    private String lineNumberEnd;
     private String className;
     private String methodName;
     private String simple;
@@ -39,6 +40,14 @@ public class CamelSimpleDetails {
 
     public void setLineNumber(String lineNumber) {
         this.lineNumber = lineNumber;
+    }
+
+    public String getLineNumberEnd() {
+        return lineNumberEnd;
+    }
+
+    public void setLineNumberEnd(String lineNumberEnd) {
+        this.lineNumberEnd = lineNumberEnd;
     }
 
     public String getClassName() {

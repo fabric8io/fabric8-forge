@@ -115,6 +115,7 @@ public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implem
         attributeMap.put("instanceName", detail.getEndpointInstance());
         attributeMap.put("endpointUri", detail.getEndpointUri());
         attributeMap.put("lineNumber", detail.getLineNumber());
+        attributeMap.put("lineNumberEnd", detail.getLineNumberEnd());
         attributeMap.put("routeBuilder", detail.getFileName());
         attributeMap.put("mode", "edit");
         attributeMap.put("kind", "java");

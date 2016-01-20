@@ -120,7 +120,7 @@ public abstract class NodeDtoSupport {
     public void defaultKey(NodeDto owner, Map<String, Integer> nodeCounts) {
         String elementName = getPattern();
         Integer countObject = nodeCounts.get(elementName);
-        int count = countObject != null ? countObject.intValue() : 0;
+        int count = countObject != null ? countObject : 0;
         nodeCounts.put(elementName, ++count);
         if (Strings.isNullOrBlank(key)) {
             key = owner.getKey();

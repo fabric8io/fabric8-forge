@@ -68,6 +68,18 @@ public final class XmlHelper {
         return root;
     }
 
+    /**
+     * To output a Node as a String.
+     */
+    public static String nodeToString(Node document) throws Exception {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
+        Source xmlSource = new DOMSource(document);
+        Result outputTarget = new StreamResult(outputStream);
+        Transformer transformer = TransformerFactory.newInstance().newTransformer();
+        transformer.transform(xmlSource, outputTarget);
+
+        return outputStream.toString();
+    }
 
 }

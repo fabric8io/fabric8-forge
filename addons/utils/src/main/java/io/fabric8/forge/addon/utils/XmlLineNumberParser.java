@@ -39,13 +39,17 @@ import org.xml.sax.helpers.DefaultHandler;
  * The line number and column number can be obtained from a Node/Element using
  * <pre>
  *   String lineNumber = (String) node.getUserData(XmlLineNumberParser.LINE_NUMBER);
+ *   String lineNumberEnd = (String) node.getUserData(XmlLineNumberParser.LINE_NUMBER_END);
  *   String columnNumber = (String) node.getUserData(XmlLineNumberParser.COLUMN_NUMBER);
+ *   String columnNumberEnd = (String) node.getUserData(XmlLineNumberParser.COLUMN_NUMBER_END);
  * </pre>
  */
 public final class XmlLineNumberParser {
 
     public static final String LINE_NUMBER = "lineNumber";
     public static final String COLUMN_NUMBER = "colNumber";
+    public static final String LINE_NUMBER_END = "lineNumberEnd";
+    public static final String COLUMN_NUMBER_END = "colNumberEnd";
 
     /**
      * Parses the XML.
@@ -107,6 +111,9 @@ public final class XmlLineNumberParser {
                     final Element parentEl = elementStack.peek();
                     parentEl.appendChild(closedEl);
                 }
+
+                closedEl.setUserData(LINE_NUMBER_END, String.valueOf(this.locator.getLineNumber()), null);
+                closedEl.setUserData(COLUMN_NUMBER_END, String.valueOf(this.locator.getColumnNumber()), null);
             }
 
             @Override

@@ -16,10 +16,12 @@
  */
 package io.fabric8.forge.camel.commands.project;
 
+import java.util.List;
+
+import io.fabric8.forge.addon.utils.LineNumberHelper;
 import io.fabric8.forge.addon.utils.XmlLineNumberParser;
 import io.fabric8.forge.camel.commands.project.dto.NodeDto;
 import io.fabric8.forge.camel.commands.project.helper.CamelXmlHelper;
-import io.fabric8.utils.DomHelper;
 import io.fabric8.utils.Strings;
 import org.apache.camel.catalog.CamelCatalog;
 import org.jboss.forge.addon.projects.ProjectFactory;
@@ -33,24 +35,18 @@ import org.jboss.forge.addon.ui.result.Results;
 import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-
-import java.util.List;
 
 /**
  * A wizard step to add a from or to endpoint to a node
  */
 public class AddFromOrToEndpointXmlStep extends ConfigureEndpointPropertiesStep {
-    private final String id;
-    private final String description;
     private final NodeDto parentNode;
     private final boolean isFrom;
 
-    public AddFromOrToEndpointXmlStep(ProjectFactory projectFactory, DependencyInstaller dependencyInstaller, CamelCatalog camelCatalog, String componentName, String group, List<InputComponent> allInputs, List<InputComponent> inputs, boolean last, int index, int total, String id, String description, NodeDto parentNode, boolean isFrom) {
+    public AddFromOrToEndpointXmlStep(ProjectFactory projectFactory, DependencyInstaller dependencyInstaller, CamelCatalog camelCatalog, String componentName, String group, List<InputComponent> allInputs, List<InputComponent> inputs,
+                                      boolean last, int index, int total, NodeDto parentNode, boolean isFrom) {
         super(projectFactory, dependencyInstaller, camelCatalog, componentName, group, allInputs, inputs, last, index, total);
-        this.id = id;
-        this.description = description;
         this.parentNode = parentNode;
         this.isFrom = isFrom;
     }
@@ -63,42 +59,55 @@ public class AddFromOrToEndpointXmlStep extends ConfigureEndpointPropertiesStep 
     }
 
     @Override
-    protected Result addOrEditEndpointXml(FileResource file, String uri, String endpointUrl, String endpointInstanceName, String xml, String lineNumber) throws Exception {
-
+    protected Result addOrEditEndpointXml(FileResource file, String uri, String endpointUrl, String endpointInstanceName, String xml, String lineNumber, String lineNumberEnd) throws Exception {
         String key = parentNode.getKey();
         if (Strings.isNullOrBlank(key)) {
             return Results.fail("Parent node has no key! " + parentNode + " in file " + file.getName());
         }
+
         Document root = XmlLineNumberParser.parseXml(file.getResourceInputStream());
         if (root != null) {
             Node selectedNode = CamelXmlHelper.findCamelNodeInDocument(root, key);
             if (selectedNode != null) {
-                String indent0 = "\n";
-                String[] paths = key.split("/");
-                for (String path : paths) {
-                    indent0 += "  ";
-                }
-                String indent1 = indent0 + "  ";
-                String indent2 = indent1 + "  ";
-                appendText(selectedNode, indent1);
-                Element endpointElement = DomHelper.addChildElement(selectedNode, isFrom ? "from" : "to", Strings.isNotBlank(description) ? indent2 : "");
-                if (Strings.isNotBlank(id)) {
-                    endpointElement.setAttribute("id", id);
-                }
-                endpointElement.setAttribute("uri", uri);
-                if (Strings.isNotBlank(description)) {
-                    DomHelper.addChildElement(endpointElement, "description", description);
-                    appendText(endpointElement, indent1);
-                }
-                appendText(selectedNode, indent0);
 
-                String content = DomHelper.toXml(root);
-                file.setContents(content);
-                return Results.success("Endpoint added");
+                // we need to add after the parent node, so use line number information from the parent
+                lineNumber = (String) selectedNode.getUserData(XmlLineNumberParser.LINE_NUMBER);
+                lineNumberEnd = (String) selectedNode.getUserData(XmlLineNumberParser.LINE_NUMBER_END);
+
+                if (lineNumber != null && lineNumberEnd != null) {
+
+                    String line;
+                    if (isFrom) {
+                        line = String.format("<from uri=\"%s\"/>", uri);
+                    } else {
+                        line = String.format("<to uri=\"%s\"/>", uri);
+                    }
+
+                    // read all the lines
+                    List<String> lines = LineNumberHelper.readLines(file.getResourceInputStream());
+
+                    // the list is 0-based, and line number is 1-based
+                    // if from then use the start line number, otherwise use the end line number
+                    int idx = isFrom ? Integer.valueOf(lineNumber) : Integer.valueOf(lineNumberEnd);
+                    // use the same indent from the parent line
+                    int spaces = LineNumberHelper.leadingSpaces(lines, idx - 1);
+                    if (isFrom) {
+                        // and append 2 if we are starting a new route with <from>
+                        spaces += 2;
+                    }
+                    line = LineNumberHelper.padString(line, spaces);
+                    // add the line at the position
+                    lines.add(idx, line);
+
+                    // and save the file back
+                    String content = LineNumberHelper.linesToString(lines);
+                    file.setContents(content);
+                    return Results.success("Added: " + line.trim());
+                }
             }
-            return Results.fail("Cannot find Camel node in XML file " + key);
+            return Results.fail("Cannot find Camel node in XML file: " + key);
         } else {
-            return Results.fail("Could not load camel XML " + file.getName());
+            return Results.fail("Cannot load Camel XML file: " + file.getName());
         }
     }
 
