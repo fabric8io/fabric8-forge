@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
 
+import io.fabric8.forge.addon.utils.XmlLineNumberParser;
 import io.fabric8.forge.camel.commands.project.dto.NodeDto;
 import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
 import io.fabric8.forge.camel.commands.project.model.EndpointOptionByGroup;
@@ -106,7 +107,7 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
         // always refresh these as the end user may have edited the instance name
         String xmlResourceName = xml.getValue();
         attributeMap.put("xml", xmlResourceName);
-        attributeMap.put("mode", "add");
+        attributeMap.put("mode", "edit");
         attributeMap.put("kind", "xml");
 
         NodeDto editNode = node.getValue();
@@ -124,9 +125,6 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
 
         attributeMap.put("node", key);
 
-        // TODO: currently we only support
-
-
         if (pattern.equals("from") || pattern.equals("to")) {
             // producer vs consumer only if selected
             boolean consumerOnly = false;
@@ -142,17 +140,19 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
 
             Element selectedElement = getSelectedElementNode(project, xmlResourceName, key);
             if (selectedElement == null) {
-                throw new IllegalArgumentException("Could not find xml for node " + editNode);
+                throw new IllegalArgumentException("Cannot find xml for node " + editNode);
             }
+            String lineNumber = (String) selectedElement.getUserData(XmlLineNumberParser.LINE_NUMBER);
+            String lineNumberEnd = (String) selectedElement.getUserData(XmlLineNumberParser.LINE_NUMBER_END);
+            attributeMap.put("lineNumber", lineNumber);
+            attributeMap.put("lineNumberEnd", lineNumberEnd);
+
             String uri = selectedElement.getAttribute("uri");
             if (Strings.isNullOrBlank(uri)) {
                 throw new IllegalArgumentException("No uri property for node " + editNode);
             }
             String[] split = uri.split(":");
             String camelComponentName = split[0];
-
-            System.out.println("Using endpoint " + uri + " and componentName: " +camelComponentName);
-
             attributeMap.put("componentName", camelComponentName);
             attributeMap.put("endpointUri", uri);
 
