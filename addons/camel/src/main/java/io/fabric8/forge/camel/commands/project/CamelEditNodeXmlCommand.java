@@ -15,25 +15,25 @@
  */
 package io.fabric8.forge.camel.commands.project;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import javax.inject.Inject;
+
 import io.fabric8.forge.addon.utils.XmlLineNumberParser;
 import io.fabric8.forge.camel.commands.project.dto.NodeDto;
 import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
-import io.fabric8.forge.camel.commands.project.helper.CamelXmlHelper;
 import io.fabric8.forge.camel.commands.project.model.EndpointOptionByGroup;
 import io.fabric8.utils.Strings;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
-import org.jboss.forge.addon.resource.FileResource;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
 import org.jboss.forge.addon.ui.context.UINavigationContext;
 import org.jboss.forge.addon.ui.input.InputComponent;
 import org.jboss.forge.addon.ui.input.InputComponentFactory;
-import org.jboss.forge.addon.ui.input.UIInput;
 import org.jboss.forge.addon.ui.input.UISelectOne;
-import org.jboss.forge.addon.ui.input.ValueChangeListener;
-import org.jboss.forge.addon.ui.input.events.ValueChangeEvent;
 import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
 import org.jboss.forge.addon.ui.metadata.WithAttributes;
 import org.jboss.forge.addon.ui.result.NavigationResult;
@@ -43,14 +43,7 @@ import org.jboss.forge.addon.ui.result.navigation.NavigationResultBuilder;
 import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
 import org.jboss.forge.addon.ui.wizard.UIWizard;
-import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-
-import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.createUIInputsForCamelComponent;
 
@@ -65,14 +58,6 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
     @Inject
     @WithAttributes(label = "Node", required = true, description = "Node to edit")
     private UISelectOne<NodeDto> node;
-
-    @Inject
-    @WithAttributes(label = "Name", required = false, description = "The name of the step")
-    private UIInput<String> id;
-
-    @Inject
-    @WithAttributes(label = "Description", required = false, description = "The description of the step")
-    private UIInput<String> description;
 
     @Inject
     private InputComponentFactory componentFactory;
@@ -108,23 +93,9 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
         Project project = getSelectedProject(context);
 
         String first = configureXml(project, xml);
-        node.addValueChangeListener(new ValueChangeListener() {
-            @Override
-            public void valueChanged(ValueChangeEvent event) {
-                NodeDto value = node.getValue();
-                if (value != null) {
-                    id.setValue(value.getId());
-
-                    // TODO did the user actually add a description?
-                    description.setValue(value.getDescription());
-                }
-            }
-        });
         configureNode(context, project, first, xml, node);
 
         builder.add(xml).add(node);
-        builder.add(xml).add(id).add(description);
-
     }
 
     @Override
@@ -136,7 +107,7 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
         // always refresh these as the end user may have edited the instance name
         String xmlResourceName = xml.getValue();
         attributeMap.put("xml", xmlResourceName);
-        attributeMap.put("mode", "add");
+        attributeMap.put("mode", "edit");
         attributeMap.put("kind", "xml");
 
         NodeDto editNode = node.getValue();
@@ -169,17 +140,19 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
 
             Element selectedElement = getSelectedElementNode(project, xmlResourceName, key);
             if (selectedElement == null) {
-                throw new IllegalArgumentException("Could not find xml for node " + editNode);
+                throw new IllegalArgumentException("Cannot find xml for node " + editNode);
             }
+            String lineNumber = (String) selectedElement.getUserData(XmlLineNumberParser.LINE_NUMBER);
+            String lineNumberEnd = (String) selectedElement.getUserData(XmlLineNumberParser.LINE_NUMBER_END);
+            attributeMap.put("lineNumber", lineNumber);
+            attributeMap.put("lineNumberEnd", lineNumberEnd);
+
             String uri = selectedElement.getAttribute("uri");
             if (Strings.isNullOrBlank(uri)) {
                 throw new IllegalArgumentException("No uri property for node " + editNode);
             }
             String[] split = uri.split(":");
             String camelComponentName = split[0];
-
-            System.out.println("Using endpoint " + uri + " and componentName: " +camelComponentName);
-
             attributeMap.put("componentName", camelComponentName);
             attributeMap.put("endpointUri", uri);
 
@@ -202,7 +175,7 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
                 EditFromOrToEndpointXmlStep step = new EditFromOrToEndpointXmlStep(projectFactory, dependencyInstaller,
                         getCamelCatalog(),
                         camelComponentName, current.getGroup(), allInputs, current.getInputs(), last, i, pages,
-                        id.getValue(), description.getValue(), editNode, isFrom);
+                        editNode, isFrom);
                 builder.add(step);
             }
             NavigationResult navigationResult = builder.build();

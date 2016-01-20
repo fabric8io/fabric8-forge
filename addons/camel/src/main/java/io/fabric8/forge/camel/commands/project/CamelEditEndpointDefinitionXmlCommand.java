@@ -47,6 +47,10 @@ import org.jboss.forge.addon.ui.wizard.UIWizard;
 
 import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.createUIInputsForCamelComponent;
 
+/**
+ * @deprecated the edit-node-xml can edit endpoints and (EIPs in the future)
+ */
+@Deprecated
 public class CamelEditEndpointDefinitionXmlCommand extends AbstractCamelProjectCommand implements UIWizard {
 
     private static final int MAX_OPTIONS = 20;
