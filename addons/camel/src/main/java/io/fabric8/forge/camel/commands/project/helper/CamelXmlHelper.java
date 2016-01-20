@@ -231,9 +231,15 @@ public final class CamelXmlHelper {
     }
 
     public static List<ContextDto> loadCamelContext(UIContext context, Project project, String xmlResourceName) throws Exception {
-        String xmlFileName = joinPaths("src/main/resources", xmlResourceName);
         List<ContextDto> camelContexts = null;
+
+        // try with src/main/resources or src/main/webapp/WEB-INF
+        String xmlFileName = joinPaths("src/main/resources", xmlResourceName);
         File xmlFile = CommandHelpers.getProjectContextFile(context, project, xmlFileName);
+        if (!Files.isFile(xmlFile)) {
+            xmlFileName = joinPaths("src/main/webapp/", xmlResourceName);
+            xmlFile = CommandHelpers.getProjectContextFile(context, project, xmlFileName);
+        }
         if (Files.isFile(xmlFile)) {
             camelContexts = parseCamelContexts(xmlFile);
         }

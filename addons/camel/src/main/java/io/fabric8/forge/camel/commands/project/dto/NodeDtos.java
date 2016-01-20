@@ -42,9 +42,11 @@ public class NodeDtos {
 
     public static List<NodeDto> toNodeList(Iterable<? extends NodeDto> nodes, String indentation) {
         List<NodeDto> answer = new ArrayList<>();
-        for (NodeDto node : nodes) {
-            List<NodeDto> list = node.toNodeList(indentation);
-            answer.addAll(list);
+        if (nodes != null) {
+            for (NodeDto node : nodes) {
+                List<NodeDto> list = node.toNodeList(indentation);
+                answer.addAll(list);
+            }
         }
         return answer;
     }
@@ -63,7 +65,7 @@ public class NodeDtos {
 
     protected static <T> List<T> toList(MappingIterator<T> iter) throws java.io.IOException {
         List<T> answer = new ArrayList<>();
-        while (iter.hasNextValue()) {
+        while (iter != null && iter.hasNextValue()) {
             T value = iter.nextValue();
             answer.add(value);
         }
@@ -71,16 +73,18 @@ public class NodeDtos {
     }
 
     public static void printNode(final Indenter out, final NodeDtoSupport node) throws Exception {
-        out.println(getNodeText(node));
-        out.withIndent(new Block() {
+        if (node != null) {
+            out.println(getNodeText(node));
+            out.withIndent(new Block() {
 
-            @Override
-            public void invoke() throws Exception {
-                for (NodeDto child : node.getChildren()) {
-                    printNode(out, child);
+                @Override
+                public void invoke() throws Exception {
+                    for (NodeDto child : node.getChildren()) {
+                        printNode(out, child);
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     public static String getNodeText(NodeDtoSupport node) {
