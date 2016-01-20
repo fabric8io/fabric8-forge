@@ -58,7 +58,7 @@ public class AddRouteFromEndpointXmlStep extends ConfigureEndpointPropertiesStep
     }
 
     @Override
-    protected Result addOrEditEndpointXml(FileResource file, String uri, String endpointUrl, String endpointInstanceName, String xml, String lineNumber) throws Exception {
+    protected Result addOrEditEndpointXml(FileResource file, String uri, String endpointUrl, String endpointInstanceName, String xml, String lineNumber, String lineNumberEnd) throws Exception {
 
         Document root = XmlLineNumberParser.parseXml(file.getResourceInputStream());
         if (root != null) {

@@ -160,9 +160,11 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
 
         // edit mode includes the existing uri and line number
         String lineNumber = null;
+        String lineNumberEnd = null;
         String endpointUrl = null;
         if ("edit".equals(mode)) {
             lineNumber = mandatoryAttributeValue(attributeMap, "lineNumber");
+            lineNumberEnd = mandatoryAttributeValue(attributeMap, "lineNumberEnd");
             endpointUrl = mandatoryAttributeValue(attributeMap, "endpointUri");
 
             // since this is XML we need to escape & as &amp;
@@ -233,10 +235,10 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
         if (file == null || !file.exists()) {
             return Results.fail("Cannot find XML file " + xml);
         }
-        return addOrEditEndpointXml(file, uri, endpointUrl, endpointInstanceName, xml, lineNumber);
+        return addOrEditEndpointXml(file, uri, endpointUrl, endpointInstanceName, xml, lineNumber, lineNumberEnd);
     }
 
-    protected Result addOrEditEndpointXml(FileResource file, String uri, String endpointUrl, String endpointInstanceName, String xml, String lineNumber) throws Exception {
+    protected Result addOrEditEndpointXml(FileResource file, String uri, String endpointUrl, String endpointInstanceName, String xml, String lineNumber, String lineNumberEnd) throws Exception {
         // if we have a line number then use that to edit the existing value
         if (lineNumber != null) {
             List<String> lines = LineNumberHelper.readLines(file.getResourceInputStream());
