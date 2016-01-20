@@ -90,16 +90,47 @@
     </dependency>
     <dependency>
       <groupId>org.jboss.forge.addon</groupId>
+      <artifactId>slf4j</artifactId>
+      <classifier>forge-addon</classifier>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.forge.addon</groupId>
       <artifactId>core</artifactId>
       <classifier>forge-addon</classifier>
+      <exclusions>
+        <exclusion>
+          <groupId>org.jboss.forge.addon</groupId>
+          <artifactId>slf4j</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>io.fabric8</groupId>
       <artifactId>kubernetes-api</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>jul-to-slf4j</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>io.fabric8</groupId>
       <artifactId>letschat-api</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>io.fabric8</groupId>
@@ -108,6 +139,16 @@
     <dependency>
       <groupId>io.fabric8</groupId>
       <artifactId>fabric8-devops-connector</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-log4j12</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>io.fabric8</groupId>
@@ -116,6 +157,12 @@
     <dependency>
       <groupId>io.fabric8</groupId>
       <artifactId>fabric8-utils</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
   </dependencies>
 
