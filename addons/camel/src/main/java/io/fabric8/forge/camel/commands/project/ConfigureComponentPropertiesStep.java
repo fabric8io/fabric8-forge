@@ -28,7 +28,6 @@ import io.fabric8.forge.camel.commands.project.model.CamelComponentDetails;
 import org.apache.camel.catalog.CamelCatalog;
 import org.apache.camel.catalog.JSonSchemaHelper;
 import org.jboss.forge.addon.dependencies.Dependency;
-import org.jboss.forge.addon.dependencies.DependencyResolver;
 import org.jboss.forge.addon.parser.java.facets.JavaSourceFacet;
 import org.jboss.forge.addon.parser.java.resources.JavaResource;
 import org.jboss.forge.addon.projects.Project;
@@ -63,9 +62,6 @@ public class ConfigureComponentPropertiesStep extends AbstractCamelProjectComman
 
     @Inject
     private DependencyInstaller dependencyInstaller;
-
-    @Inject
-    private DependencyResolver dependencyResolver;
 
     @Inject
     private CamelCatalog camelCatalog;

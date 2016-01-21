@@ -15,6 +15,10 @@
  */
 package io.fabric8.forge.camel.commands.project.converter;
 
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import io.fabric8.forge.camel.commands.project.dto.ContextDto;
 import io.fabric8.forge.camel.commands.project.dto.NodeDto;
 import io.fabric8.forge.camel.commands.project.dto.NodeDtos;
@@ -24,14 +28,8 @@ import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.input.UISelectOne;
 
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-/**
- */
 public class NodeDtoConverter implements Converter<String, NodeDto> {
-    private final Logger logger = Logger.getLogger(getClass().getName());
+    private static final Logger LOG = Logger.getLogger(NodeDtoConverter.class.getName());
 
     private final Project project;
     private final UIContext context;
@@ -51,9 +49,9 @@ public class NodeDtoConverter implements Converter<String, NodeDto> {
             List<ContextDto> camelContexts = CamelXmlHelper.loadCamelContext(context, project, xmlResourceName);
             answer = NodeDtos.findNodeByKey(camelContexts, name);
         } catch (Exception e) {
-            logger.log(Level.WARNING, "Caught " + e, e);
+            LOG.log(Level.FINE, "Error converting to NodeDto due " + e.getMessage(), e);
         }
-        System.out.println("converting node key '" + name + "' to a node: " + answer);
         return answer;
     }
+
 }
