@@ -234,8 +234,8 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
         return first;
     }
 
-    protected void configureComponentName(Project project, final UISelectOne<ComponentDto> componentName) {
-        componentName.setValueChoices(CamelCommandsHelper.createComponentDtoValues(project, getCamelCatalog(), null, false));
+    protected void configureComponentName(Project project, final UISelectOne<ComponentDto> componentName, boolean consumerOnly, boolean producerOnly) {
+        componentName.setValueChoices(CamelCommandsHelper.createComponentDtoValues(project, getCamelCatalog(), null, false, consumerOnly, producerOnly));
         // include converter from string->dto
         componentName.setValueConverter(new Converter<String, ComponentDto>() {
             @Override

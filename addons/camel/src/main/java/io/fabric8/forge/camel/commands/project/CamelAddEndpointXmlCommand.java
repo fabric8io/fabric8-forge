@@ -95,8 +95,7 @@ public class CamelAddEndpointXmlCommand extends AbstractCamelProjectCommand impl
 
         Project project = getSelectedProject(context);
 
-        // TODO limit the components to consumer endpoints only?
-        configureComponentName(project, componentName);
+        configureComponentName(project, componentName, false, false);
 
         String first = configureXml(project, xml);
         configureNode(context, project, first, xml, node);

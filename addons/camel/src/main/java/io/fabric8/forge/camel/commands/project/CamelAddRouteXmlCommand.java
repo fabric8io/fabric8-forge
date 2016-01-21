@@ -91,8 +91,8 @@ public class CamelAddRouteXmlCommand extends AbstractCamelProjectCommand impleme
 
         Project project = getSelectedProject(builder.getUIContext());
 
-        // TODO limit the components to consumer endpoints only?
-        configureComponentName(project, componentName);
+        // we only want components that is able to consume because this is to add a new route
+        configureComponentName(project, componentName, true, false);
         configureXml(project, xml);
 
         builder.add(xml).add(id).add(componentName);
