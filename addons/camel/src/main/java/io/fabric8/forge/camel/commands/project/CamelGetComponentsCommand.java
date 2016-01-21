@@ -27,7 +27,6 @@ import io.fabric8.forge.camel.commands.project.helper.OutputFormatHelper;
 import io.fabric8.utils.Strings;
 import io.fabric8.utils.TablePrinter;
 import org.jboss.forge.addon.projects.Project;
-import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
@@ -57,9 +56,6 @@ public class CamelGetComponentsCommand extends AbstractCamelProjectCommand {
     @Inject
     @WithAttributes(label = "Exclude Project", defaultValue = "true", description = "Whether to exclude components in the current project")
     private UIInput<Boolean> excludeProject;
-
-    @Inject
-    private DependencyInstaller dependencyInstaller;
 
     @Override
     public UICommandMetadata getMetadata(UIContext context) {

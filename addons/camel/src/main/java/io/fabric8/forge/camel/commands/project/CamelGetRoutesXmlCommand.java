@@ -22,7 +22,6 @@ import io.fabric8.forge.camel.commands.project.dto.NodeDtos;
 import io.fabric8.forge.camel.commands.project.dto.OutputFormat;
 import io.fabric8.forge.camel.commands.project.helper.CamelXmlHelper;
 import org.jboss.forge.addon.projects.Project;
-import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
@@ -50,9 +49,6 @@ public class CamelGetRoutesXmlCommand extends AbstractCamelProjectCommand {
     @Inject
     @WithAttributes(label = "Format", defaultValue = "Text", description = "Format output as text or json")
     private UISelectOne<OutputFormat> format;
-
-    @Inject
-    private DependencyInstaller dependencyInstaller;
 
     @Override
     public UICommandMetadata getMetadata(UIContext context) {

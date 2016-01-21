@@ -38,7 +38,7 @@ import org.jboss.forge.furnace.services.Imported;
  */
 public class FabricArchetypeCatalogFactory implements ArchetypeCatalogFactory {
 
-    private final Logger logger = Logger.getLogger(getClass().getName());
+    private static final Logger LOG = Logger.getLogger(FabricArchetypeCatalogFactory.class.getName());
     private static final String NAME = "fabric8";
 
     @Inject
@@ -78,7 +78,7 @@ public class FabricArchetypeCatalogFactory implements ArchetypeCatalogFactory {
                         cachedArchetypes = new ArchetypeCatalogXpp3Reader().read(is);
                     }
                 } catch (Exception e) {
-                    logger.log(Level.SEVERE, "Error while retrieving archetypes", e);
+                    LOG.log(Level.WARNING, "Error while retrieving archetypes due " + e.getMessage(), e);
                 }
             }
         }

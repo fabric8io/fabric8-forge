@@ -25,11 +25,9 @@ import io.fabric8.forge.addon.utils.validator.PackageNameValidator;
 import io.fabric8.forge.camel.commands.project.dto.ComponentDto;
 import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
 import org.jboss.forge.addon.convert.Converter;
-import org.jboss.forge.addon.dependencies.DependencyResolver;
 import org.jboss.forge.addon.facets.constraints.FacetConstraint;
 import org.jboss.forge.addon.parser.java.facets.JavaSourceFacet;
 import org.jboss.forge.addon.projects.Project;
-import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
 import org.jboss.forge.addon.projects.facets.ClassLoaderFacet;
 import org.jboss.forge.addon.projects.facets.ResourcesFacet;
 import org.jboss.forge.addon.ui.context.UIBuilder;
@@ -76,12 +74,6 @@ public class CamelNewComponentInstanceSpringCommand extends AbstractCamelProject
     @Inject
     @WithAttributes(label = "Class Name", required = true, description = "Name of the Spring Component class to generate")
     private UIInput<String> className;
-
-    @Inject
-    private DependencyInstaller dependencyInstaller;
-
-    @Inject
-    private DependencyResolver dependencyResolver;
 
     @Override
     public UICommandMetadata getMetadata(UIContext context) {
