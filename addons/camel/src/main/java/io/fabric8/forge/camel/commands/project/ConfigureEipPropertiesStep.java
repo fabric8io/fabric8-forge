@@ -126,17 +126,12 @@ public abstract class ConfigureEipPropertiesStep extends AbstractCamelProjectCom
     }
 
     protected Result executeXml(UIExecutionContext context, Map<Object, Object> attributeMap) throws Exception {
-        String modelName = optionalAttributeValue(attributeMap, "modelName");
         String mode = mandatoryAttributeValue(attributeMap, "mode");
         String xml = mandatoryAttributeValue(attributeMap, "xml");
 
-        // edit mode includes the existing uri and line number
-        String lineNumber = null;
-        String lineNumberEnd = null;
-        if ("edit".equals(mode)) {
-            lineNumber = mandatoryAttributeValue(attributeMap, "lineNumber");
-            lineNumberEnd = mandatoryAttributeValue(attributeMap, "lineNumberEnd");
-        }
+        // line number for the parent node
+        String lineNumber = mandatoryAttributeValue(attributeMap, "lineNumber");
+        String lineNumberEnd = mandatoryAttributeValue(attributeMap, "lineNumberEnd");
 
         Project project = getSelectedProject(context);
         ResourcesFacet facet = project.getFacet(ResourcesFacet.class);
@@ -160,7 +155,7 @@ public abstract class ConfigureEipPropertiesStep extends AbstractCamelProjectCom
                 String value = input.getValue().toString();
                 if (value != null) {
                     // do not add the value if it match the default value
-                    boolean matchDefault = isModelDefaultValue(camelCatalog, modelName, key, value);
+                    boolean matchDefault = isModelDefaultValue(camelCatalog, eipName, key, value);
                     if (!matchDefault) {
                         options.put(key, value);
                     }
@@ -192,15 +187,11 @@ public abstract class ConfigureEipPropertiesStep extends AbstractCamelProjectCom
     }
 
     protected Result addOrEditModelXml(FileResource file, String modelXml, String xml, String lineNumber, String lineNumberEnd) throws Exception {
-        // if we have a line number then use that to edit the existing value
-        if (lineNumber != null) {
-            List<String> lines = LineNumberHelper.readLines(file.getResourceInputStream());
-            return editModelXml(lines, lineNumber, modelXml, file, xml);
-        }
-        return null;
+        List<String> lines = LineNumberHelper.readLines(file.getResourceInputStream());
+        return editModelXml(lines, lineNumber, lineNumberEnd, modelXml, file, xml);
     }
 
-    protected abstract Result editModelXml(List<String> lines, String lineNumber, String modelXml, FileResource file, String xml) throws Exception;
+    protected abstract Result editModelXml(List<String> lines, String lineNumber, String lineNumberEnd, String modelXml, FileResource file, String xml) throws Exception;
 
     /**
      * Returns the mandatory String value of the given name

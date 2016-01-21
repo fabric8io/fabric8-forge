@@ -456,7 +456,7 @@ public final class CamelCommandsHelper {
                             // if its an enum and its optional then make sure there is a default value
                             // if no default value exists then add none as the 1st choice default value
                             // otherwise the GUI makes us force to select an option which is not what we want
-                            if (enums != null && required == null || "false".equals(required)) {
+                            if (enums != null && (required == null || "false".equals(required))) {
                                 if (defaultValue == null || defaultValue.isEmpty()) {
                                     defaultValue = "none";
                                     if (!enums.startsWith("none,")) {
@@ -568,7 +568,7 @@ public final class CamelCommandsHelper {
                             // if its an enum and its optional then make sure there is a default value
                             // if no default value exists then add none as the 1st choice default value
                             // otherwise the GUI makes us force to select an option which is not what we want
-                            if (enums != null && required == null || "false".equals(required)) {
+                            if (enums != null && (required == null || "false".equals(required))) {
                                 if (defaultValue == null || defaultValue.isEmpty()) {
                                     defaultValue = "none";
                                     if (!enums.startsWith("none,")) {

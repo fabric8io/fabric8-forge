@@ -180,7 +180,7 @@ public class CamelAddNodeXmlCommand extends AbstractCamelProjectCommand implemen
             boolean last = i == pages - 1;
             InputOptionByGroup current = groups.get(i);
             AddNodeXmlStep step = new AddNodeXmlStep(projectFactory, getCamelCatalog(),
-                    nodeName, current.getGroup(), allInputs, current.getInputs(), last, i, pages, editNode);
+                    nodeName, current.getGroup(), allInputs, current.getInputs(), last, i, pages);
             builder.add(step);
         }
         NavigationResult navigationResult = builder.build();
