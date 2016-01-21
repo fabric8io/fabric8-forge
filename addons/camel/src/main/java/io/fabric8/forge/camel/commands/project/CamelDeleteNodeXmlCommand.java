@@ -1,29 +1,31 @@
 /**
- * Copyright 2005-2015 Red Hat, Inc.
- * <p/>
- * Red Hat licenses this file to you under the Apache License, version
- * 2.0 (the "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- * <p/>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p/>
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
- * implied.  See the License for the specific language governing
- * permissions and limitations under the License.
+ *  Copyright 2005-2015 Red Hat, Inc.
+ *
+ *  Red Hat licenses this file to you under the Apache License, version
+ *  2.0 (the "License"); you may not use this file except in compliance
+ *  with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+ *  implied.  See the License for the specific language governing
+ *  permissions and limitations under the License.
  */
 package io.fabric8.forge.camel.commands.project;
 
+import java.util.List;
+import javax.inject.Inject;
+
+import io.fabric8.forge.addon.utils.LineNumberHelper;
 import io.fabric8.forge.addon.utils.XmlLineNumberParser;
 import io.fabric8.forge.camel.commands.project.dto.ContextDto;
 import io.fabric8.forge.camel.commands.project.dto.NodeDto;
 import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
 import io.fabric8.forge.camel.commands.project.helper.CamelXmlHelper;
-import io.fabric8.utils.DomHelper;
 import io.fabric8.utils.Strings;
 import org.jboss.forge.addon.projects.Project;
-import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
 import org.jboss.forge.addon.resource.FileResource;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
@@ -35,10 +37,8 @@ import org.jboss.forge.addon.ui.result.Results;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 
-import javax.inject.Inject;
-import java.util.List;
-
 public class CamelDeleteNodeXmlCommand extends AbstractCamelProjectCommand {
+
     @Inject
     @WithAttributes(label = "XML File", required = true, description = "The XML file to use (either Spring or Blueprint)")
     private UISelectOne<String> xml;
@@ -46,9 +46,6 @@ public class CamelDeleteNodeXmlCommand extends AbstractCamelProjectCommand {
     @Inject
     @WithAttributes(label = "Node", required = true, description = "Node to delete")
     private UISelectOne<NodeDto> node;
-
-    @Inject
-    private DependencyInstaller dependencyInstaller;
 
     @Override
     public boolean isEnabled(UIContext context) {
@@ -99,14 +96,36 @@ public class CamelDeleteNodeXmlCommand extends AbstractCamelProjectCommand {
         if (root != null) {
             Node selectedNode = CamelXmlHelper.findCamelNodeInDocument(root, key);
             if (selectedNode != null) {
-                DomHelper.detach(selectedNode);
-                String content = DomHelper.toXml(root);
-                file.setContents(content);
-                return Results.success("Node deleted");
+
+                // we need to add after the parent node, so use line number information from the parent
+                String lineNumber = (String) selectedNode.getUserData(XmlLineNumberParser.LINE_NUMBER);
+                String lineNumberEnd = (String) selectedNode.getUserData(XmlLineNumberParser.LINE_NUMBER_END);
+
+                if (lineNumber != null && lineNumberEnd != null) {
+
+                    // read all the lines
+                    List<String> lines = LineNumberHelper.readLines(file.getResourceInputStream());
+
+                    // the list is 0-based, and line number is 1-based
+                    int idx = Integer.valueOf(lineNumber) - 1;
+                    int idx2 = Integer.valueOf(lineNumberEnd) - 1;
+                    int delta = (idx2 - idx) + 1;
+
+                    // remove the lines
+                    while (delta > 0) {
+                        delta--;
+                        lines.remove(idx);
+                    }
+
+                    // and save the file back
+                    String content = LineNumberHelper.linesToString(lines);
+                    file.setContents(content);
+                    return Results.success("Removed node");
+                }
             }
-            return Results.fail("Cannot find Camel node in XML file " + nodeValue);
+            return Results.fail("Cannot find Camel node in XML file: " + nodeValue);
         } else {
-            return Results.fail("Could not load camel XML " + xmlResourceName);
+            return Results.fail("Cannot load Camel XML file: " + file.getName());
         }
     }
 
