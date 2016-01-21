@@ -110,6 +110,13 @@ public class CamelComponentsCompleter implements UICompleter<ComponentDto> {
             names = filterByLabel(names, label);
         }
 
+        if (consumerOnly) {
+            names = filterByConsumerOnly(names);
+        }
+        if (producerOnly) {
+            names = filterByProducerOnly(names);
+        }
+
         List<ComponentDto> answer = new ArrayList<>();
         for (String filter : names) {
             ComponentDto dto = createComponentDto(camelCatalog, filter);
