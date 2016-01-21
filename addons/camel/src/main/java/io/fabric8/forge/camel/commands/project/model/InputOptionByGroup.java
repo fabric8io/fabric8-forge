@@ -20,9 +20,9 @@ import java.util.List;
 import org.jboss.forge.addon.ui.input.InputComponent;
 
 /**
- * Holds a group of related endpoint options.
+ * Holds a group of related {@link InputComponent} UI elements.
  */
-public class EndpointOptionByGroup {
+public class InputOptionByGroup {
 
     private List<InputComponent> inputs;
     private String group;

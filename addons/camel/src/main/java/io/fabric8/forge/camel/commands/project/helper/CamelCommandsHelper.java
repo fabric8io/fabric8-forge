@@ -27,9 +27,11 @@ import java.util.concurrent.Callable;
 import io.fabric8.forge.addon.utils.CamelProjectHelper;
 import io.fabric8.forge.camel.commands.project.completer.CamelComponentsCompleter;
 import io.fabric8.forge.camel.commands.project.completer.CamelComponentsLabelCompleter;
+import io.fabric8.forge.camel.commands.project.completer.CamelEipsCompleter;
 import io.fabric8.forge.camel.commands.project.dto.ComponentDto;
+import io.fabric8.forge.camel.commands.project.dto.EipDto;
 import io.fabric8.forge.camel.commands.project.model.CamelComponentDetails;
-import io.fabric8.forge.camel.commands.project.model.EndpointOptionByGroup;
+import io.fabric8.forge.camel.commands.project.model.InputOptionByGroup;
 import org.apache.camel.catalog.CamelCatalog;
 import org.apache.camel.catalog.JSonSchemaHelper;
 import org.jboss.forge.addon.convert.ConverterFactory;
@@ -93,6 +95,16 @@ public final class CamelCommandsHelper {
             public Iterable<ComponentDto> call() throws Exception {
                 String label = componentCategoryFilter != null ? componentCategoryFilter.getValue() : null;
                 return new CamelComponentsCompleter(project, camelCatalog, null, excludeComponentsOnClasspath, false, consumerOnly, producerOnly).getValueChoices(label);
+            }
+        };
+    }
+
+    public static Callable<Iterable<EipDto>> createAllEipDtoValues(final Project project, final CamelCatalog camelCatalog) {
+        // use callable so we can live update the filter
+        return new Callable<Iterable<EipDto>>() {
+            @Override
+            public Iterable<EipDto> call() throws Exception {
+                return new CamelEipsCompleter(project, camelCatalog).getValueChoices();
             }
         };
     }
@@ -344,9 +356,9 @@ public final class CamelCommandsHelper {
         return null;
     }
 
-    public static List<EndpointOptionByGroup> createUIInputsForCamelComponent(String camelComponentName, String uri, int maxOptionsPerPage, boolean consumerOnly, boolean producerOnly,
-                                                                              CamelCatalog camelCatalog, InputComponentFactory componentFactory, ConverterFactory converterFactory, UIContext ui) throws Exception {
-        List<EndpointOptionByGroup> answer = new ArrayList<>();
+    public static List<InputOptionByGroup> createUIInputsForCamelComponent(String camelComponentName, String uri, int maxOptionsPerPage, boolean consumerOnly, boolean producerOnly,
+                                                                           CamelCatalog camelCatalog, InputComponentFactory componentFactory, ConverterFactory converterFactory, UIContext ui) throws Exception {
+        List<InputOptionByGroup> answer = new ArrayList<>();
 
         if (camelComponentName == null && uri != null) {
             camelComponentName = endpointComponentName(uri);
@@ -381,7 +393,7 @@ public final class CamelCommandsHelper {
             }
 
             List<InputComponent> inputs = new ArrayList<>();
-            EndpointOptionByGroup current = new EndpointOptionByGroup();
+            InputOptionByGroup current = new InputOptionByGroup();
             current.setGroup(null);
             current.setInputs(inputs);
 
@@ -413,7 +425,7 @@ public final class CamelCommandsHelper {
 
                     // get ready for a new group
                     inputs = new ArrayList<>();
-                    current = new EndpointOptionByGroup();
+                    current = new InputOptionByGroup();
                     current.setGroup(group);
                     current.setInputs(inputs);
                 }
@@ -465,7 +477,119 @@ public final class CamelCommandsHelper {
                                     }
                                     // get ready for a new group
                                     inputs = new ArrayList<>();
-                                    current = new EndpointOptionByGroup();
+                                    current = new InputOptionByGroup();
+                                    current.setGroup(group);
+                                    current.setInputs(inputs);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // add last group if there was some new inputs
+            if (!inputs.isEmpty()) {
+                answer.add(current);
+            }
+        }
+
+        return answer;
+    }
+
+    public static List<InputOptionByGroup> createUIInputsForCamelEIP(String eip, int maxOptionsPerPage,
+                                                                     CamelCatalog camelCatalog, InputComponentFactory componentFactory, ConverterFactory converterFactory, UIContext ui) throws Exception {
+        List<InputOptionByGroup> answer = new ArrayList<>();
+
+        String json = camelCatalog.modelJSonSchema(eip);
+        if (json == null) {
+            throw new IllegalArgumentException("Could not find catalog entry for model name: " + eip);
+        }
+
+        List<Map<String, String>> data = JSonSchemaHelper.parseJsonSchema("properties", json, true);
+
+        if (data != null) {
+
+            // whether to prompt for all fields or not in the interactive mode
+            boolean promptInInteractiveMode = false;
+            if (ui instanceof ShellContext) {
+                // we want to prompt if the command was executed without any arguments
+                boolean params = ((ShellContext) ui).getCommandLine().hasParameters();
+                promptInInteractiveMode = !params;
+            }
+
+            List<InputComponent> inputs = new ArrayList<>();
+            InputOptionByGroup current = new InputOptionByGroup();
+            current.setGroup(null);
+            current.setInputs(inputs);
+
+            Set<String> namesAdded = new HashSet<>();
+
+            for (Map<String, String> propertyMap : data) {
+                String name = propertyMap.get("name");
+                String kind = propertyMap.get("kind");
+                String group = propertyMap.get("group");
+                String label = propertyMap.get("label");
+                String type = propertyMap.get("type");
+                String javaType = propertyMap.get("javaType");
+                String deprecated = propertyMap.get("deprecated");
+                String required = propertyMap.get("required");
+                String defaultValue = propertyMap.get("defaultValue");
+                String description = propertyMap.get("description");
+                String enums = propertyMap.get("enum");
+
+                if (current.getGroup() == null) {
+                    current.setGroup(group);
+                }
+                // its a new group
+                if (group != null && !group.equals(current.getGroup())) {
+                    if (!current.getInputs().isEmpty()) {
+                        // this group is now done so add to answer
+                        answer.add(current);
+                    }
+
+                    // get ready for a new group
+                    inputs = new ArrayList<>();
+                    current = new InputOptionByGroup();
+                    current.setGroup(group);
+                    current.setInputs(inputs);
+                }
+
+                if (!Strings.isNullOrEmpty(name)) {
+                    Class<Object> inputClazz = CamelCommandsHelper.loadValidInputTypes(javaType, type);
+                    if (inputClazz != null) {
+                        if (namesAdded.add(name)) {
+
+                            // we do not want descriptions in CLI mode as it makes the UI clutter
+                            boolean gui = ui.getProvider().isGUI();
+                            if (!gui) {
+                                description = "";
+                            }
+
+                            // if its an enum and its optional then make sure there is a default value
+                            // if no default value exists then add none as the 1st choice default value
+                            // otherwise the GUI makes us force to select an option which is not what we want
+                            if (enums != null && required == null || "false".equals(required)) {
+                                if (defaultValue == null || defaultValue.isEmpty()) {
+                                    defaultValue = "none";
+                                    if (!enums.startsWith("none,")) {
+                                        enums = "none," + enums;
+                                    }
+                                }
+                            }
+
+                            InputComponent input = createUIInput(componentFactory, converterFactory, name, inputClazz, required, null, defaultValue, enums, description, promptInInteractiveMode);
+                            if (input != null) {
+                                inputs.add(input);
+
+                                // if we hit max options then create a new group
+                                if (inputs.size() == maxOptionsPerPage) {
+                                    // this group is now done so add to answer
+                                    if (!current.getInputs().isEmpty()) {
+                                        answer.add(current);
+                                    }
+                                    // get ready for a new group
+                                    inputs = new ArrayList<>();
+                                    current = new InputOptionByGroup();
                                     current.setGroup(group);
                                     current.setInputs(inputs);
                                 }

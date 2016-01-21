@@ -21,12 +21,12 @@ import java.util.Map;
 import javax.inject.Inject;
 
 import io.fabric8.forge.addon.utils.XmlLineNumberParser;
+import io.fabric8.forge.camel.commands.project.dto.EipDto;
 import io.fabric8.forge.camel.commands.project.dto.NodeDto;
 import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
 import io.fabric8.forge.camel.commands.project.model.InputOptionByGroup;
-import io.fabric8.utils.Strings;
+import org.jboss.forge.addon.convert.Converter;
 import org.jboss.forge.addon.projects.Project;
-import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
@@ -34,6 +34,8 @@ import org.jboss.forge.addon.ui.context.UINavigationContext;
 import org.jboss.forge.addon.ui.input.InputComponent;
 import org.jboss.forge.addon.ui.input.InputComponentFactory;
 import org.jboss.forge.addon.ui.input.UISelectOne;
+import org.jboss.forge.addon.ui.input.ValueChangeListener;
+import org.jboss.forge.addon.ui.input.events.ValueChangeEvent;
 import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
 import org.jboss.forge.addon.ui.metadata.WithAttributes;
 import org.jboss.forge.addon.ui.result.NavigationResult;
@@ -45,31 +47,34 @@ import org.jboss.forge.addon.ui.util.Metadata;
 import org.jboss.forge.addon.ui.wizard.UIWizard;
 import org.w3c.dom.Element;
 
-import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.createUIInputsForCamelComponent;
+import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.createEipDto;
+import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.createUIInputsForCamelEIP;
 
 /**
- * Edits a from/to endpoint
+ * Adds an EIP to an existing XML route
  */
-public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand implements UIWizard {
+public class CamelAddNodeXmlCommand extends AbstractCamelProjectCommand implements UIWizard {
+
     @Inject
     @WithAttributes(label = "XML File", required = true, description = "The XML file to use (either Spring or Blueprint)")
     private UISelectOne<String> xml;
 
     @Inject
-    @WithAttributes(label = "Node", required = true, description = "Node to edit")
-    private UISelectOne<NodeDto> node;
+    @WithAttributes(label = "Parent Node", required = true, description = "Parent node (where to add the node)")
+    private UISelectOne<NodeDto> parent;
+
+    @Inject
+    @WithAttributes(label = "Name", required = true, description = "Name of node to add")
+    private UISelectOne<EipDto> name;
 
     @Inject
     private InputComponentFactory componentFactory;
 
-    @Inject
-    private DependencyInstaller dependencyInstaller;
-
     @Override
     public UICommandMetadata getMetadata(UIContext context) {
-        return Metadata.forCommand(CamelEditNodeXmlCommand.class).name(
-                "Camel: Edit Node XML").category(Categories.create(CATEGORY))
-                .description("Edits a node in a Camel XML file");
+        return Metadata.forCommand(CamelAddNodeXmlCommand.class).name(
+                "Camel: Add Node XML").category(Categories.create(CATEGORY))
+                .description("Adds a node in a Camel XML file");
     }
 
     @Override
@@ -93,9 +98,31 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
         Project project = getSelectedProject(context);
 
         String first = configureXml(project, xml);
-        configureNode(context, project, first, xml, node);
+        configureNode(context, project, first, xml, parent);
 
-        builder.add(xml).add(node);
+        name.setValueChoices(CamelCommandsHelper.createAllEipDtoValues(project, getCamelCatalog()));
+        // include converter from string->dto
+        name.setValueConverter(new Converter<String, EipDto>() {
+            @Override
+            public EipDto convert(String text) {
+                return createEipDto(getCamelCatalog(), text);
+            }
+        });
+        // show note about the chosen eip
+        name.addValueChangeListener(new ValueChangeListener() {
+            @Override
+            public void valueChanged(ValueChangeEvent event) {
+                EipDto eip = (EipDto) event.getNewValue();
+                if (eip != null) {
+                    String description = eip.getDescription();
+                    name.setNote(description != null ? description : "");
+                } else {
+                    name.setNote("");
+                }
+            }
+        });
+
+        builder.add(xml).add(parent).add(name);
     }
 
     @Override
@@ -107,16 +134,18 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
         // always refresh these as the end user may have edited the instance name
         String xmlResourceName = xml.getValue();
         attributeMap.put("xml", xmlResourceName);
-        attributeMap.put("mode", "edit");
+        attributeMap.put("mode", "add");
         attributeMap.put("kind", "xml");
 
-        NodeDto editNode = node.getValue();
+        NodeDto editNode = parent.getValue();
         String key = editNode.getKey();
-        String pattern = editNode.getPattern();
 
-        // must be same component name to allow reusing existing navigation result
+        String nodeName = name.getValue() != null ? name.getValue().getName() : null;
+
+        // must be same node and modelName to allow reusing existing navigation result
         String previous = getNodeKey(attributeMap.get("node"));
-        if (previous != null && previous.equals(key)) {
+        String previous2 = (String) attributeMap.get("name");
+        if (previous != null && previous.equals(key) && previous2 != null && previous2.equals(nodeName)) {
             NavigationResult navigationResult = (NavigationResult) attributeMap.get("navigationResult");
             if (navigationResult != null) {
                 return navigationResult;
@@ -124,67 +153,39 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
         }
 
         attributeMap.put("node", key);
+        attributeMap.put("name", nodeName);
 
-        if (pattern.equals("from") || pattern.equals("to")) {
-            // producer vs consumer only if selected
-            boolean consumerOnly = false;
-            boolean producerOnly = false;
-            boolean isFrom = false;
-
-            if (pattern.equals("from")) {
-                consumerOnly = true;
-                isFrom = true;
-            } else {
-                producerOnly = true;
-            }
-
-            Element selectedElement = getSelectedElementNode(project, xmlResourceName, key);
-            if (selectedElement == null) {
-                throw new IllegalArgumentException("Cannot find xml for node " + editNode);
-            }
-            String lineNumber = (String) selectedElement.getUserData(XmlLineNumberParser.LINE_NUMBER);
-            String lineNumberEnd = (String) selectedElement.getUserData(XmlLineNumberParser.LINE_NUMBER_END);
-            attributeMap.put("lineNumber", lineNumber);
-            attributeMap.put("lineNumberEnd", lineNumberEnd);
-
-            String uri = selectedElement.getAttribute("uri");
-            if (Strings.isNullOrBlank(uri)) {
-                throw new IllegalArgumentException("No uri property for node " + editNode);
-            }
-            String[] split = uri.split(":");
-            String camelComponentName = split[0];
-            attributeMap.put("componentName", camelComponentName);
-            attributeMap.put("endpointUri", uri);
-
-            UIContext ui = context.getUIContext();
-            List<InputOptionByGroup> groups = createUIInputsForCamelComponent(camelComponentName, uri, CamelAddEndpointDefinitionXmlCommand.MAX_OPTIONS, consumerOnly, producerOnly,
-                    getCamelCatalog(), componentFactory, converterFactory, ui);
-
-            // need all inputs in a list as well
-            List<InputComponent> allInputs = new ArrayList<>();
-            for (InputOptionByGroup group : groups) {
-                allInputs.addAll(group.getInputs());
-            }
-
-
-            NavigationResultBuilder builder = Results.navigationBuilder();
-            int pages = groups.size();
-            for (int i = 0; i < pages; i++) {
-                boolean last = i == pages - 1;
-                InputOptionByGroup current = groups.get(i);
-                EditFromOrToEndpointXmlStep step = new EditFromOrToEndpointXmlStep(projectFactory, dependencyInstaller,
-                        getCamelCatalog(),
-                        camelComponentName, current.getGroup(), allInputs, current.getInputs(), last, i, pages,
-                        editNode, isFrom);
-                builder.add(step);
-            }
-            NavigationResult navigationResult = builder.build();
-            attributeMap.put("navigationResult", navigationResult);
-            return navigationResult;
-        } else {
-            // TODO edit other patterns!
-            return null;
+        Element selectedElement = getSelectedElementNode(project, xmlResourceName, key);
+        if (selectedElement == null) {
+            throw new IllegalArgumentException("Cannot find xml for node " + editNode);
         }
+        String lineNumber = (String) selectedElement.getUserData(XmlLineNumberParser.LINE_NUMBER);
+        String lineNumberEnd = (String) selectedElement.getUserData(XmlLineNumberParser.LINE_NUMBER_END);
+        attributeMap.put("lineNumber", lineNumber);
+        attributeMap.put("lineNumberEnd", lineNumberEnd);
+
+        UIContext ui = context.getUIContext();
+        List<InputOptionByGroup> groups = createUIInputsForCamelEIP(nodeName, CamelAddEndpointDefinitionXmlCommand.MAX_OPTIONS,
+                getCamelCatalog(), componentFactory, converterFactory, ui);
+
+        // need all inputs in a list as well
+        List<InputComponent> allInputs = new ArrayList<>();
+        for (InputOptionByGroup group : groups) {
+            allInputs.addAll(group.getInputs());
+        }
+
+        NavigationResultBuilder builder = Results.navigationBuilder();
+        int pages = groups.size();
+        for (int i = 0; i < pages; i++) {
+            boolean last = i == pages - 1;
+            InputOptionByGroup current = groups.get(i);
+            AddNodeXmlStep step = new AddNodeXmlStep(projectFactory, getCamelCatalog(),
+                    nodeName, current.getGroup(), allInputs, current.getInputs(), last, i, pages, editNode);
+            builder.add(step);
+        }
+        NavigationResult navigationResult = builder.build();
+        attributeMap.put("navigationResult", navigationResult);
+        return navigationResult;
     }
 
     private String getNodeKey(Object value) {

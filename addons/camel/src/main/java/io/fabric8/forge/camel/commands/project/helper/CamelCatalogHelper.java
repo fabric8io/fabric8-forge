@@ -22,6 +22,7 @@ import java.util.TreeSet;
 
 import io.fabric8.forge.camel.commands.project.dto.ComponentDto;
 import io.fabric8.forge.camel.commands.project.dto.DataFormatDto;
+import io.fabric8.forge.camel.commands.project.dto.EipDto;
 import io.fabric8.forge.camel.commands.project.dto.LanguageDto;
 import io.fabric8.utils.Strings;
 import org.apache.camel.catalog.CamelCatalog;
@@ -169,6 +170,34 @@ public final class CamelCatalogHelper {
     }
 
     /**
+     * Checks whether the given value is matching the default value from the given component.
+     *
+     * @param modelName the model name
+     * @param key    the option key
+     * @param value  the option value
+     * @return <tt>true</tt> if matching the default value, <tt>false</tt> otherwise
+     */
+    public static boolean isModelDefaultValue(CamelCatalog camelCatalog, String modelName, String key, String value) {
+        // use the camel catalog
+        String json = camelCatalog.modelJSonSchema(modelName);
+        if (json == null) {
+            throw new IllegalArgumentException("Could not find catalog entry for model name: " + modelName);
+        }
+
+        List<Map<String, String>> data = JSonSchemaHelper.parseJsonSchema("properties", json, true);
+        if (data != null) {
+            for (Map<String, String> propertyMap : data) {
+                String name = propertyMap.get("name");
+                String defaultValue = propertyMap.get("defaultValue");
+                if (key.equals(name)) {
+                    return value.equalsIgnoreCase(defaultValue);
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      * Whether the component is consumer only
      */
     public static boolean isComponentConsumerOnly(CamelCatalog camelCatalog, String scheme) {
@@ -243,6 +272,34 @@ public final class CamelCatalogHelper {
                 dto.setArtifactId(row.get("artifactId"));
             } else if (row.get("version") != null) {
                 dto.setVersion(row.get("version"));
+            }
+        }
+        return dto;
+    }
+
+    public static EipDto createEipDto(CamelCatalog camelCatalog, String modelName) {
+        // use the camel catalog
+        String json = camelCatalog.modelJSonSchema(modelName);
+        if (json == null) {
+            return null;
+        }
+
+        EipDto dto = new EipDto();
+        List<Map<String, String>> data = JSonSchemaHelper.parseJsonSchema("model", json, false);
+        for (Map<String, String> row : data) {
+            if (row.get("name") != null) {
+                dto.setName(row.get("name"));
+            } else if (row.get("title") != null) {
+                dto.setTitle(row.get("title"));
+            } else if (row.get("description") != null) {
+                dto.setDescription(row.get("description"));
+            } else if (row.get("label") != null) {
+                String labelText = row.get("label");
+                if (Strings.isNotBlank(labelText)) {
+                    dto.setTags(labelText.split(","));
+                }
+            } else if (row.get("javaType") != null) {
+                dto.setJavaType(row.get("javaType"));
             }
         }
         return dto;
