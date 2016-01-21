@@ -15,8 +15,12 @@
  */
 package io.fabric8.forge.camel.commands.project;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import javax.inject.Inject;
+
 import io.fabric8.forge.camel.commands.project.dto.ComponentDto;
-import io.fabric8.forge.camel.commands.project.dto.NodeDto;
 import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
 import io.fabric8.forge.camel.commands.project.model.EndpointOptionByGroup;
 import org.jboss.forge.addon.projects.Project;
@@ -39,29 +43,17 @@ import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
 import org.jboss.forge.addon.ui.wizard.UIWizard;
 
-import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.createUIInputsForCamelComponent;
 
 public class CamelAddRouteXmlCommand extends AbstractCamelProjectCommand implements UIWizard {
+
     @Inject
     @WithAttributes(label = "XML File", required = true, description = "The XML file to use (either Spring or Blueprint)")
     private UISelectOne<String> xml;
 
     @Inject
-    @WithAttributes(label = "Node", required = true, description = "Node to delete")
-    private UISelectOne<NodeDto> node;
-
-    @Inject
     @WithAttributes(label = "Name", required = false, description = "The name of the new route")
     private UIInput<String> id;
-
-    @Inject
-    @WithAttributes(label = "Description", required = false, description = "The description of the new route")
-    private UIInput<String> description;
 
     @Inject
     @WithAttributes(label = "Name", required = true, description = "Name of component to use for the endpoint")
@@ -103,7 +95,7 @@ public class CamelAddRouteXmlCommand extends AbstractCamelProjectCommand impleme
         configureComponentName(project, componentName);
         configureXml(project, xml);
 
-        builder.add(xml).add(id).add(description).add(componentName);
+        builder.add(xml).add(id).add(componentName);
     }
 
     @Override
@@ -153,7 +145,7 @@ public class CamelAddRouteXmlCommand extends AbstractCamelProjectCommand impleme
                 AddRouteFromEndpointXmlStep step = new AddRouteFromEndpointXmlStep(projectFactory, dependencyInstaller,
                         getCamelCatalog(),
                         camelComponentName, current.getGroup(), allInputs, current.getInputs(), last, i, pages,
-                        id.getValue(), description.getValue());
+                        id.getValue());
                 builder.add(step);
             }
 
