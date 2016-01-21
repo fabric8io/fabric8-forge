@@ -184,11 +184,14 @@ public abstract class ConfigureEipPropertiesStep extends AbstractCamelProjectCom
             Object instance = clazz.newInstance();
 
             // set properties on the instance
-            // TODO: we may need to copy this code so we dont have classloading problems
             IntrospectionSupport.setProperties(instance, options);
+
+            // TODO: set expression is harder, such as a throttler that needs an expression for the delay
 
             // marshal to xml
             modelXml = dumpModelAsXml(instance, cl);
+
+            // TODO: if single xml tag, then try to close the tag, eg <log xxx></log> should be <log xxx/>
         } catch (Exception e) {
             // ignore
         }

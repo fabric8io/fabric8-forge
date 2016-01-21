@@ -49,9 +49,12 @@ public class AddNodeXmlStep extends ConfigureEipPropertiesStep {
     @Override
     protected Result editModelXml(List<String> lines, String lineNumber, String lineNumberEnd, String modelXml, FileResource file, String xml) throws Exception {
         // the list is 0-based, and line number is 1-based
-        int idx = Integer.valueOf(lineNumberEnd) - 1;
-        // we want to add after, so +1
-        lines.add(idx + 1, modelXml);
+        int idx = Integer.valueOf(lineNumberEnd);
+        // use the same indent from the parent line
+        int spaces = LineNumberHelper.leadingSpaces(lines, idx - 1);
+        String line = LineNumberHelper.padString(modelXml, spaces);
+        // add the line at the position
+        lines.add(idx, line);
 
         // and save the file back
         String content = LineNumberHelper.linesToString(lines);
