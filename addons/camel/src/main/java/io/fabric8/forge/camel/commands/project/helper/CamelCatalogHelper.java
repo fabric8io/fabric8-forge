@@ -170,7 +170,7 @@ public final class CamelCatalogHelper {
     }
 
     /**
-     * Checks whether the given value is matching the default value from the given component.
+     * Checks whether the given value is matching the default value from the given model.
      *
      * @param modelName the model name
      * @param key    the option key
@@ -195,6 +195,31 @@ public final class CamelCatalogHelper {
             }
         }
         return false;
+    }
+
+    /**
+     * Gets the java type of the given model
+     *
+     * @param modelName the model name
+     * @return the java type
+     */
+    public static String getModelJavaType(CamelCatalog camelCatalog, String modelName) {
+        // use the camel catalog
+        String json = camelCatalog.modelJSonSchema(modelName);
+        if (json == null) {
+            throw new IllegalArgumentException("Could not find catalog entry for model name: " + modelName);
+        }
+
+        List<Map<String, String>> data = JSonSchemaHelper.parseJsonSchema("model", json, false);
+        if (data != null) {
+            for (Map<String, String> propertyMap : data) {
+                String javaType = propertyMap.get("javaType");
+                if (javaType != null) {
+                    return javaType;
+                }
+            }
+        }
+        return null;
     }
 
     /**
