@@ -65,7 +65,7 @@ public final class CamelCommandsHelper {
             @Override
             public Iterable<ComponentDto> call() throws Exception {
                 String label = componentCategoryFilter.getValue();
-                return new CamelComponentsCompleter(project, camelCatalog, null, excludeComponentsOnClasspath, true).getValueChoices(label);
+                return new CamelComponentsCompleter(project, camelCatalog, null, excludeComponentsOnClasspath, true, false, false).getValueChoices(label);
             }
         };
     }
@@ -78,7 +78,21 @@ public final class CamelCommandsHelper {
             @Override
             public Iterable<ComponentDto> call() throws Exception {
                 String label = componentCategoryFilter != null ? componentCategoryFilter.getValue() : null;
-                return new CamelComponentsCompleter(project, camelCatalog, null, excludeComponentsOnClasspath, false).getValueChoices(label);
+                return new CamelComponentsCompleter(project, camelCatalog, null, excludeComponentsOnClasspath, false, false, false).getValueChoices(label);
+            }
+        };
+    }
+
+    public static Callable<Iterable<ComponentDto>> createComponentDtoValues(final Project project, final CamelCatalog camelCatalog,
+                                                                            final UISelectOne<String> componentCategoryFilter,
+                                                                            final boolean excludeComponentsOnClasspath,
+                                                                            final boolean consumerOnly, final boolean producerOnly) {
+        // use callable so we can live update the filter
+        return new Callable<Iterable<ComponentDto>>() {
+            @Override
+            public Iterable<ComponentDto> call() throws Exception {
+                String label = componentCategoryFilter != null ? componentCategoryFilter.getValue() : null;
+                return new CamelComponentsCompleter(project, camelCatalog, null, excludeComponentsOnClasspath, false, consumerOnly, producerOnly).getValueChoices(label);
             }
         };
     }

@@ -44,14 +44,20 @@ public class CamelComponentsCompleter implements UICompleter<ComponentDto> {
     private final UIInput<String> filter;
     private final boolean excludeComponentsOnClasspath;
     private final boolean includeCatalogComponents;
+    private final boolean consumerOnly;
+    private final boolean producerOnly;
     private final Dependency core;
 
-    public CamelComponentsCompleter(Project project, CamelCatalog camelCatalog, UIInput<String> filter, boolean excludeComponentsOnClasspath, boolean includeCatalogComponents) {
+    public CamelComponentsCompleter(Project project, CamelCatalog camelCatalog, UIInput<String> filter,
+                                    boolean excludeComponentsOnClasspath, boolean includeCatalogComponents,
+                                    boolean consumerOnly, boolean producerOnly) {
         this.project = project;
         this.camelCatalog = camelCatalog;
         this.filter = filter;
         this.excludeComponentsOnClasspath = excludeComponentsOnClasspath;
         this.includeCatalogComponents = includeCatalogComponents;
+        this.consumerOnly = consumerOnly;
+        this.producerOnly = producerOnly;
 
         // need to find camel-core so we known the camel version
         core = CamelProjectHelper.findCamelCoreDependency(project);
@@ -71,6 +77,13 @@ public class CamelComponentsCompleter implements UICompleter<ComponentDto> {
             if (value == null || name.startsWith(value)) {
                 filtered.add(name);
             }
+        }
+
+        if (consumerOnly) {
+            filtered = filterByConsumerOnly(filtered);
+        }
+        if (producerOnly) {
+            filtered = filterByProducerOnly(filtered);
         }
 
         filtered = filterByName(filtered);
@@ -95,6 +108,13 @@ public class CamelComponentsCompleter implements UICompleter<ComponentDto> {
 
         if (label != null && !"<all>".equals(label)) {
             names = filterByLabel(names, label);
+        }
+
+        if (consumerOnly) {
+            names = filterByConsumerOnly(names);
+        }
+        if (producerOnly) {
+            names = filterByProducerOnly(names);
         }
 
         List<ComponentDto> answer = new ArrayList<>();
@@ -128,6 +148,40 @@ public class CamelComponentsCompleter implements UICompleter<ComponentDto> {
             }
             names = new ArrayList<>(set);
         } return names;
+    }
+
+    private List<String> filterByConsumerOnly(List<String> choices) {
+        List<String> answer = new ArrayList<String>();
+
+        for (String name : choices) {
+            String json = camelCatalog.componentJSonSchema(name);
+            // yes its correct we grab the producer value
+            String producerOnly = findProducerOnly(json);
+            if (producerOnly != null && "true".equals(producerOnly)) {
+                // its not able to consume so skip it
+                continue;
+            }
+            answer.add(name);
+        }
+
+        return answer;
+    }
+
+    private List<String> filterByProducerOnly(List<String> choices) {
+        List<String> answer = new ArrayList<String>();
+
+        for (String name : choices) {
+            String json = camelCatalog.componentJSonSchema(name);
+            // yes its correct we grab the consumer value
+            String consumerOnly = findConsumerOnly(json);
+            if (consumerOnly != null && "true".equals(consumerOnly)) {
+                // its not able to produce so skip it
+                continue;
+            }
+            answer.add(name);
+        }
+
+        return answer;
     }
 
     private List<String> filterByName(List<String> choices) {
@@ -185,6 +239,26 @@ public class CamelComponentsCompleter implements UICompleter<ComponentDto> {
         for (Map<String, String> row : data) {
             if (row.get("artifactId") != null) {
                 return row.get("artifactId");
+            }
+        }
+        return null;
+    }
+
+    private static String findConsumerOnly(String json) {
+        List<Map<String, String>> data = JSonSchemaHelper.parseJsonSchema("component", json, false);
+        for (Map<String, String> row : data) {
+            if (row.get("consumerOnly") != null) {
+                return row.get("consumerOnly");
+            }
+        }
+        return null;
+    }
+
+    private static String findProducerOnly(String json) {
+        List<Map<String, String>> data = JSonSchemaHelper.parseJsonSchema("component", json, false);
+        for (Map<String, String> row : data) {
+            if (row.get("producerOnly") != null) {
+                return row.get("producerOnly");
             }
         }
         return null;
