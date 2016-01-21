@@ -22,7 +22,7 @@ import javax.inject.Inject;
 
 import io.fabric8.forge.camel.commands.project.dto.ComponentDto;
 import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
-import io.fabric8.forge.camel.commands.project.model.EndpointOptionByGroup;
+import io.fabric8.forge.camel.commands.project.model.InputOptionByGroup;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
 import org.jboss.forge.addon.ui.context.UIBuilder;
@@ -128,12 +128,12 @@ public class CamelAddRouteXmlCommand extends AbstractCamelProjectCommand impleme
             boolean producerOnly = false;
 
             UIContext ui = context.getUIContext();
-            List<EndpointOptionByGroup> groups = createUIInputsForCamelComponent(camelComponentName, null, CamelAddEndpointDefinitionXmlCommand.MAX_OPTIONS, consumerOnly, producerOnly,
+            List<InputOptionByGroup> groups = createUIInputsForCamelComponent(camelComponentName, null, CamelAddEndpointDefinitionXmlCommand.MAX_OPTIONS, consumerOnly, producerOnly,
                     getCamelCatalog(), componentFactory, converterFactory, ui);
 
             // need all inputs in a list as well
             List<InputComponent> allInputs = new ArrayList<>();
-            for (EndpointOptionByGroup group : groups) {
+            for (InputOptionByGroup group : groups) {
                 allInputs.addAll(group.getInputs());
             }
 
@@ -141,7 +141,7 @@ public class CamelAddRouteXmlCommand extends AbstractCamelProjectCommand impleme
             int pages = groups.size();
             for (int i = 0; i < pages; i++) {
                 boolean last = i == pages - 1;
-                EndpointOptionByGroup current = groups.get(i);
+                InputOptionByGroup current = groups.get(i);
                 AddRouteFromEndpointXmlStep step = new AddRouteFromEndpointXmlStep(projectFactory, dependencyInstaller,
                         getCamelCatalog(),
                         camelComponentName, current.getGroup(), allInputs, current.getInputs(), last, i, pages,

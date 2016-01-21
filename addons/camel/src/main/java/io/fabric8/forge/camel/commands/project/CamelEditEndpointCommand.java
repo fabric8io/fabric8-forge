@@ -22,7 +22,7 @@ import javax.inject.Inject;
 
 import io.fabric8.forge.camel.commands.project.completer.RouteBuilderEndpointsCompleter;
 import io.fabric8.forge.camel.commands.project.model.CamelEndpointDetails;
-import io.fabric8.forge.camel.commands.project.model.EndpointOptionByGroup;
+import io.fabric8.forge.camel.commands.project.model.InputOptionByGroup;
 import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
@@ -130,12 +130,12 @@ public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implem
         boolean producerOnly = detail.isProducerOnly();
 
         UIContext ui = context.getUIContext();
-        List<EndpointOptionByGroup> groups = createUIInputsForCamelComponent(camelComponentName, uri, MAX_OPTIONS, consumerOnly, producerOnly,
+        List<InputOptionByGroup> groups = createUIInputsForCamelComponent(camelComponentName, uri, MAX_OPTIONS, consumerOnly, producerOnly,
                 getCamelCatalog(), componentFactory, converterFactory, ui);
 
         // need all inputs in a list as well
         List<InputComponent> allInputs = new ArrayList<>();
-        for (EndpointOptionByGroup group : groups) {
+        for (InputOptionByGroup group : groups) {
             allInputs.addAll(group.getInputs());
         }
 
@@ -143,7 +143,7 @@ public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implem
         int pages = groups.size();
         for (int i = 0; i < pages; i++) {
             boolean last = i == pages - 1;
-            EndpointOptionByGroup current = groups.get(i);
+            InputOptionByGroup current = groups.get(i);
             ConfigureEndpointPropertiesStep step = new ConfigureEndpointPropertiesStep(projectFactory, dependencyInstaller, getCamelCatalog(),
                     camelComponentName, current.getGroup(), allInputs, current.getInputs(), last, i, pages);
             builder.add(step);
