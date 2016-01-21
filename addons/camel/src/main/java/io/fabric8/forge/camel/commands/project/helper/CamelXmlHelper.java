@@ -1,24 +1,38 @@
 /**
- *  Copyright 2005-2015 Red Hat, Inc.
- *
- *  Red Hat licenses this file to you under the Apache License, version
- *  2.0 (the "License"); you may not use this file except in compliance
- *  with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
- *  implied.  See the License for the specific language governing
- *  permissions and limitations under the License.
+ * Copyright 2005-2015 Red Hat, Inc.
+ * <p/>
+ * Red Hat licenses this file to you under the Apache License, version
+ * 2.0 (the "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+ * implied.  See the License for the specific language governing
+ * permissions and limitations under the License.
  */
 package io.fabric8.forge.camel.commands.project.helper;
+
+import java.io.File;
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
 
 import io.fabric8.camel.tooling.util.CamelModelHelper;
 import io.fabric8.camel.tooling.util.RouteXml;
 import io.fabric8.camel.tooling.util.XmlModel;
 import io.fabric8.forge.addon.utils.CommandHelpers;
+import io.fabric8.forge.addon.utils.JaxbNoNamespaceWriter;
 import io.fabric8.forge.camel.commands.project.dto.ContextDto;
 import io.fabric8.forge.camel.commands.project.dto.NodeDto;
 import io.fabric8.forge.camel.commands.project.dto.RouteDto;
@@ -40,15 +54,18 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import static io.fabric8.forge.addon.utils.Files.joinPaths;
 
 public final class CamelXmlHelper {
+
+    public static final String JAXB_CONTEXT_PACKAGES = ""
+            + "org.apache.camel:"
+            + "org.apache.camel.model:"
+            + "org.apache.camel.model.config:"
+            + "org.apache.camel.model.dataformat:"
+            + "org.apache.camel.model.language:"
+            + "org.apache.camel.model.loadbalancer:"
+            + "org.apache.camel.model.rest";
 
     public static Node findEndpointById(Document dom, String endpointId) {
         NodeList list = dom.getElementsByTagName("endpoint");
@@ -270,7 +287,7 @@ public final class CamelXmlHelper {
 
     protected static List<NodeDto> createRouteDtos(List<RouteDefinition> routeDefs, ContextDto context) {
         List<NodeDto> answer = new ArrayList<>();
-        Map<String,Integer> nodeCounts = new HashMap<>();
+        Map<String, Integer> nodeCounts = new HashMap<>();
         for (RouteDefinition def : routeDefs) {
             RouteDto route = new RouteDto();
             route.setId(def.getId());
@@ -286,14 +303,14 @@ public final class CamelXmlHelper {
     }
 
     protected static void addInputs(NodeDto owner, List<FromDefinition> inputs) {
-        Map<String,Integer> nodeCounts = new HashMap<>();
+        Map<String, Integer> nodeCounts = new HashMap<>();
         for (FromDefinition input : inputs) {
             addChild(owner, input, nodeCounts);
         }
     }
 
     protected static void addOutputs(NodeDto owner, List<ProcessorDefinition<?>> outputs) {
-        Map<String,Integer> nodeCounts = new HashMap<>();
+        Map<String, Integer> nodeCounts = new HashMap<>();
         for (ProcessorDefinition<?> output : outputs) {
             addChild(owner, output, nodeCounts);
         }
@@ -359,7 +376,7 @@ public final class CamelXmlHelper {
     protected static Node findCamelNodeForPath(Node node, String path) {
         NodeList childNodes = node.getChildNodes();
         if (childNodes != null) {
-            Map<String,Integer> nodeCounts = new HashMap<>();
+            Map<String, Integer> nodeCounts = new HashMap<>();
             for (int i = 0, size = childNodes.getLength(); i < size; i++) {
                 Node child = childNodes.item(i);
                 if (child instanceof Element) {
@@ -388,6 +405,32 @@ public final class CamelXmlHelper {
             }
         }
         return answer;
+    }
+
+    /**
+     * Dumps the definition as XML
+     *
+     * @param definition the definition, such as a {@link org.apache.camel.NamedNode}
+     * @param classLoader  the class loader
+     * @return the output in XML (is formatted)
+     * @throws JAXBException is throw if error marshalling to XML
+     */
+    public static String dumpModelAsXml(Object definition, ClassLoader classLoader) throws JAXBException, XMLStreamException {
+        JAXBContext jaxbContext = JAXBContext.newInstance(JAXB_CONTEXT_PACKAGES, classLoader);
+
+        StringWriter buffer = new StringWriter();
+
+        // we do not want to output namespace
+        XMLStreamWriter delegate = XMLOutputFactory.newInstance().createXMLStreamWriter(buffer);
+        JaxbNoNamespaceWriter writer = new JaxbNoNamespaceWriter(delegate);
+
+        Marshaller marshaller = jaxbContext.createMarshaller();
+        marshaller.setProperty(Marshaller.JAXB_SCHEMA_LOCATION, "");
+        marshaller.setProperty(Marshaller.JAXB_FRAGMENT, Boolean.TRUE);
+        marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.FALSE);
+        marshaller.marshal(definition, writer);
+
+        return buffer.toString();
     }
 
 }

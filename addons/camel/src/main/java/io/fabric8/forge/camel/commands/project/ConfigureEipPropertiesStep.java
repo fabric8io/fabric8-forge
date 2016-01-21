@@ -22,6 +22,7 @@ import java.util.Map;
 import io.fabric8.forge.addon.utils.CamelProjectHelper;
 import io.fabric8.forge.addon.utils.LineNumberHelper;
 import org.apache.camel.catalog.CamelCatalog;
+import org.apache.camel.util.IntrospectionSupport;
 import org.jboss.forge.addon.dependencies.Dependency;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.ProjectFactory;
@@ -42,7 +43,9 @@ import org.jboss.forge.addon.ui.util.Metadata;
 import org.jboss.forge.addon.ui.wizard.UIWizardStep;
 import org.jboss.forge.roaster.model.util.Strings;
 
+import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.getModelJavaType;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.isModelDefaultValue;
+import static io.fabric8.forge.camel.commands.project.helper.CamelXmlHelper.dumpModelAsXml;
 
 public abstract class ConfigureEipPropertiesStep extends AbstractCamelProjectCommand implements UIWizardStep {
 
@@ -147,7 +150,7 @@ public abstract class ConfigureEipPropertiesStep extends AbstractCamelProjectCom
         }
 
         // collect all the options that was set
-        Map<String, String> options = new HashMap<String, String>();
+        Map<String, Object> options = new HashMap<String, Object>();
         for (InputComponent input : allInputs) {
             String key = input.getName();
             // only use the value if a value was set (and the value is not the same as the default value)
@@ -169,12 +172,30 @@ public abstract class ConfigureEipPropertiesStep extends AbstractCamelProjectCom
             }
         }
 
-        // TODO: build the eip model, maybe use the catalog so we can build it from there
-//        String uri = camelCatalog.asEndpointUriXml(camelComponentName, options, false);
-//        if (uri == null) {
-//            return Results.fail("Cannot create endpoint uri");
-//        }
-        String modelXml = "<todo/>";
+        String javaType = getModelJavaType(camelCatalog, eipName);
+        if (javaType == null) {
+            return Results.fail("Cannot find javaType for " + eipName);
+        }
+
+        String modelXml = null;
+        try {
+            ClassLoader cl = CamelCatalog.class.getClassLoader();
+            Class clazz = cl.loadClass(javaType);
+            Object instance = clazz.newInstance();
+
+            // set properties on the instance
+            // TODO: we may need to copy this code so we dont have classloading problems
+            IntrospectionSupport.setProperties(instance, options);
+
+            // marshal to xml
+            modelXml = dumpModelAsXml(instance, cl);
+        } catch (Exception e) {
+            // ignore
+        }
+
+        if (modelXml == null) {
+            return Results.fail("Cannot create XML model of the node");
+        }
 
         FileResource file = facet != null ? facet.getResource(xml) : null;
         if (file == null || !file.exists()) {
