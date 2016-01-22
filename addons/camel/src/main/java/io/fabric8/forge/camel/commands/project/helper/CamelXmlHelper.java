@@ -387,7 +387,6 @@ public final class CamelXmlHelper {
                 }
             }
         }
-        System.out.println("Could not find path '" + path + "' in node " + node.getNodeName() + " " + node.getAttributes());
         return null;
     }
 
@@ -430,7 +429,15 @@ public final class CamelXmlHelper {
         marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.FALSE);
         marshaller.marshal(definition, writer);
 
-        return buffer.toString();
+        String answer = buffer.toString();
+
+        // if there is only 1 element them collapse it, eg <log xxx></log> => <log xxx/>
+        if (writer.getElements() == 1) {
+            String token = "></" + writer.getRootElementName() + ">";
+            answer = answer.replaceFirst(token, "/>");
+        }
+
+        return answer;
     }
 
 }
