@@ -27,29 +27,48 @@ public class JaxbNoNamespaceWriter implements XMLStreamWriter {
         this.delegate = delegate;
     }
 
+    private int elements;
+    private String rootElementName;
+
     @Override
     public void writeStartElement(String localName) throws XMLStreamException {
         delegate.writeStartElement(localName);
+        elements++;
+        if (rootElementName == null) {
+            rootElementName = localName;
+        }
     }
 
     @Override
     public void writeStartElement(String namespaceURI, String localName) throws XMLStreamException {
-        delegate.writeStartElement(namespaceURI, localName);
+        // we do not want to write namespaces
+        delegate.writeStartElement("", localName);
+        elements++;
+        if (rootElementName == null) {
+            rootElementName = localName;
+        }
     }
 
     @Override
     public void writeStartElement(String prefix, String localName, String namespaceURI) throws XMLStreamException {
-        delegate.writeStartElement(prefix, localName, namespaceURI);
+        // we do not want to write namespaces
+        delegate.writeStartElement("", localName, "");
+        elements++;
+        if (rootElementName == null) {
+            rootElementName = localName;
+        }
     }
 
     @Override
     public void writeEmptyElement(String namespaceURI, String localName) throws XMLStreamException {
-        delegate.writeEmptyElement(namespaceURI, localName);
+        // we do not want to write namespaces
+        delegate.writeEmptyElement("", localName);
     }
 
     @Override
     public void writeEmptyElement(String prefix, String localName, String namespaceURI) throws XMLStreamException {
-        delegate.writeEmptyElement(prefix, localName, namespaceURI);
+        // we do not want to write namespaces
+        delegate.writeEmptyElement("", localName, "");
     }
 
     @Override
@@ -191,5 +210,19 @@ public class JaxbNoNamespaceWriter implements XMLStreamWriter {
     @Override
     public Object getProperty(String name) throws IllegalArgumentException {
         return delegate.getProperty(name);
+    }
+
+    /**
+     * Number of elements in the XML
+     */
+    public int getElements() {
+        return elements;
+    }
+
+    /**
+     * The root element name
+     */
+    public String getRootElementName() {
+        return rootElementName;
     }
 }
