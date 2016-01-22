@@ -423,6 +423,8 @@ public final class CamelXmlHelper {
         // we do not want to output namespace
         XMLStreamWriter delegate = XMLOutputFactory.newInstance().createXMLStreamWriter(buffer);
         JaxbNoNamespaceWriter writer = new JaxbNoNamespaceWriter(delegate);
+        // we do not want to include the customId attribute
+        writer.setSkipAttributes("customId");
 
         Marshaller marshaller = jaxbContext.createMarshaller();
         marshaller.setProperty(Marshaller.JAXB_SCHEMA_LOCATION, "");

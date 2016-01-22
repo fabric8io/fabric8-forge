@@ -29,6 +29,7 @@ public class JaxbNoNamespaceWriter implements XMLStreamWriter {
 
     private int elements;
     private String rootElementName;
+    private String skipAttributes;
 
     @Override
     public void writeStartElement(String localName) throws XMLStreamException {
@@ -98,6 +99,10 @@ public class JaxbNoNamespaceWriter implements XMLStreamWriter {
 
     @Override
     public void writeAttribute(String localName, String value) throws XMLStreamException {
+        if (skipAttributes != null && isSkipAttribute(localName)) {
+            return;
+        }
+
         delegate.writeAttribute(localName, value);
     }
 
@@ -106,6 +111,10 @@ public class JaxbNoNamespaceWriter implements XMLStreamWriter {
         if ("xsi".equals(prefix)) {
             // skip xsi namespace
         } else {
+            if (skipAttributes != null && isSkipAttribute(localName)) {
+                return;
+            }
+
             // we do not want to write namespaces
             delegate.writeAttribute(prefix, "", localName, value);
         }
@@ -113,6 +122,9 @@ public class JaxbNoNamespaceWriter implements XMLStreamWriter {
 
     @Override
     public void writeAttribute(String namespaceURI, String localName, String value) throws XMLStreamException {
+        if (skipAttributes != null && isSkipAttribute(localName)) {
+            return;
+        }
         // we do not want to write namespaces
         delegate.writeAttribute("", localName, value);
     }
@@ -212,6 +224,17 @@ public class JaxbNoNamespaceWriter implements XMLStreamWriter {
         return delegate.getProperty(name);
     }
 
+    public String getSkipAttributes() {
+        return skipAttributes;
+    }
+
+    /**
+     * Sets a comma separated list of attribute names to skip writing.
+     */
+    public void setSkipAttributes(String skipAttributes) {
+        this.skipAttributes = skipAttributes;
+    }
+
     /**
      * Number of elements in the XML
      */
@@ -225,4 +248,14 @@ public class JaxbNoNamespaceWriter implements XMLStreamWriter {
     public String getRootElementName() {
         return rootElementName;
     }
+
+    private boolean isSkipAttribute(String localName) {
+        for (String att : skipAttributes.split(",")) {
+            if (localName.equals(att)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }

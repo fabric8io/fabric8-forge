@@ -53,8 +53,8 @@ public class EditNodeXmlStep extends ConfigureEipPropertiesStep {
         int idx2 = Integer.valueOf(lineNumberEnd) - 1;
         int delta = (idx2 - idx) + 1;
 
-        // use the same indent from the parent line
-        int spaces = LineNumberHelper.leadingSpaces(lines, idx - 1);
+        // use the same indent from the eip we are replacing
+        int spaces = LineNumberHelper.leadingSpaces(lines, idx);
         String line = LineNumberHelper.padString(modelXml, spaces);
 
         // remove the lines
