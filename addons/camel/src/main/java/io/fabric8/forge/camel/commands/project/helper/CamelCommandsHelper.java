@@ -493,6 +493,13 @@ public final class CamelCommandsHelper {
             }
         }
 
+        // use common as faullback group name
+        for (InputOptionByGroup group : answer) {
+            if (group.getGroup() == null) {
+                group.setGroup("common");
+            }
+        }
+
         return answer;
     }
 
@@ -603,6 +610,13 @@ public final class CamelCommandsHelper {
             // add last group if there was some new inputs
             if (!inputs.isEmpty()) {
                 answer.add(current);
+            }
+        }
+
+        // use common as faullback group name
+        for (InputOptionByGroup group : answer) {
+            if (group.getGroup() == null) {
+                group.setGroup("common");
             }
         }
 
