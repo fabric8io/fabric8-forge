@@ -126,7 +126,7 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
         String nodeName = editNode.getPattern();
         attributeMap.put("nodeName", nodeName);
 
-        Element selectedElement = getSelectedElementNode(project, xmlResourceName, key);
+        Element selectedElement = getSelectedCamelElementNode(project, xmlResourceName, key);
         if (selectedElement == null) {
             throw new IllegalArgumentException("Cannot find xml for node " + editNode);
         }
@@ -135,7 +135,7 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
         attributeMap.put("lineNumber", lineNumber);
         attributeMap.put("lineNumberEnd", lineNumberEnd);
 
-        // TODO: we need to get all the options configured on the EIP, maybe using introspection support or something
+        // we need to get all the options that are currently configured on the EIP so we have all the current values
         Map<String, String> options = new LinkedHashMap<>();
         try {
             ClassLoader cl = CamelCatalog.class.getClassLoader();
@@ -158,7 +158,6 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
 
         } catch (Exception e) {
             // ignore
-            e.printStackTrace();
         }
 
 
