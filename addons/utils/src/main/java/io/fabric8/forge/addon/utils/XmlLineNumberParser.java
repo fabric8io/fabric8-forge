@@ -59,6 +59,18 @@ public final class XmlLineNumberParser {
      * @throws Exception is thrown if error parsing
      */
     public static Document parseXml(final InputStream is) throws Exception {
+        return parseXml(is, null);
+    }
+
+    /**
+     * Parses the XML.
+     *
+     * @param is the XML content as an input stream
+     * @param namespace the root namespace to use in the DOM model
+     * @return the DOM model
+     * @throws Exception is thrown if error parsing
+     */
+    public static Document parseXml(final InputStream is, final String namespace) throws Exception {
         final Document doc;
         SAXParser parser;
         final SAXParserFactory factory = SAXParserFactory.newInstance();
@@ -80,40 +92,61 @@ public final class XmlLineNumberParser {
         final StringBuilder textBuffer = new StringBuilder();
         final DefaultHandler handler = new DefaultHandler() {
             private Locator locator;
+            private boolean found;
 
             @Override
             public void setDocumentLocator(final Locator locator) {
                 this.locator = locator; // Save the locator, so that it can be used later for line tracking when traversing nodes.
+                this.found = namespace == null;
             }
 
             @Override
             public void startElement(final String uri, final String localName, final String qName, final Attributes attributes) throws SAXException {
                 addTextIfNeeded();
 
-                final Element el = doc.createElement(qName);
-                for (int i = 0; i < attributes.getLength(); i++) {
-                    el.setAttribute(attributes.getQName(i), attributes.getValue(i));
+                Element el = null;
+                if ("camelContext".equals(qName) && !found && namespace != null) {
+                    el = doc.createElementNS(namespace, qName);
+                    found = true;
+                } else if (found && namespace != null) {
+                    el = doc.createElementNS(namespace, qName);
+                } else if (found) {
+                    el = doc.createElement(qName);
                 }
 
-                el.setUserData(LINE_NUMBER, String.valueOf(this.locator.getLineNumber()), null);
-                el.setUserData(COLUMN_NUMBER, String.valueOf(this.locator.getColumnNumber()), null);
-                elementStack.push(el);
+                if (el != null) {
+
+                    for (int i = 0; i < attributes.getLength(); i++) {
+                        el.setAttribute(attributes.getQName(i), attributes.getValue(i));
+                    }
+
+                    el.setUserData(LINE_NUMBER, String.valueOf(this.locator.getLineNumber()), null);
+                    el.setUserData(COLUMN_NUMBER, String.valueOf(this.locator.getColumnNumber()), null);
+                    elementStack.push(el);
+                }
             }
 
             @Override
             public void endElement(final String uri, final String localName, final String qName) {
-                addTextIfNeeded();
-                final Element closedEl = elementStack.pop();
-                if (elementStack.isEmpty()) {
-                    // Is this the root element?
-                    doc.appendChild(closedEl);
-                } else {
-                    final Element parentEl = elementStack.peek();
-                    parentEl.appendChild(closedEl);
+                if (!found) {
+                    return;
                 }
 
-                closedEl.setUserData(LINE_NUMBER_END, String.valueOf(this.locator.getLineNumber()), null);
-                closedEl.setUserData(COLUMN_NUMBER_END, String.valueOf(this.locator.getColumnNumber()), null);
+                addTextIfNeeded();
+
+                final Element closedEl = elementStack.isEmpty() ? null : elementStack.pop();
+                if (closedEl != null) {
+                    if (elementStack.isEmpty()) {
+                        // Is this the root element?
+                        doc.appendChild(closedEl);
+                    } else {
+                        final Element parentEl = elementStack.peek();
+                        parentEl.appendChild(closedEl);
+                    }
+
+                    closedEl.setUserData(LINE_NUMBER_END, String.valueOf(this.locator.getLineNumber()), null);
+                    closedEl.setUserData(COLUMN_NUMBER_END, String.valueOf(this.locator.getColumnNumber()), null);
+                }
             }
 
             @Override
@@ -130,10 +163,12 @@ public final class XmlLineNumberParser {
             // Outputs text accumulated under the current node
             private void addTextIfNeeded() {
                 if (textBuffer.length() > 0) {
-                    final Element el = elementStack.peek();
-                    final Node textNode = doc.createTextNode(textBuffer.toString());
-                    el.appendChild(textNode);
-                    textBuffer.delete(0, textBuffer.length());
+                    final Element el = elementStack.isEmpty() ? null : elementStack.peek();
+                    if (el != null) {
+                        final Node textNode = doc.createTextNode(textBuffer.toString());
+                        el.appendChild(textNode);
+                        textBuffer.delete(0, textBuffer.length());
+                    }
                 }
             }
         };

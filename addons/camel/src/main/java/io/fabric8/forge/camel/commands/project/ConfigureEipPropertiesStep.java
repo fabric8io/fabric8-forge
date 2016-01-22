@@ -190,8 +190,6 @@ public abstract class ConfigureEipPropertiesStep extends AbstractCamelProjectCom
 
             // marshal to xml
             modelXml = dumpModelAsXml(instance, cl);
-
-            // TODO: if single xml tag, then try to close the tag, eg <log xxx></log> should be <log xxx/>
         } catch (Exception e) {
             // ignore
         }

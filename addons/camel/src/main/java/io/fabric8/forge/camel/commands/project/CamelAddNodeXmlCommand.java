@@ -166,7 +166,7 @@ public class CamelAddNodeXmlCommand extends AbstractCamelProjectCommand implemen
 
         UIContext ui = context.getUIContext();
         List<InputOptionByGroup> groups = createUIInputsForCamelEIP(nodeName, CamelAddEndpointDefinitionXmlCommand.MAX_OPTIONS,
-                getCamelCatalog(), componentFactory, converterFactory, ui);
+                null, getCamelCatalog(), componentFactory, converterFactory, ui);
 
         // need all inputs in a list as well
         List<InputComponent> allInputs = new ArrayList<>();

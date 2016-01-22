@@ -496,7 +496,7 @@ public final class CamelCommandsHelper {
         return answer;
     }
 
-    public static List<InputOptionByGroup> createUIInputsForCamelEIP(String eip, int maxOptionsPerPage,
+    public static List<InputOptionByGroup> createUIInputsForCamelEIP(String eip, int maxOptionsPerPage, Map<String, String> currentValues,
                                                                      CamelCatalog camelCatalog, InputComponentFactory componentFactory, ConverterFactory converterFactory, UIContext ui) throws Exception {
         List<InputOptionByGroup> answer = new ArrayList<>();
 
@@ -533,6 +533,7 @@ public final class CamelCommandsHelper {
                 String javaType = propertyMap.get("javaType");
                 String deprecated = propertyMap.get("deprecated");
                 String required = propertyMap.get("required");
+                String currentValue = currentValues != null ? currentValues.get(name) : null;
                 String defaultValue = propertyMap.get("defaultValue");
                 String description = propertyMap.get("description");
                 String enums = propertyMap.get("enum");
@@ -577,7 +578,7 @@ public final class CamelCommandsHelper {
                                 }
                             }
 
-                            InputComponent input = createUIInput(componentFactory, converterFactory, name, inputClazz, required, null, defaultValue, enums, description, promptInInteractiveMode);
+                            InputComponent input = createUIInput(componentFactory, converterFactory, name, inputClazz, required, currentValue, defaultValue, enums, description, promptInInteractiveMode);
                             if (input != null) {
                                 inputs.add(input);
 
