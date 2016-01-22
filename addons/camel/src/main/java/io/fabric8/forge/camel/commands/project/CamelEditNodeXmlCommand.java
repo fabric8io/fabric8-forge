@@ -26,6 +26,7 @@ import io.fabric8.forge.camel.commands.project.dto.NodeDto;
 import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
 import io.fabric8.forge.camel.commands.project.model.InputOptionByGroup;
 import org.apache.camel.catalog.CamelCatalog;
+import org.apache.camel.model.language.ExpressionDefinition;
 import org.apache.camel.util.IntrospectionSupport;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.ui.context.UIBuilder;
@@ -149,10 +150,20 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
             for (Map.Entry<String, Object> entry : temp.entrySet()) {
                 String k = entry.getKey();
                 Object v = entry.getValue();
-                // convert the value to a text based
-                String text = v != null ? v.toString() : null;
-                if (text != null) {
-                    options.put(k, text);
+
+                // special for expression
+                if (v instanceof ExpressionDefinition) {
+                    ExpressionDefinition exp = (ExpressionDefinition) v;
+                    String text = exp.getExpression();
+                    String lan = exp.getLanguage();
+                    options.put(k, lan);
+                    options.put(k + "-value", text);
+                } else {
+                    // convert the value to a text based
+                    String text = v != null ? v.toString() : null;
+                    if (text != null) {
+                        options.put(k, text);
+                    }
                 }
             }
 

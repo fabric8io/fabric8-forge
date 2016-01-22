@@ -544,6 +544,12 @@ public final class CamelCommandsHelper {
                 String defaultValue = propertyMap.get("defaultValue");
                 String description = propertyMap.get("description");
                 String enums = propertyMap.get("enum");
+                String oneOf = propertyMap.get("oneOf");
+
+                // we do not want to include outputs as an option
+                if ("outputs".equals(name)) {
+                    continue;
+                }
 
                 if (current.getGroup() == null) {
                     current.setGroup(group);
@@ -585,9 +591,34 @@ public final class CamelCommandsHelper {
                                 }
                             }
 
-                            InputComponent input = createUIInput(componentFactory, converterFactory, name, inputClazz, required, currentValue, defaultValue, enums, description, promptInInteractiveMode);
+                            // if its an enum and its optional then make sure there is a default value
+                            // if no default value exists then add none as the 1st choice default value
+                            // otherwise the GUI makes us force to select an option which is not what we want
+                            if (oneOf != null && (required == null || "false".equals(required))) {
+                                if (defaultValue == null || defaultValue.isEmpty()) {
+                                    defaultValue = "none";
+                                    if (!oneOf.startsWith("none,")) {
+                                        oneOf = "none," + oneOf;
+                                    }
+                                }
+                            }
+
+                            // we cannot have both enum and oneOf at the same time
+                            String enumsOrOneOfs = enums != null ? enums : oneOf;
+
+                            InputComponent input = createUIInput(componentFactory, converterFactory, name, inputClazz, required, currentValue, defaultValue, enumsOrOneOfs, description, promptInInteractiveMode);
+
                             if (input != null) {
                                 inputs.add(input);
+
+                                // if its an expression then we need to add a 2nd input for the actual value
+                                if ("expression".equals(kind)) {
+                                    currentValue = currentValues != null ? currentValues.get(name + "-value") : null;
+                                    InputComponent input2 = createUIInput(componentFactory, converterFactory, name + "-value", String.class, required, currentValue, null, null, description, promptInInteractiveMode);
+                                    if (input2 != null) {
+                                        inputs.add(input2);
+                                    }
+                                }
 
                                 // if we hit max options then create a new group
                                 if (inputs.size() == maxOptionsPerPage) {
