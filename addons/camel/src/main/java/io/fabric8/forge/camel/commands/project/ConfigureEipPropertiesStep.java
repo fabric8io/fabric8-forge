@@ -45,6 +45,7 @@ import org.jboss.forge.roaster.model.util.Strings;
 
 import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.getModelJavaType;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.isModelDefaultValue;
+import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.isModelExpressionKind;
 import static io.fabric8.forge.camel.commands.project.helper.CamelXmlHelper.dumpModelAsXml;
 
 public abstract class ConfigureEipPropertiesStep extends AbstractCamelProjectCommand implements UIWizardStep {
@@ -151,8 +152,15 @@ public abstract class ConfigureEipPropertiesStep extends AbstractCamelProjectCom
 
         // collect all the options that was set
         Map<String, Object> options = new HashMap<String, Object>();
+        Map<String, String> expressionKeys = new HashMap<String, String>();
+        Map<String, String> expressionValues = new HashMap<String, String>();
         for (InputComponent input : allInputs) {
             String key = input.getName();
+
+            // special for expression
+            boolean expressionKey = isModelExpressionKind(camelCatalog, eipName, key);
+            boolean expressionValue = key.endsWith("-value");
+
             // only use the value if a value was set (and the value is not the same as the default value)
             if (input.hasValue()) {
                 String value = input.getValue().toString();
@@ -160,14 +168,26 @@ public abstract class ConfigureEipPropertiesStep extends AbstractCamelProjectCom
                     // do not add the value if it match the default value
                     boolean matchDefault = isModelDefaultValue(camelCatalog, eipName, key, value);
                     if (!matchDefault) {
-                        options.put(key, value);
+                        if (expressionKey) {
+                            expressionKeys.put(key, value);
+                        } else if (expressionValue) {
+                            expressionValues.put(key, value);
+                        } else {
+                            options.put(key, value);
+                        }
                     }
                 }
             } else if (input.isRequired() && input.hasDefaultValue()) {
                 // if its required then we need to grab the value
                 String value = input.getValue().toString();
                 if (value != null) {
-                    options.put(key, value);
+                    if (expressionKey) {
+                        expressionKeys.put(key, value);
+                    } else if (expressionValue) {
+                        expressionValues.put(key, value);
+                    } else {
+                        options.put(key, value);
+                    }
                 }
             }
         }
@@ -186,7 +206,23 @@ public abstract class ConfigureEipPropertiesStep extends AbstractCamelProjectCom
             // set properties on the instance
             IntrospectionSupport.setProperties(instance, options);
 
-            // TODO: set expression is harder, such as a throttler that needs an expression for the delay
+            for (Map.Entry<String, String> entry : expressionKeys.entrySet()) {
+                String name = entry.getKey();
+                String language = entry.getValue();
+                String text = expressionValues.get(name + "-value");
+
+                // build the model
+                String lanJavaType = getModelJavaType(camelCatalog, language);
+                if (lanJavaType != null) {
+                    Class clazz2 = cl.loadClass(lanJavaType);
+                    Object instance2 = clazz2.newInstance();
+
+                    // set the value of the expression
+                    IntrospectionSupport.setProperty(instance2, "expression", text);
+                    // add the expression to the parent
+                    IntrospectionSupport.setProperty(instance, name, instance2);
+                }
+            }
 
             // marshal to xml
             modelXml = dumpModelAsXml(instance, cl);

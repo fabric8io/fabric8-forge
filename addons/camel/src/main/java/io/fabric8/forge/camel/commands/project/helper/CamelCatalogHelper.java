@@ -198,6 +198,32 @@ public final class CamelCatalogHelper {
     }
 
     /**
+     * Checks whether the given key is an expression kind
+     *
+     * @param modelName the model name
+     * @param key    the option key
+     * @return <tt>true</tt> if the key is an expression type, <tt>false</tt> otherwise
+     */
+    public static boolean isModelExpressionKind(CamelCatalog camelCatalog, String modelName, String key) {
+        // use the camel catalog
+        String json = camelCatalog.modelJSonSchema(modelName);
+        if (json == null) {
+            throw new IllegalArgumentException("Could not find catalog entry for model name: " + modelName);
+        }
+
+        List<Map<String, String>> data = JSonSchemaHelper.parseJsonSchema("properties", json, true);
+        if (data != null) {
+            for (Map<String, String> propertyMap : data) {
+                String name = propertyMap.get("name");
+                if (key.equals(name)) {
+                    return "expression".equals(propertyMap.get("kind"));
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      * Gets the java type of the given model
      *
      * @param modelName the model name
