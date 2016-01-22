@@ -176,7 +176,7 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
         for (int i = 0; i < pages; i++) {
             boolean last = i == pages - 1;
             InputOptionByGroup current = groups.get(i);
-            AddNodeXmlStep step = new AddNodeXmlStep(projectFactory, getCamelCatalog(),
+            EditNodeXmlStep step = new EditNodeXmlStep(projectFactory, getCamelCatalog(),
                     nodeName, current.getGroup(), allInputs, current.getInputs(), last, i, pages);
             builder.add(step);
         }

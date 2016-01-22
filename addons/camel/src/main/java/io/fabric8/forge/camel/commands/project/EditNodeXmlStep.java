@@ -30,40 +30,50 @@ import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
 
 /**
- * A wizard step to add a node to XML
+ * A wizard step to edit a XML node
  */
-public class AddNodeXmlStep extends ConfigureEipPropertiesStep {
+public class EditNodeXmlStep extends ConfigureEipPropertiesStep {
 
-    public AddNodeXmlStep(ProjectFactory projectFactory, CamelCatalog camelCatalog, String eipName, String group, List<InputComponent> allInputs, List<InputComponent> inputs,
-                          boolean last, int index, int total) {
+    public EditNodeXmlStep(ProjectFactory projectFactory, CamelCatalog camelCatalog, String eipName, String group, List<InputComponent> allInputs, List<InputComponent> inputs,
+                           boolean last, int index, int total) {
         super(projectFactory, camelCatalog, eipName, group, allInputs, inputs, last, index, total);
     }
 
     @Override
     public UICommandMetadata getMetadata(UIContext context) {
         return Metadata.forCommand(ConfigureEndpointPropertiesStep.class).name(
-                "Camel: Add EIP").category(Categories.create(CATEGORY))
+                "Camel: Edit EIP").category(Categories.create(CATEGORY))
                 .description(String.format("Configure %s options (%s of %s)", getGroup(), getIndex(), getTotal()));
     }
 
     @Override
-    protected Result addModelXml(List<String> lines, String lineNumber, String lineNumberEnd, String modelXml, FileResource file, String xml) throws Exception {
+    protected Result editModelXml(List<String> lines, String lineNumber, String lineNumberEnd, String modelXml, FileResource file, String xml) throws Exception {
         // the list is 0-based, and line number is 1-based
-        int idx = Integer.valueOf(lineNumberEnd);
+        int idx = Integer.valueOf(lineNumber) - 1;
+        int idx2 = Integer.valueOf(lineNumberEnd) - 1;
+        int delta = (idx2 - idx) + 1;
+
         // use the same indent from the parent line
         int spaces = LineNumberHelper.leadingSpaces(lines, idx - 1);
         String line = LineNumberHelper.padString(modelXml, spaces);
-        // add the line at the position
+
+        // remove the lines
+        while (delta > 0) {
+            delta--;
+            lines.remove(idx);
+        }
+
+        // add the new line at the old starting position
         lines.add(idx, line);
 
         // and save the file back
         String content = LineNumberHelper.linesToString(lines);
         file.setContents(content);
-        return Results.success("Added: " + modelXml);
+        return Results.success("Edited: " + modelXml);
     }
 
     @Override
-    protected Result editModelXml(List<String> lines, String lineNumber, String lineNumberEnd, String modelXml, FileResource file, String xml) throws Exception {
+    protected Result addModelXml(List<String> lines, String lineNumber, String lineNumberEnd, String modelXml, FileResource file, String xml) throws Exception {
         // noop
         return null;
     }

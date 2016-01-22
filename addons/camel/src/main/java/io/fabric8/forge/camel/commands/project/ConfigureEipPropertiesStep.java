@@ -205,13 +205,19 @@ public abstract class ConfigureEipPropertiesStep extends AbstractCamelProjectCom
         if (file == null || !file.exists()) {
             return Results.fail("Cannot find XML file " + xml);
         }
-        return addOrEditModelXml(file, modelXml, xml, lineNumber, lineNumberEnd);
+        return addOrEditModelXml(file, modelXml, xml, lineNumber, lineNumberEnd, mode);
     }
 
-    protected Result addOrEditModelXml(FileResource file, String modelXml, String xml, String lineNumber, String lineNumberEnd) throws Exception {
+    protected Result addOrEditModelXml(FileResource file, String modelXml, String xml, String lineNumber, String lineNumberEnd, String mode) throws Exception {
         List<String> lines = LineNumberHelper.readLines(file.getResourceInputStream());
-        return editModelXml(lines, lineNumber, lineNumberEnd, modelXml, file, xml);
+        if ("add".equals(mode)) {
+            return addModelXml(lines, lineNumber, lineNumberEnd, modelXml, file, xml);
+        } else {
+            return editModelXml(lines, lineNumber, lineNumberEnd, modelXml, file, xml);
+        }
     }
+
+    protected abstract Result addModelXml(List<String> lines, String lineNumber, String lineNumberEnd, String modelXml, FileResource file, String xml) throws Exception;
 
     protected abstract Result editModelXml(List<String> lines, String lineNumber, String lineNumberEnd, String modelXml, FileResource file, String xml) throws Exception;
 
