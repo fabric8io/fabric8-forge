@@ -155,7 +155,7 @@ public class CamelAddNodeXmlCommand extends AbstractCamelProjectCommand implemen
         attributeMap.put("node", key);
         attributeMap.put("name", nodeName);
 
-        Element selectedElement = getSelectedElementNode(project, xmlResourceName, key);
+        Element selectedElement = getSelectedCamelElementNode(project, xmlResourceName, key);
         if (selectedElement == null) {
             throw new IllegalArgumentException("Cannot find xml for node " + editNode);
         }
@@ -166,7 +166,7 @@ public class CamelAddNodeXmlCommand extends AbstractCamelProjectCommand implemen
 
         UIContext ui = context.getUIContext();
         List<InputOptionByGroup> groups = createUIInputsForCamelEIP(nodeName, CamelAddEndpointDefinitionXmlCommand.MAX_OPTIONS,
-                getCamelCatalog(), componentFactory, converterFactory, ui);
+                null, getCamelCatalog(), componentFactory, converterFactory, ui);
 
         // need all inputs in a list as well
         List<InputComponent> allInputs = new ArrayList<>();

@@ -24,6 +24,7 @@ import java.util.Map;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
+import javax.xml.bind.Unmarshaller;
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
@@ -409,8 +410,8 @@ public final class CamelXmlHelper {
     /**
      * Dumps the definition as XML
      *
-     * @param definition the definition, such as a {@link org.apache.camel.NamedNode}
-     * @param classLoader  the class loader
+     * @param definition  the definition, such as a {@link org.apache.camel.NamedNode}
+     * @param classLoader the class loader
      * @return the output in XML (is formatted)
      * @throws JAXBException is throw if error marshalling to XML
      */
@@ -436,6 +437,23 @@ public final class CamelXmlHelper {
             String token = "></" + writer.getRootElementName() + ">";
             answer = answer.replaceFirst(token, "/>");
         }
+
+        return answer;
+    }
+
+    /**
+     * Turns the xml into EIP model classes
+     *
+     * @param node        the node representing the XML
+     * @param classLoader the class loader
+     * @return the EIP model class
+     * @throws JAXBException is throw if error unmarshalling XML to Object
+     */
+    public static Object xmlAsModel(Node node, ClassLoader classLoader) throws JAXBException {
+        JAXBContext jaxbContext = JAXBContext.newInstance(JAXB_CONTEXT_PACKAGES, classLoader);
+
+        Unmarshaller marshaller = jaxbContext.createUnmarshaller();
+        Object answer = marshaller.unmarshal(node);
 
         return answer;
     }

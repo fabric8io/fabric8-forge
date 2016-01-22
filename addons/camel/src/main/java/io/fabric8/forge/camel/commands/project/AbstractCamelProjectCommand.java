@@ -264,9 +264,9 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
         });
     }
 
-    protected Element getSelectedElementNode(Project project, String xmlResourceName, String key) throws Exception {
+    protected Element getSelectedCamelElementNode(Project project, String xmlResourceName, String key) throws Exception {
         FileResource file = getXmlResourceFile(project, xmlResourceName);
-        Document root = XmlLineNumberParser.parseXml(file.getResourceInputStream());
+        Document root = XmlLineNumberParser.parseXml(file.getResourceInputStream(), "camelContext,routes,rests", "http://camel.apache.org/schema/spring");
         Element selectedElement = null;
         if (root != null) {
             Node selectedNode = CamelXmlHelper.findCamelNodeInDocument(root, key);
