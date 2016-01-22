@@ -281,6 +281,12 @@
       </properties>
     </profile>
     <profile>
+      <id>ipaas-snapshot</id>
+      <properties>
+        <fabric8.archetypes.release.version>2.2.94-SNAPSHOT</fabric8.archetypes.release.version>
+      </properties>
+    </profile>
+    <profile>
       <id>release</id>
       <build>
         <plugins>
