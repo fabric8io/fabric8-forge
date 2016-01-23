@@ -33,7 +33,7 @@
     <!-- to include hawtio version in pom.xml which is needed by camel setup command -->
     <hawtio.version>1.4.59</hawtio.version>
     <!-- docker maven plugin -->
-    <docker.version>0.13.6</docker.version>
+    <docker.version>0.13.8</docker.version>
     <!-- TODO: until Camel 2.16.2
     <camel.version>2.17-SNAPSHOT</camel.version> -->
   </properties>
