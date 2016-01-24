@@ -54,7 +54,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-
 @RunWith(Arquillian.class)
 public class NewNodeXmlTest {
 
@@ -116,16 +115,17 @@ public class NewNodeXmlTest {
         // lets add a new route
         testAddRoute(project);
 
-        testDeleteRoute(project);
-
+        // add endpoint to the route
         testAddEndpoint(project);
+
+        // and then delete the route
+        testDeleteRoute(project);
     }
 
     protected void testAddRoute(Project project) throws Exception {
         WizardCommandController command = testHarness.createWizardController(CamelAddRouteXmlCommand.class, project.getRoot());
         command.initialize();
         command.setValueFor("id", "myNewRoute");
-        command.setValueFor("description", "The description of this new route");
         command.setValueFor("componentName", "seda");
         command.setValueFor("xml", "META-INF/spring/camel-context.xml");
 
@@ -169,31 +169,24 @@ public class NewNodeXmlTest {
     }
 
     protected void testAddEndpoint(Project project) throws Exception {
-        String key = NEW_ROUTE_KEY;
+        String key = "_camelContext1/myNewRoute/_from1";
         WizardCommandController command = testHarness.createWizardController(CamelAddEndpointXmlCommand.class, project.getRoot());
         command.initialize();
         command.setValueFor("xml", "META-INF/spring/camel-context.xml");
-
         setNodeValue(key, command);
-
-        String id = "myNewEndpoint";
-        command.setValueFor("id", id);
-        command.setValueFor("description", "This is a description");
-        command.setValueFor("componentName", "ref");
+        command.setValueFor("componentName", "log");
 
         command = command.next();
-
         command.initialize();
-        command.setValueFor("name", "someRefName");
+        command.setValueFor("loggerName", "myLog");
 
         assertExecutes(command);
 
         List<ContextDto> contexts = getRoutesXml(project);
         assertFalse("Should have loaded a camelContext", contexts.isEmpty());
 
-        String expectedKey = NEW_ROUTE_KEY + "/" + id;
+        String expectedKey = "_camelContext1/myNewRoute/_to1";
         assertNodeWithKey(contexts, expectedKey);
-
     }
 
     protected static void assertValidAndExecutes(CommandController command) throws Exception {
@@ -229,7 +222,6 @@ public class NewNodeXmlTest {
         }
     }
 
-
     protected List<ContextDto> getRoutesXml(Project project) throws Exception {
         CommandController command = testHarness.createCommandController(CamelGetRoutesXmlCommand.class, project.getRoot());
         command.initialize();
@@ -255,7 +247,6 @@ public class NewNodeXmlTest {
         System.out.println();
         return answer;
     }
-
 
     public static NodeDto assertNodeWithKey(List<? extends NodeDto> contexts, String key) {
         NodeDto actual = getNodeWithKey(contexts, key);
