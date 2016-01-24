@@ -39,19 +39,19 @@
     <docker.from>fabric8/java</docker.from>
     <docker.port.container.jolokia>8778</docker.port.container.jolokia>
     <fabric8.label.group>quickstarts</fabric8.label.group>
-    <camel.version>2.16.0</camel.version>
+    <camel.version>2.16.1</camel.version>
     <docker.env.MAIN>org.apache.camel.cdi.Main</docker.env.MAIN>
     <version.compiler.plugin>2.3.1</version.compiler.plugin>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <docker.assemblyDescriptorRef>artifact-with-dependencies</docker.assemblyDescriptorRef>
-    <docker-maven-plugin-version>0.13.7</docker-maven-plugin-version>
+    <docker-maven-plugin-version>0.13.8</docker-maven-plugin-version>
   </properties>
   <dependencyManagement>
     <dependencies>
       <dependency>
         <groupId>org.apache.camel</groupId>
         <artifactId>camel-netty4-http</artifactId>
-        <version>2.14.1</version>
+        <version>2.16.1</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
