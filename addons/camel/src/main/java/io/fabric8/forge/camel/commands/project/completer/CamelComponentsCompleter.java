@@ -214,7 +214,7 @@ public class CamelComponentsCompleter implements UICompleter<ComponentDto> {
 
         List<String> answer = new ArrayList<String>();
 
-        // filter names which are already on the classpath, or do not match the optional filter by label input
+        // filter names
         for (String name : choices) {
             String json = camelCatalog.componentJSonSchema(name);
             String labels = findLabel(json);
