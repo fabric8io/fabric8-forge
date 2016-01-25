@@ -32,27 +32,13 @@
     <module>camel</module>
     <module>camel-commands</module>
     <module>camel-tooling-util</module>
-<!--
-    TODO disabled until this bug is fixed: https://issues.jboss.org/browse/FORGE-2312 as it breaks our CD process
-    hopefully in 2.16.1 of forge...
-
-    <module>camel-tests</module>
--->
     <module>kubernetes</module>
     <module>devops</module>
     <module>utils</module>
 <!-- TODO: disabled until Camel 2.16.2
     <module>fabric8-camel-maven-plugin</module>
 -->
+    <module>camel-tests</module>
   </modules>
 
-
-  <profiles>
-    <profile>
-      <id>itests</id>
-      <modules>
-        <module>camel-tests</module>
-      </modules>
-    </profile>
-  </profiles>
 </project>
