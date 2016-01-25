@@ -119,6 +119,12 @@ public class EndpointMojo extends AbstractMojo {
     @Parameter(property = "ignoreLenientProperties", defaultValue = "true", readonly = true, required = false)
     private boolean ignoreLenientProperties;
 
+    /**
+     * Whether to show all endpoints and simple expressions (both invalid and valid).
+     */
+    @Parameter(property = "showAll", defaultValue = "false", readonly = true, required = false)
+    private boolean showAll;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         CamelCatalog catalog = new DefaultCamelCatalog();
@@ -270,6 +276,35 @@ public class EndpointMojo extends AbstractMojo {
                 sb.append("\n\n");
 
                 getLog().warn(sb.toString());
+            } else if (showAll) {
+                StringBuilder sb = new StringBuilder();
+                sb.append("Endpoint validation passsed at: ");
+                if (detail.getClassName() != null && detail.getLineNumber() != null) {
+                    // this is from java code
+                    sb.append(detail.getClassName());
+                    if (detail.getMethodName() != null) {
+                        sb.append(".").append(detail.getMethodName());
+                    }
+                    sb.append("(").append(asSimpleClassName(detail.getClassName())).append(".java:");
+                    sb.append(detail.getLineNumber()).append(")");
+                } else if (detail.getLineNumber() != null) {
+                    // this is from xml
+                    String fqn = stripRootPath(asRelativeFile(detail.getFileName()));
+                    if (fqn.endsWith(".xml")) {
+                        fqn = fqn.substring(0, fqn.length() - 4);
+                        fqn = asPackageName(fqn);
+                    }
+                    sb.append(fqn);
+                    sb.append("(").append(asSimpleClassName(fqn)).append(".xml:");
+                    sb.append(detail.getLineNumber()).append(")");
+                } else {
+                    sb.append(detail.getFileName());
+                }
+                sb.append("\n");
+                sb.append("\n\t").append(result.getUri());
+                sb.append("\n\n");
+
+                getLog().info(sb.toString());
             }
         }
         String endpointSummary;
@@ -324,6 +359,35 @@ public class EndpointMojo extends AbstractMojo {
                 sb.append("\n");
 
                 getLog().warn(sb.toString());
+            } else if (showAll) {
+                StringBuilder sb = new StringBuilder();
+                sb.append("Simple validation passed at: ");
+                if (detail.getClassName() != null && detail.getLineNumber() != null) {
+                    // this is from java code
+                    sb.append(detail.getClassName());
+                    if (detail.getMethodName() != null) {
+                        sb.append(".").append(detail.getMethodName());
+                    }
+                    sb.append("(").append(asSimpleClassName(detail.getClassName())).append(".java:");
+                    sb.append(detail.getLineNumber()).append(")");
+                } else if (detail.getLineNumber() != null) {
+                    // this is from xml
+                    String fqn = stripRootPath(asRelativeFile(detail.getFileName()));
+                    if (fqn.endsWith(".xml")) {
+                        fqn = fqn.substring(0, fqn.length() - 4);
+                        fqn = asPackageName(fqn);
+                    }
+                    sb.append(fqn);
+                    sb.append("(").append(asSimpleClassName(fqn)).append(".xml:");
+                    sb.append(detail.getLineNumber()).append(")");
+                } else {
+                    sb.append(detail.getFileName());
+                }
+                sb.append("\n");
+                sb.append("\n\t").append(result.getSimple());
+                sb.append("\n\n");
+
+                getLog().info(sb.toString());
             }
         }
 
