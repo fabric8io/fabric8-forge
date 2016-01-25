@@ -28,6 +28,7 @@ import io.fabric8.forge.addon.utils.CamelProjectHelper;
 import io.fabric8.forge.camel.commands.project.completer.CamelComponentsCompleter;
 import io.fabric8.forge.camel.commands.project.completer.CamelComponentsLabelCompleter;
 import io.fabric8.forge.camel.commands.project.completer.CamelEipsCompleter;
+import io.fabric8.forge.camel.commands.project.completer.CamelEipsLabelCompleter;
 import io.fabric8.forge.camel.commands.project.dto.ComponentDto;
 import io.fabric8.forge.camel.commands.project.dto.EipDto;
 import io.fabric8.forge.camel.commands.project.model.CamelComponentDetails;
@@ -57,6 +58,10 @@ public final class CamelCommandsHelper {
 
     public static Iterable<String> createComponentLabelValues(Project project, CamelCatalog camelCatalog) {
         return new CamelComponentsLabelCompleter(project, camelCatalog).getValueChoices();
+    }
+
+    public static Iterable<String> createEipLabelValues(Project project, CamelCatalog camelCatalog) {
+        return new CamelEipsLabelCompleter(project, camelCatalog).getValueChoices();
     }
 
     public static Callable<Iterable<ComponentDto>> createAllComponentDtoValues(final Project project, final CamelCatalog camelCatalog,
@@ -99,12 +104,13 @@ public final class CamelCommandsHelper {
         };
     }
 
-    public static Callable<Iterable<EipDto>> createAllEipDtoValues(final Project project, final CamelCatalog camelCatalog) {
+    public static Callable<Iterable<EipDto>> createAllEipDtoValues(final Project project, final CamelCatalog camelCatalog, final UISelectOne<String> eipCategoryFilter) {
         // use callable so we can live update the filter
         return new Callable<Iterable<EipDto>>() {
             @Override
             public Iterable<EipDto> call() throws Exception {
-                return new CamelEipsCompleter(project, camelCatalog).getValueChoices();
+                String label = eipCategoryFilter != null ? eipCategoryFilter.getValue() : null;
+                return new CamelEipsCompleter(project, camelCatalog).getValueChoices(label);
             }
         };
     }

@@ -17,10 +17,12 @@ package io.fabric8.forge.camel.commands.project.completer;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import io.fabric8.forge.addon.utils.CamelProjectHelper;
 import io.fabric8.forge.camel.commands.project.dto.EipDto;
 import org.apache.camel.catalog.CamelCatalog;
+import org.apache.camel.catalog.JSonSchemaHelper;
 import org.jboss.forge.addon.dependencies.Dependency;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.ui.context.UIContext;
@@ -70,12 +72,16 @@ public class CamelEipsCompleter implements UICompleter<EipDto> {
         return answer;
     }
 
-    public Iterable<EipDto> getValueChoices() {
+    public Iterable<EipDto> getValueChoices(String label) {
         if (core == null) {
             return null;
         }
 
         List<String> names = camelCatalog.findModelNames();
+
+        if (label != null && !"<all>".equals(label)) {
+            names = filterByLabel(names, label);
+        }
 
         List<EipDto> answer = new ArrayList<>();
         for (String name : names) {
@@ -84,6 +90,42 @@ public class CamelEipsCompleter implements UICompleter<EipDto> {
         }
 
         return answer;
+    }
+
+    private List<String> filterByLabel(List<String> choices, String label) {
+        if (label == null || label.isEmpty()) {
+            return choices;
+        }
+
+        List<String> answer = new ArrayList<String>();
+
+        for (String name : choices) {
+            String json = camelCatalog.modelJSonSchema(name);
+            String labels = findLabel(json);
+            if (labels != null) {
+                for (String target : labels.split(",")) {
+                    if (target.startsWith(label)) {
+                        answer.add(name);
+                        break;
+                    }
+                }
+            } else {
+                // no label so they all match
+                answer.addAll(choices);
+            }
+        }
+
+        return answer;
+    }
+
+    private static String findLabel(String json) {
+        List<Map<String, String>> data = JSonSchemaHelper.parseJsonSchema("model", json, false);
+        for (Map<String, String> row : data) {
+            if (row.get("label") != null) {
+                return row.get("label");
+            }
+        }
+        return null;
     }
 
 }

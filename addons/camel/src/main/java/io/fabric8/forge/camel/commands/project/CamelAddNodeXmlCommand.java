@@ -64,6 +64,10 @@ public class CamelAddNodeXmlCommand extends AbstractCamelProjectCommand implemen
     private UISelectOne<NodeDto> parent;
 
     @Inject
+    @WithAttributes(label = "Filter", required = false, description = "To filter nodes")
+    private UISelectOne<String> nameFilter;
+
+    @Inject
     @WithAttributes(label = "Name", required = true, description = "Name of node to add")
     private UISelectOne<EipDto> name;
 
@@ -100,7 +104,10 @@ public class CamelAddNodeXmlCommand extends AbstractCamelProjectCommand implemen
         String first = configureXml(project, xml);
         configureNode(context, project, first, xml, parent);
 
-        name.setValueChoices(CamelCommandsHelper.createAllEipDtoValues(project, getCamelCatalog()));
+        nameFilter.setValueChoices(CamelCommandsHelper.createEipLabelValues(project, getCamelCatalog()));
+        nameFilter.setDefaultValue("<all>");
+
+        name.setValueChoices(CamelCommandsHelper.createAllEipDtoValues(project, getCamelCatalog(), nameFilter));
         // include converter from string->dto
         name.setValueConverter(new Converter<String, EipDto>() {
             @Override
@@ -122,7 +129,7 @@ public class CamelAddNodeXmlCommand extends AbstractCamelProjectCommand implemen
             }
         });
 
-        builder.add(xml).add(parent).add(name);
+        builder.add(xml).add(parent).add(nameFilter).add(name);
     }
 
     @Override
