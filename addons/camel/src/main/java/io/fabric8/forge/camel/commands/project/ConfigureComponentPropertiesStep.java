@@ -112,7 +112,7 @@ public class ConfigureComponentPropertiesStep extends AbstractCamelProjectComman
                                 promptInInteractiveMode = !params;
                             }
 
-                            InputComponent input = createUIInput(componentFactory, getConverterFactory(), name, inputClazz, required, currentValue, defaultValue, enums, description, promptInInteractiveMode);
+                            InputComponent input = createUIInput(builder.getUIContext().getProvider(), componentFactory, getConverterFactory(), name, inputClazz, required, currentValue, defaultValue, enums, description, promptInInteractiveMode, false, null);
                             if (input != null) {
                                 builder.add(input);
                                 inputs.add(input);

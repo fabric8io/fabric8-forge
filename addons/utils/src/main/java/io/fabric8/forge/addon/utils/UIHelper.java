@@ -22,6 +22,7 @@ import java.util.Objects;
 
 import org.jboss.forge.addon.convert.Converter;
 import org.jboss.forge.addon.convert.ConverterFactory;
+import org.jboss.forge.addon.ui.UIProvider;
 import org.jboss.forge.addon.ui.facets.HintsFacet;
 import org.jboss.forge.addon.ui.input.InputComponent;
 import org.jboss.forge.addon.ui.input.InputComponentFactory;
@@ -36,9 +37,9 @@ public final class UIHelper {
      * @return the input widget, or <tt>null</tt> if not supported because of inputClazz not possible to be used
      */
     @SuppressWarnings("unchecked")
-    public static InputComponent createUIInput(InputComponentFactory factory, ConverterFactory converterFactory, String name, Class inputClazz,
+    public static InputComponent createUIInput(UIProvider provider, InputComponentFactory factory, ConverterFactory converterFactory, String name, Class inputClazz,
                                                String required, String currentValue, String defaultValue, String enums, String description,
-                                               boolean promptInInteractiveMode) {
+                                               boolean promptInInteractiveMode, boolean multiValue, String prefix) {
 
         // is the current value a property placeholder, then we need to use a regular text based UI
         if (currentValue != null && currentValue.startsWith("{{") && currentValue.endsWith("}}")) {
@@ -130,9 +131,31 @@ public final class UIHelper {
             input.setRequired(true);
         }
         String label = asTitleCase(name);
+        if (multiValue) {
+            label += " (multivalued)";
+        }
         input.setLabel(label);
-        // must use an empty description otherwise the UI prints null
-        input.setDescription(description != null ? description : "");
+
+        if (!provider.isGUI()) {
+            // no description in CLI/embedded as that clutters the shell
+            input.setDescription("");
+        } else {
+            if (multiValue) {
+                String extra = "This option is multi valued, which means you can provide multiple key/value pairs"
+                        + " prefixed with " + prefix + " and separated with &, eg " + prefix + "foo=123&" + prefix + "bar=456";
+                if (description == null) {
+                    description = extra;
+                } else {
+                    if (description.endsWith(".")) {
+                        description += " " + extra;
+                    } else {
+                        description += ". " + extra;
+                    }
+                }
+            }
+            // must use an empty description otherwise the GUI prints null
+            input.setDescription(description != null ? description : "");
+        }
 
         return input;
     }

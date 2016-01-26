@@ -418,6 +418,8 @@ public final class CamelCommandsHelper {
                 String defaultValue = propertyMap.get("defaultValue");
                 String description = propertyMap.get("description");
                 String enums = propertyMap.get("enum");
+                String prefix = propertyMap.get("prefix");
+                String multiValue = propertyMap.get("multiValue");
 
                 if (current.getGroup() == null) {
                     current.setGroup(group);
@@ -453,12 +455,6 @@ public final class CamelCommandsHelper {
                     if (inputClazz != null) {
                         if (namesAdded.add(name)) {
 
-                            // we do not want descriptions in CLI mode as it makes the UI clutter
-                            boolean gui = ui.getProvider().isGUI();
-                            if (!gui) {
-                                description = "";
-                            }
-
                             // if its an enum and its optional then make sure there is a default value
                             // if no default value exists then add none as the 1st choice default value
                             // otherwise the GUI makes us force to select an option which is not what we want
@@ -471,7 +467,8 @@ public final class CamelCommandsHelper {
                                 }
                             }
 
-                            InputComponent input = createUIInput(componentFactory, converterFactory, name, inputClazz, required, currentValue, defaultValue, enums, description, promptInInteractiveMode);
+                            boolean multi = "true".equals(multiValue);
+                            InputComponent input = createUIInput(ui.getProvider(), componentFactory, converterFactory, name, inputClazz, required, currentValue, defaultValue, enums, description, promptInInteractiveMode, multi, prefix);
                             if (input != null) {
                                 inputs.add(input);
 
@@ -579,12 +576,6 @@ public final class CamelCommandsHelper {
                     if (inputClazz != null) {
                         if (namesAdded.add(name)) {
 
-                            // we do not want descriptions in CLI mode as it makes the UI clutter
-                            boolean gui = ui.getProvider().isGUI();
-                            if (!gui) {
-                                description = "";
-                            }
-
                             // if its an enum and its optional then make sure there is a default value
                             // if no default value exists then add none as the 1st choice default value
                             // otherwise the GUI makes us force to select an option which is not what we want
@@ -612,7 +603,7 @@ public final class CamelCommandsHelper {
                             // we cannot have both enum and oneOf at the same time
                             String enumsOrOneOfs = enums != null ? enums : oneOf;
 
-                            InputComponent input = createUIInput(componentFactory, converterFactory, name, inputClazz, required, currentValue, defaultValue, enumsOrOneOfs, description, promptInInteractiveMode);
+                            InputComponent input = createUIInput(ui.getProvider(), componentFactory, converterFactory, name, inputClazz, required, currentValue, defaultValue, enumsOrOneOfs, description, promptInInteractiveMode, false, null);
 
                             if (input != null) {
                                 inputs.add(input);
@@ -620,7 +611,7 @@ public final class CamelCommandsHelper {
                                 // if its an expression then we need to add a 2nd input for the actual value
                                 if ("expression".equals(kind)) {
                                     currentValue = currentValues != null ? currentValues.get(name + "-value") : null;
-                                    InputComponent input2 = createUIInput(componentFactory, converterFactory, name + "-value", String.class, required, currentValue, null, null, description, promptInInteractiveMode);
+                                    InputComponent input2 = createUIInput(ui.getProvider(), componentFactory, converterFactory, name + "-value", String.class, required, currentValue, null, null, description, promptInInteractiveMode, false, null);
                                     if (input2 != null) {
                                         inputs.add(input2);
                                     }
