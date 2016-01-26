@@ -170,6 +170,37 @@ public final class CamelCatalogHelper {
     }
 
     /**
+     * Checks whether the given value is matching the default value from the given component.
+     *
+     * @param scheme the component name
+     * @param key    the option key
+     * @return <tt>true</tt> if matching the default value, <tt>false</tt> otherwise
+     */
+    public static boolean isNonePlaceholderEnumValue(CamelCatalog camelCatalog, String scheme, String key) {
+        // use the camel catalog
+        String json = camelCatalog.componentJSonSchema(scheme);
+        if (json == null) {
+            throw new IllegalArgumentException("Could not find catalog entry for component name: " + scheme);
+        }
+
+        List<Map<String, String>> data = JSonSchemaHelper.parseJsonSchema("properties", json, true);
+        if (data != null) {
+            for (Map<String, String> propertyMap : data) {
+                String name = propertyMap.get("name");
+                String enums = propertyMap.get("enum");
+                if (key.equals(name) && enums != null) {
+                    if (!enums.contains("none")) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      * Checks whether the given value is matching the default value from the given model.
      *
      * @param modelName the model name
