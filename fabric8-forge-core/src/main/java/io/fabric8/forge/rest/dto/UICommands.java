@@ -22,6 +22,8 @@ import org.jboss.forge.addon.convert.Converter;
 import org.jboss.forge.addon.convert.ConverterFactory;
 import org.jboss.forge.addon.projects.ProjectProvider;
 import org.jboss.forge.addon.projects.ProjectType;
+import org.jboss.forge.addon.projects.stacks.Stack;
+import org.jboss.forge.addon.projects.stacks.StackFacet;
 import org.jboss.forge.addon.ui.command.UICommand;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.controller.CommandController;
@@ -191,6 +193,15 @@ public class UICommands {
             if (value instanceof ProjectType) {
                 ProjectType projectType = (ProjectType) value;
                 return projectType.getType();
+            }
+            if (value instanceof StackFacet) {
+                StackFacet stackFacet = (StackFacet) value;
+                Stack stack = stackFacet.getStack();
+                if (stack != null) {
+                    return stack.getName();
+                } else {
+                    return null;
+                }
             }
             Class<?> aClass = Proxies.unwrap(value).getClass();
             while (aClass != null && !aClass.equals(Object.class)) {
