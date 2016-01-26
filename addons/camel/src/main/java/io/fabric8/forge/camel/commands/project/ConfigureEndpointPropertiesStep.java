@@ -59,7 +59,9 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import static io.fabric8.forge.addon.utils.CamelProjectHelper.findCamelArtifactDependency;
+import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.getPrefix;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.isDefaultValue;
+import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.isMultiValue;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.isNonePlaceholderEnumValue;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.ensureCamelArtifactIdAdded;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.loadCamelComponentDetails;
@@ -208,6 +210,36 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
             if (input.hasValue()) {
                 String value = input.getValue().toString();
                 if (value != null) {
+                    // special for multivalued options
+                    boolean isMultiValue = isMultiValue(camelCatalog, camelComponentName, key);
+                    if (isMultiValue) {
+                        String prefix = getPrefix(camelCatalog, camelComponentName, key);
+
+                        // ensure the value has prefix for all its options
+                        // and make sure to adjust & to &amp; if in xml
+
+                        // since this is XML we need to escape & as &amp;
+                        // to be safe that & is not already &amp; we need to revert it first
+                        value = StringHelper.replaceAll(value, "&amp;", "&");
+                        value = StringHelper.replaceAll(value, "&", "&amp;");
+
+                        // rebuild value (accordingly to above comment)
+                        StringBuilder sb = new StringBuilder();
+                        String[] parts = value.split("&amp;");
+                        for (int i = 0; i < parts.length; i++) {
+                            String part = parts[i];
+                            if (!part.startsWith(prefix)) {
+                                part = prefix + part;
+                            }
+                            sb.append(part);
+                            if (i < parts.length - 1) {
+                                // since this is xml then use &amp; as separator
+                                sb.append("&amp;");
+                            }
+                        }
+                        value = sb.toString();
+                    }
+
                     boolean matchDefault = isDefaultValue(camelCatalog, camelComponentName, key, value);
                     if ("none".equals(value)) {
                         // special for enum that may have a none as dummy placeholder which we should not add
@@ -381,6 +413,32 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
             if (input.hasValue()) {
                 String value = input.getValue().toString();
                 if (value != null) {
+                    // special for multivalued options
+                    boolean isMultiValue = isMultiValue(camelCatalog, camelComponentName, key);
+                    if (isMultiValue) {
+                        String prefix = getPrefix(camelCatalog, camelComponentName, key);
+
+                        // ensure the value has prefix for all its options
+                        // and make sure to adjust & (we replace to xml style)
+                        value = StringHelper.replaceAll(value, "&amp;", "&");
+                        value = StringHelper.replaceAll(value, "&", "&amp;");
+
+                        // rebuild value (accordingly to above comment)
+                        StringBuilder sb = new StringBuilder();
+                        String[] parts = value.split("&amp;");
+                        for (int i = 0; i < parts.length; i++) {
+                            String part = parts[i];
+                            if (!part.startsWith(prefix)) {
+                                part = prefix + part;
+                            }
+                            sb.append(part);
+                            if (i < parts.length - 1) {
+                                // since this is java then use & as separator
+                                sb.append("&");
+                            }
+                        }
+                        value = sb.toString();
+                    }
                     boolean matchDefault = isDefaultValue(camelCatalog, camelComponentName, key, value);
                     if ("none".equals(value)) {
                         // special for enum that may have a none as dummy placeholder which we should not add
