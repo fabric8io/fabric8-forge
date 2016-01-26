@@ -170,6 +170,60 @@ public final class CamelCatalogHelper {
     }
 
     /**
+     * Checks whether the given key is a multi valued option
+     *
+     * @param scheme the component name
+     * @param key    the option key
+     * @return <tt>true</tt> if the key is multi valued, <tt>false</tt> otherwise
+     */
+    public static boolean isMultiValue(CamelCatalog camelCatalog, String scheme, String key) {
+        // use the camel catalog
+        String json = camelCatalog.componentJSonSchema(scheme);
+        if (json == null) {
+            throw new IllegalArgumentException("Could not find catalog entry for component name: " + scheme);
+        }
+
+        List<Map<String, String>> data = JSonSchemaHelper.parseJsonSchema("properties", json, true);
+        if (data != null) {
+            for (Map<String, String> propertyMap : data) {
+                String name = propertyMap.get("name");
+                String multiValue = propertyMap.get("multiValue");
+                if (key.equals(name)) {
+                    return "true".equals(multiValue);
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Checks whether the given key is a multi valued option
+     *
+     * @param scheme the component name
+     * @param key    the option key
+     * @return <tt>true</tt> if the key is multi valued, <tt>false</tt> otherwise
+     */
+    public static String getPrefix(CamelCatalog camelCatalog, String scheme, String key) {
+        // use the camel catalog
+        String json = camelCatalog.componentJSonSchema(scheme);
+        if (json == null) {
+            throw new IllegalArgumentException("Could not find catalog entry for component name: " + scheme);
+        }
+
+        List<Map<String, String>> data = JSonSchemaHelper.parseJsonSchema("properties", json, true);
+        if (data != null) {
+            for (Map<String, String> propertyMap : data) {
+                String name = propertyMap.get("name");
+                String prefix = propertyMap.get("prefix");
+                if (key.equals(name)) {
+                    return prefix;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
      * Checks whether the given value is matching the default value from the given component.
      *
      * @param scheme the component name
