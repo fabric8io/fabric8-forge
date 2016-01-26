@@ -60,6 +60,7 @@ import org.w3c.dom.NodeList;
 
 import static io.fabric8.forge.addon.utils.CamelProjectHelper.findCamelArtifactDependency;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.isDefaultValue;
+import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.isNonePlaceholderEnumValue;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.ensureCamelArtifactIdAdded;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.loadCamelComponentDetails;
 
@@ -207,9 +208,14 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
             if (input.hasValue()) {
                 String value = input.getValue().toString();
                 if (value != null) {
-                    // do not add the value if it match the default value
                     boolean matchDefault = isDefaultValue(camelCatalog, camelComponentName, key, value);
-                    if (!matchDefault) {
+                    if ("none".equals(value)) {
+                        // special for enum that may have a none as dummy placeholder which we should not add
+                        boolean nonePlaceholder = isNonePlaceholderEnumValue(camelCatalog, camelComponentName, key);
+                        if (!matchDefault && !nonePlaceholder) {
+                            options.put(key, value);
+                        }
+                    } else if (!matchDefault) {
                         options.put(key, value);
                     }
                 }
@@ -375,9 +381,14 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
             if (input.hasValue()) {
                 String value = input.getValue().toString();
                 if (value != null) {
-                    // do not add the value if it match the default value
                     boolean matchDefault = isDefaultValue(camelCatalog, camelComponentName, key, value);
-                    if (!matchDefault) {
+                    if ("none".equals(value)) {
+                        // special for enum that may have a none as dummy placeholder which we should not add
+                        boolean nonePlaceholder = isNonePlaceholderEnumValue(camelCatalog, camelComponentName, key);
+                        if (!matchDefault && !nonePlaceholder) {
+                            options.put(key, value);
+                        }
+                    } else if (!matchDefault) {
                         options.put(key, value);
                     }
                 }
