@@ -25,6 +25,8 @@ import io.fabric8.utils.Strings;
 
 public final class VersionHelper {
 
+    public static final String ENV_FABRIC8_ARCHETYPES_VERSION = "FABRIC8_ARCHETYPES_VERSION";
+
     /**
      * Retrieves the version of fabric8 to use
      */
@@ -36,7 +38,7 @@ public final class VersionHelper {
      * Returns the version to use for the fabric8 archetypes
      */
     public static String fabric8ArchetypesVersion() {
-        String version = System.getenv("FABRIC8_ARCHETYPES_VERSION");
+        String version = System.getenv(ENV_FABRIC8_ARCHETYPES_VERSION);
         if (Strings.isNotBlank(version)) {
             return version;
         }
