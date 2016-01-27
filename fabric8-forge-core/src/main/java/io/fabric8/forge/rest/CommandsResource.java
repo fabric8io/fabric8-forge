@@ -36,6 +36,7 @@ import io.fabric8.forge.rest.ui.RestUIContext;
 import io.fabric8.forge.rest.ui.RestUIFunction;
 import io.fabric8.forge.rest.ui.RestUIRuntime;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.utils.Objects;
 import io.fabric8.utils.Strings;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Repository;
@@ -76,6 +77,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static io.fabric8.forge.rest.Constants.*;
 
 @Path("/api/forge")
 @Stateless
@@ -290,6 +293,16 @@ public class CommandsResource {
                 return Response.status(Status.NOT_FOUND).build();
             }
             List<Map<String, String>> inputList = executionRequest.getInputList();
+
+            // lets ensure a valid targetLocation for new projects
+            if (Objects.equal(PROJECT_NEW_COMMAND, name)) {
+                for (Map<String, String> map : inputList) {
+                    String value = map.get(TARGET_LOCATION_PROPERTY);
+                    if (Strings.isNotBlank(value)) {
+                        map.put(TARGET_LOCATION_PROPERTY, projectFileSystem.getUserProjectFolderLocation(userDetails));
+                    }
+                }
+            }
             CommandController controller = createController(context, command);
             configureAttributeMaps(userDetails, controller, executionRequest);
             ExecutionResult answer = null;

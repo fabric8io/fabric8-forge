@@ -15,6 +15,7 @@
  */
 package io.fabric8.forge.rest.main;
 
+import io.fabric8.forge.rest.Constants;
 import io.fabric8.forge.rest.dto.ExecutionRequest;
 import io.fabric8.forge.rest.dto.ExecutionResult;
 import io.fabric8.forge.rest.hooks.CommandCompletePostProcessor;
@@ -55,8 +56,6 @@ import static io.fabric8.utils.cxf.JsonHelper.toJson;
 // TODO we should try add this into the ConfigureDevOpsStep.execute() block instead!
 public class GitCommandCompletePostProcessor implements CommandCompletePostProcessor {
     private static final transient Logger LOG = LoggerFactory.getLogger(GitCommandCompletePostProcessor.class);
-    public static final String PROJECT_NEW_COMMAND = "project-new";
-    public static final String TARGET_LOCATION_PROPERTY = "targetLocation";
     public static final String DEFAULT_JENKINS_SEED_JOB = "seed";
     private final KubernetesClient kubernetes;
     private final GitUserHelper gitUserHelper;
@@ -85,18 +84,14 @@ public class GitCommandCompletePostProcessor implements CommandCompletePostProce
             throw new NotAuthorizedException("You must authenticate to be able to perform this command");
         }
 
-        if (Objects.equals(name, PROJECT_NEW_COMMAND)) {
+        if (Objects.equals(name, Constants.PROJECT_NEW_COMMAND)) {
             List<Map<String, String>> inputList = executionRequest.getInputList();
             if (inputList != null) {
                 Map<String, String> page1 = inputList.get(0);
                 if (page1 != null) {
-                    if (page1.containsKey(TARGET_LOCATION_PROPERTY)) {
-                        page1.put(TARGET_LOCATION_PROPERTY, projectFileSystem.getUserProjectFolderLocation(userDetails));
+                    if (page1.containsKey(Constants.TARGET_LOCATION_PROPERTY)) {
+                        page1.put(Constants.TARGET_LOCATION_PROPERTY, projectFileSystem.getUserProjectFolderLocation(userDetails));
                     }
-/*
-
-                    page1.put(TARGET_LOCATION_PROPERTY, projectFileSystem.getUserProjectFolderLocation(userDetails));
-*/
                 }
             }
         }
@@ -115,19 +110,16 @@ public class GitCommandCompletePostProcessor implements CommandCompletePostProce
         String origin = projectFileSystem.getRemote();
 
         try {
-            if (name.equals(PROJECT_NEW_COMMAND)) {
+            if (name.equals(Constants.PROJECT_NEW_COMMAND)) {
                 GitHelpers.disableSslCertificateChecks();
 
                 PersonIdent personIdent = userDetails.createPersonIdent();
 
-                String targetLocation = null;
+                String targetLocation = projectFileSystem.getUserProjectFolderLocation(userDetails);
                 String named = null;
                 List<Map<String, String>> inputList = executionRequest.getInputList();
 
                 for (Map<String, String> map : inputList) {
-                    if (Strings.isNullOrEmpty(targetLocation)) {
-                        targetLocation = map.get("targetLocation");
-                    }
                     if (Strings.isNullOrEmpty(named)) {
                         named = map.get("named");
                     }
