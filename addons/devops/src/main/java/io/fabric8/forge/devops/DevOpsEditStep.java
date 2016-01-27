@@ -22,6 +22,7 @@ import io.fabric8.forge.addon.utils.CommandHelpers;
 import io.fabric8.forge.addon.utils.MavenHelpers;
 import io.fabric8.forge.devops.dto.PipelineDTO;
 import io.fabric8.forge.devops.dto.PipelineMetadata;
+import io.fabric8.forge.devops.dto.ProjectOverviewDTO;
 import io.fabric8.kubernetes.api.KubernetesHelper;
 import io.fabric8.letschat.LetsChatClient;
 import io.fabric8.letschat.LetsChatKubernetes;
@@ -64,6 +65,8 @@ import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -482,7 +485,10 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
     }
 
     protected Iterable<PipelineDTO> getPipelines(UIContext context) {
+        ProjectOverviewDTO projectOveriew = getProjectOverview(context);
+        Set<String> builders = projectOveriew.getBuilders();
         File dir = getJenkinsWorkflowFolder(context);
+        Set<String> buildersFound = new HashSet<>();
         if (dir != null) {
             Filter<File> filter = new Filter<File>() {
                 @Override
@@ -491,7 +497,7 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
                 }
             };
             Set<File> files =  Files.findRecursive(dir, filter);
-            Map<String,PipelineDTO> nameMap = new TreeMap<>();
+            List<PipelineDTO> pipelines = new ArrayList<>();
             for (File file : files) {
                 try {
                     String relativePath = Files.getRelativePath(dir, file);
@@ -512,6 +518,12 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
                     int idx = label.indexOf("/");
                     if (idx > 0) {
                         builder = label.substring(0, idx);
+                        if (!builders.contains(builder)) {
+                            // ignore this builder
+                            continue;
+                        } else {
+                            buildersFound.add(builder);
+                        }
                     }
                     String descriptionMarkdown = null;
                     File markdownFile = new File(file.getParentFile(), "ReadMe.md");
@@ -531,14 +543,28 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
                         if (metadata != null) {
                             metadata.configurePipeline(pipeline);
                         }
-
                     }
-                    nameMap.put(pipeline.getLabel(), pipeline);
+                    pipelines.add(pipeline);
                 } catch (IOException e) {
                     LOG.warn("Failed to find relative path for folder " + dir + " and file " + file + ". " + e, e);
                 }
             }
-            return new ArrayList<>(nameMap.values());
+            if (buildersFound.size() == 1) {
+                // lets trim the builder prefix from the labels
+                for (String first : buildersFound) {
+                    String prefix = first + "/";
+                    for (PipelineDTO pipeline : pipelines) {
+                        String label = pipeline.getLabel();
+                        if (label.startsWith(prefix)) {
+                            label = label.substring(prefix.length());
+                            pipeline.setLabel(label);
+                        }
+                    }
+                    break;
+                }
+            }
+            Collections.sort(pipelines);
+            return pipelines;
         } else {
             LOG.warn("No jenkinsWorkflowFolder!");
             return new ArrayList<>();

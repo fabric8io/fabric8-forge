@@ -158,6 +158,7 @@ public class UICommands {
      * Uses the given converter to convert to a nicer UI value and return the JSON safe version
      */
     public static Object convertValueToSafeJson(Converter converter, Object value) {
+        value = Proxies.unwrap(value);
         if (converter != null) {
             // TODO converters ususally go from String -> CustomType?
             try {

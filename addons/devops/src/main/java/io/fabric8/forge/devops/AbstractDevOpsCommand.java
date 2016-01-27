@@ -19,10 +19,12 @@ import io.fabric8.devops.ProjectConfig;
 import io.fabric8.devops.ProjectConfigs;
 import io.fabric8.forge.addon.utils.CommandHelpers;
 import io.fabric8.forge.devops.dto.PipelineDTO;
+import io.fabric8.forge.devops.dto.ProjectOverviewDTO;
 import io.fabric8.kubernetes.api.Controller;
 import io.fabric8.kubernetes.client.ConfigBuilder;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.utils.Files;
 import io.fabric8.utils.GitHelpers;
 import io.fabric8.utils.Objects;
 import io.fabric8.utils.Strings;
@@ -35,6 +37,7 @@ import org.jboss.forge.addon.projects.ProjectFactory;
 import org.jboss.forge.addon.projects.Projects;
 import org.jboss.forge.addon.projects.ui.AbstractProjectCommand;
 import org.jboss.forge.addon.resource.Resource;
+import org.jboss.forge.addon.resource.util.ResourceUtil;
 import org.jboss.forge.addon.ui.UIProvider;
 import org.jboss.forge.addon.ui.command.UICommand;
 import org.jboss.forge.addon.ui.context.UIBuilder;
@@ -53,7 +56,11 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+
+import static io.fabric8.forge.addon.utils.CamelProjectHelper.findCamelCoreDependency;
 
 /**
  * An abstract base class for DevOps related commands
@@ -247,5 +254,141 @@ public abstract class AbstractDevOpsCommand extends AbstractProjectCommand imple
                 config.setPipeline(pipeline.getValue());
             }
         }
+    }
+
+    protected ProjectOverviewDTO getProjectOverview(UIContext uiContext) {
+        ProjectOverviewDTO projectOveriew = new ProjectOverviewDTO();
+        File rootFolder = getSelectionFolder(uiContext);
+        if (rootFolder != null) {
+            List<GetOverviewCommand.FileProcessor> processors = loadFileMatches();
+            scanProject(rootFolder, processors, projectOveriew, 0, 3);
+        }
+        if (hasProjectFile(uiContext, "pom.xml")) {
+            projectOveriew.addBuilder("maven");
+            projectOveriew.addPerspective("forge");
+
+            if (containsProject(uiContext)) {
+                Project project = getSelectedProject(uiContext);
+                if (findCamelCoreDependency(project) != null) {
+                    projectOveriew.addPerspective("camel");
+                }
+            }
+        }
+        return projectOveriew;
+    }
+
+    protected List<GetOverviewCommand.FileProcessor> loadFileMatches() {
+        List<GetOverviewCommand.FileProcessor> answer = new ArrayList<>();
+        answer.add(new GetOverviewCommand.FileProcessor() {
+                       @Override
+                       public boolean processes(ProjectOverviewDTO overview, File file, String name, String extension) {
+                           if (java.util.Objects.equals(name, "package.json") || java.util.Objects.equals(extension, "js")) {
+                               overview.addBuilder("node");
+                               return true;
+                           }
+                           return false;
+                       }
+                   }
+        );
+        answer.add(new GetOverviewCommand.FileProcessor() {
+                       @Override
+                       public boolean processes(ProjectOverviewDTO overview, File file, String name, String extension) {
+                           if (java.util.Objects.equals(extension, "go")) {
+                               overview.addBuilder("golang");
+                               return true;
+                           }
+                           return false;
+                       }
+                   }
+        );
+        answer.add(new GetOverviewCommand.FileProcessor() {
+                       @Override
+                       public boolean processes(ProjectOverviewDTO overview, File file, String name, String extension) {
+                           if (java.util.Objects.equals(name, "Rakefile") || java.util.Objects.equals(extension, "rb")) {
+                               overview.addBuilder("ruby");
+                               return true;
+                           }
+                           return false;
+                       }
+                   }
+        );
+        answer.add(new GetOverviewCommand.FileProcessor() {
+                       @Override
+                       public boolean processes(ProjectOverviewDTO overview, File file, String name, String extension) {
+                           if (java.util.Objects.equals(extension, "swift")) {
+                               overview.addBuilder("swift");
+                               return true;
+                           }
+                           return false;
+                       }
+                   }
+        );
+        answer.add(new GetOverviewCommand.FileProcessor() {
+                       @Override
+                       public boolean processes(ProjectOverviewDTO overview, File file, String name, String extension) {
+                           if (java.util.Objects.equals(name, "urls.py") || java.util.Objects.equals(extension, "wsgi.py")) {
+                               overview.addBuilder("django");
+                               return true;
+                           }
+                           return false;
+                       }
+                   }
+        );
+        return answer;
+    }
+
+    protected void scanProject(File file, List<GetOverviewCommand.FileProcessor> processors, ProjectOverviewDTO overview, int level, int maxLevels) {
+        if (file.isFile()) {
+            String name = file.getName();
+            String extension = Files.getExtension(name);
+            for (GetOverviewCommand.FileProcessor processor : new ArrayList<>(processors)) {
+                if (processor.processes(overview, file, name, extension)) {
+                    processors.remove(processor);
+                }
+            }
+        } else if (file.isDirectory()) {
+            int newLevel = level + 1;
+            if (newLevel <= maxLevels && !processors.isEmpty()) {
+                File[] files = file.listFiles();
+                if (files != null) {
+                    for (File child : files) {
+                        scanProject(child, processors, overview, newLevel, maxLevels);
+                    }
+                }
+            }
+        }
+    }
+
+    protected boolean hasProjectFile(UIContext context, String fileName) {
+        UISelection<Object> selection = context.getSelection();
+        if (selection != null) {
+            Object object = selection.get();
+            if (object instanceof Resource) {
+                File folder = ResourceUtil.getContextFile((Resource<?>) object);
+                if (folder != null && Files.isDirectory(folder)) {
+                    File file = new File(folder, fileName);
+                    return file != null && file.exists() && file.isFile();
+                }
+            }
+        }
+        return false;
+    }
+
+    protected File getSelectionFolder(UIContext context) {
+        UISelection<Object> selection = context.getSelection();
+        if (selection != null) {
+            Object object = selection.get();
+            if (object instanceof Resource) {
+                File folder = ResourceUtil.getContextFile((Resource<?>) object);
+                if (folder != null && Files.isDirectory(folder)) {
+                    return folder;
+                }
+            }
+        }
+        return null;
+    }
+
+    protected interface FileProcessor {
+        boolean processes(ProjectOverviewDTO overview, File file, String name, String extension);
     }
 }
