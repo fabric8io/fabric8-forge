@@ -31,11 +31,6 @@
   <name>Fabric8 :: Camel Maven Plugin</name>
   <packaging>maven-plugin</packaging>
 
-  <!-- TODO: need Camel 2.16.2 -->
-  <properties>
-    <camel.version>2.17-SNAPSHOT</camel.version>
-  </properties>
-
   <dependencies>
 
     <!-- fabric8 -->

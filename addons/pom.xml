@@ -28,6 +28,10 @@
   <packaging>pom</packaging>
   <name>Fabric8 :: Forge Addons</name>
 
+  <properties>
+    <camel.version>2.16.2</camel.version>
+  </properties>
+
   <modules>
     <module>camel</module>
     <module>camel-commands</module>
@@ -41,9 +45,7 @@
     <module>kubernetes</module>
     <module>devops</module>
     <module>utils</module>
-<!-- TODO: disabled until Camel 2.16.2
     <module>fabric8-camel-maven-plugin</module>
--->
   </modules>
 
 
