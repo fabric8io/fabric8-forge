@@ -22,6 +22,8 @@ import org.jboss.forge.addon.convert.Converter;
 import org.jboss.forge.addon.convert.ConverterFactory;
 import org.jboss.forge.addon.projects.ProjectProvider;
 import org.jboss.forge.addon.projects.ProjectType;
+import org.jboss.forge.addon.projects.stacks.Stack;
+import org.jboss.forge.addon.projects.stacks.StackFacet;
 import org.jboss.forge.addon.ui.command.UICommand;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.controller.CommandController;
@@ -156,6 +158,7 @@ public class UICommands {
      * Uses the given converter to convert to a nicer UI value and return the JSON safe version
      */
     public static Object convertValueToSafeJson(Converter converter, Object value) {
+        value = Proxies.unwrap(value);
         if (converter != null) {
             // TODO converters ususally go from String -> CustomType?
             try {
@@ -192,16 +195,31 @@ public class UICommands {
                 ProjectType projectType = (ProjectType) value;
                 return projectType.getType();
             }
-            Class<?> aClass = Proxies.unwrap(value).getClass();
+            if (value instanceof StackFacet) {
+                StackFacet stackFacet = (StackFacet) value;
+                Stack stack = stackFacet.getStack();
+                if (stack != null) {
+                    return stack.getName();
+                } else {
+                    return null;
+                }
+            }
+            value = Proxies.unwrap(value);
+            Class<?> aClass = value.getClass();
             while (aClass != null && !aClass.equals(Object.class)) {
                 Annotation[] annotations = aClass.getAnnotations();
                 if (annotations != null) {
                     for (Annotation annotation : annotations) {
-                        String text = annotation.toString();
-                        // because of the Forge proxying we can't just use the actual class here...
-                        if (text.indexOf("com.fasterxml.jackson.") >= 0) {
+                        String annotationClassName = annotation.getClass().getName();
+                        if (annotationClassName != null && annotationClassName.startsWith("com.fasterxml.jackson.")) {
                             // lets assume its a JSON DTO!
                             return value;
+                        } else {
+                            String text = annotation.toString();
+                            // because of the Forge proxying we can't just use the actual class here...
+                            if (text.indexOf("com.fasterxml.jackson.") >= 0) {
+                                return value;
+                            }
                         }
                     }
                 }

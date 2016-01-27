@@ -18,7 +18,21 @@ To try out addons:
     mvn install
     
 Then you can install the addons into forge via the [forge addon-install command](http://fabric8.io/guide/forge.html) using the current snapshot build version 
+
+#### Trying the addons locally
     
+If you startup forge you can then install the local builds of the addons via:
+    
+    addon-install --coordinate io.fabric8.forge:camel,2.2.113-SNAPSHOT
+    addon-install --coordinate io.fabric8.forge:camel-commands,2.2.113-SNAPSHOT
+    addon-install --coordinate io.fabric8.forge:devops,2.2.113-SNAPSHOT
+    
+To remove any of them type:
+   
+    addon-remove --addons io.fabric8.forge:camel,2.2.113-SNAPSHOT
+    addon-remove --addons io.fabric8.forge:camel-commands,2.2.113-SNAPSHOT
+    addon-remove --addons io.fabric8.forge:devops,2.2.113-SNAPSHOT
+
 ### Building and testing REST service
 
 To build everything and run it in your local OpenShift installation on your laptop try:

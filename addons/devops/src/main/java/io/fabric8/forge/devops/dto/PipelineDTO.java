@@ -22,7 +22,7 @@ import java.util.List;
 /**
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class PipelineDTO {
+public class PipelineDTO implements Comparable<PipelineDTO> {
     private String label;
     private String value;
     private String descriptionMarkdown;
@@ -45,6 +45,11 @@ public class PipelineDTO {
         return "PipelineDTO{" +
                 "value='" + value + '\'' +
                 '}';
+    }
+
+    @Override
+    public int compareTo(PipelineDTO o) {
+        return label.compareTo(o.label);
     }
 
     public String getBuilder() {

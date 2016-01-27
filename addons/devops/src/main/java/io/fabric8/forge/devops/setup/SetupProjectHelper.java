@@ -19,7 +19,9 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import io.fabric8.forge.addon.utils.MavenHelpers;
 import org.jboss.forge.addon.dependencies.Dependency;
+import org.jboss.forge.addon.maven.plugins.MavenPlugin;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.facets.DependencyFacet;
 
@@ -36,5 +38,15 @@ public class SetupProjectHelper {
         }
         return answer;
     }
+
+
+    public static boolean fabric8ProjectSetupCorrectly(Project project) {
+        MavenPlugin plugin = MavenHelpers.findPlugin(project, "io.fabric8", "fabric8-maven-plugin");
+        if (plugin != null) {
+            return DockerSetupHelper.verifyDocker(project);
+        }
+        return false;
+    }
+
 
 }

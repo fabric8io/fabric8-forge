@@ -151,14 +151,23 @@ public class ProjectGenerator {
         wizardCommandController.setValueFor("archetype", archetypeUri);
 
         validate(wizardCommandController);
-        Result result = wizardCommandController.execute();
-        printResult(result);
+        try {
 
-        useProject(archetype, outputDir, name);
+            Result result = wizardCommandController.execute();
+            printResult(result);
+
+            useProject(archetype, outputDir, name);
+        } catch (Exception e) {
+            LOG.error("Failed to create project " + archetypeUri + " " + e, e);
+        }
     }
 
     protected void useProject(String archetype, File outputDir, String projectName) throws MavenInvocationException {
-        LOG.info("Now using project: " + archetype + " at folder: " + outputDir);
+        File projectDir = new File(outputDir, projectName);
+        File pom = new File(projectDir, "pom.xml");
+        boolean hasPom = pom.exists() && pom.isFile();
+
+        LOG.info("Now using project: " + archetype + " at folder: " + outputDir + " has pom.xml: " + hasPom);
 
         RestUIContext context = createUIContextForFolder(outputDir);
         Set<String> names = commandFactory.getCommandNames(context);
@@ -177,10 +186,14 @@ public class ProjectGenerator {
         // now lets try validate the devops-edit command
         //UICommand devOpsEdit = commandFactory.getCommandByName(context, "devops-edit");
 
-        useCommand(context, "fabric8-setup", true);
+        if (hasPom) {
+            useCommand(context, "fabric8-setup", true);
+        }
         useCommand(context, "fabric8-pipeline", false);
 
-        runMavenGoals(archetype, new File(outputDir, projectName), "package");
+        if (hasPom) {
+            runMavenGoals(archetype, projectDir, "package");
+        }
     }
 
     protected void runMavenGoals(String archetype, File outputDir, String... goals) throws MavenInvocationException {

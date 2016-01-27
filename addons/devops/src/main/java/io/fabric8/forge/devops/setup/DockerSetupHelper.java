@@ -54,6 +54,13 @@ public class DockerSetupHelper {
     private static String[] bundleImages = new String[]{DEFAULT_KARAF_IMAGE};
     private static String[] warImages = new String[]{DEFAULT_TOMCAT_IMAGE, DEFAULT_WILDFLY_IMAGE};
 
+    /**
+     * Returns true if it seems like the docker maven plugin is configured
+     */
+    public static boolean verifyDocker(Project project) {
+        return true;
+    }
+
     public static void setupDocker(Project project, String organization, String fromImage, String main) {
         MavenFacet maven = project.getFacet(MavenFacet.class);
         Model pom = maven.getModel();

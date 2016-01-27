@@ -47,6 +47,7 @@ import static org.assertj.core.api.Assertions.fail;
  */
 public class PopulateMavenRepositoryTest {
     private static final transient Logger LOG = LoggerFactory.getLogger(PopulateMavenRepositoryTest.class);
+    public static final String TEST_ARCHETYPE_SYSTEM_PROPERTY = "test.archetype";
 
     protected String baseDir = System.getProperty("basedir", ".");
     protected File localMavenRepo = new File(baseDir, "localMavenRepo");
@@ -77,12 +78,19 @@ public class PopulateMavenRepositoryTest {
         List<String> archetypes = getArchetypesFromJar(archetypeJar);
         assertThat(archetypes).describedAs("Archetypes to create").isNotEmpty();
 
-        for (String archetype : archetypes) {
-            generator.createProject(archetype);
+        String testArchetype = System.getProperty(TEST_ARCHETYPE_SYSTEM_PROPERTY, "");
+        if (Strings.isNotBlank(testArchetype)) {
+            LOG.info("Due to system property: '" + TEST_ARCHETYPE_SYSTEM_PROPERTY + "' we will just run the test on archetype: " + testArchetype);
+            generator.createProject(testArchetype);
+        } else {
+            for (String archetype : archetypes) {
+                generator.createProject(archetype);
+            }
         }
 
         removeSnapshotFabric8Artifacts();
     }
+
     protected List<String> getArchetypesFromJar(File archetypeJar) throws IOException {
         assertThat(archetypeJar).exists();
         JarFile jar = new JarFile(archetypeJar);
