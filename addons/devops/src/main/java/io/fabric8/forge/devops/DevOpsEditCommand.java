@@ -16,6 +16,7 @@
 package io.fabric8.forge.devops;
 
 import io.fabric8.forge.devops.setup.Fabric8SetupStep;
+import io.fabric8.forge.devops.setup.SetupProjectHelper;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
@@ -45,7 +46,9 @@ public class DevOpsEditCommand extends AbstractDevOpsCommand implements UIWizard
         try {
             Project project = getSelectedProject(context.getUIContext());
             if (project != null) {
-                builder.add(Fabric8SetupStep.class);
+                if (!SetupProjectHelper.fabric8ProjectSetupCorrectly(project)) {
+                    builder.add(Fabric8SetupStep.class);
+                }
             }
         } catch (IllegalStateException e) {
             // ignore lack of project
