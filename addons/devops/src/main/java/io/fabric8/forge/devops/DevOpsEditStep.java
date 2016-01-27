@@ -86,11 +86,11 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
     private String jenkinsFilePrefix = "workflows/";
 
     @Inject
-    @WithAttributes(label = "pipeline", required = false, description = "The Jenkins workflow groovy script to use for defining the Continous Delivery pipeline")
+    @WithAttributes(label = "pipeline", required = false, description = "The Jenkinsfile used to define the Continous Delivery pipeline")
     private UIInput<PipelineDTO> pipeline;
 
     @Inject
-    @WithAttributes(label = "copyFlowToProject", required = false, description = "Should we copy the Jenkins Workflow script into the project source code")
+    @WithAttributes(label = "copyFlowToProject", required = false, description = "Should we copy the Jenkinsfile for the pipeline into the project source code")
     private UIInput<Boolean> copyFlowToProject;
 
     @Inject
