@@ -24,7 +24,7 @@ import io.fabric8.forge.camel.commands.project.completer.RouteBuilderEndpointsCo
 import io.fabric8.forge.camel.commands.project.completer.XmlEndpointsCompleter;
 import io.fabric8.forge.camel.commands.project.dto.ComponentDto;
 import io.fabric8.forge.camel.commands.project.dto.EndpointDto;
-import io.fabric8.forge.camel.commands.project.dto.OutputFormat;
+import io.fabric8.forge.addon.utils.dto.OutputFormat;
 import io.fabric8.forge.camel.commands.project.dto.ProjectDto;
 import io.fabric8.utils.TablePrinter;
 import org.jboss.forge.addon.dependencies.Dependency;
@@ -44,8 +44,8 @@ import org.jboss.forge.addon.ui.result.Results;
 import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
 
-import static io.fabric8.forge.camel.commands.project.helper.OutputFormatHelper.addTableTextOutput;
-import static io.fabric8.forge.camel.commands.project.helper.OutputFormatHelper.toJson;
+import static io.fabric8.forge.addon.utils.OutputFormatHelper.addTableTextOutput;
+import static io.fabric8.forge.addon.utils.OutputFormatHelper.toJson;
 
 public class CamelGetOverviewCommand extends AbstractCamelProjectCommand {
 

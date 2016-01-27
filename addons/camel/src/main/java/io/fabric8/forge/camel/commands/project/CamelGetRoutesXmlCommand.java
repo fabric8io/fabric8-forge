@@ -19,7 +19,7 @@ import io.fabric8.forge.addon.utils.Indenter;
 import io.fabric8.forge.camel.commands.project.completer.XmlFileCompleter;
 import io.fabric8.forge.camel.commands.project.dto.ContextDto;
 import io.fabric8.forge.camel.commands.project.dto.NodeDtos;
-import io.fabric8.forge.camel.commands.project.dto.OutputFormat;
+import io.fabric8.forge.addon.utils.dto.OutputFormat;
 import io.fabric8.forge.camel.commands.project.helper.CamelXmlHelper;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.ui.context.UIBuilder;
@@ -38,7 +38,7 @@ import java.util.List;
 import java.util.Set;
 
 import static io.fabric8.forge.camel.commands.project.helper.CollectionHelper.first;
-import static io.fabric8.forge.camel.commands.project.helper.OutputFormatHelper.toJson;
+import static io.fabric8.forge.addon.utils.OutputFormatHelper.toJson;
 
 public class CamelGetRoutesXmlCommand extends AbstractCamelProjectCommand {
 

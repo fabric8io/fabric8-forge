@@ -13,11 +13,12 @@
  *  implied.  See the License for the specific language governing
  *  permissions and limitations under the License.
  */
-package io.fabric8.forge.camel.commands.project.helper;
+package io.fabric8.forge.addon.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import io.fabric8.utils.Strings;
 import io.fabric8.utils.TablePrinter;
 
 /**
@@ -26,8 +27,10 @@ import io.fabric8.utils.TablePrinter;
 public class OutputFormatHelper {
 
     public static void addTableTextOutput(StringBuilder buffer, String title, TablePrinter table) {
-        buffer.append(title);
-        buffer.append(":\n\n");
+        if (Strings.isNotBlank(title)) {
+            buffer.append(title);
+            buffer.append(":\n\n");
+        }
         buffer.append(table.asText());
         buffer.append("\n");
     }

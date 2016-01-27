@@ -18,11 +18,9 @@ package io.fabric8.forge.camel.commands.project;
 import java.util.List;
 import javax.inject.Inject;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.fabric8.forge.camel.commands.project.completer.RouteBuilderEndpointsCompleter;
 import io.fabric8.forge.camel.commands.project.completer.XmlEndpointsCompleter;
-import io.fabric8.forge.camel.commands.project.dto.OutputFormat;
-import io.fabric8.forge.camel.commands.project.helper.OutputFormatHelper;
+import io.fabric8.forge.addon.utils.dto.OutputFormat;
 import io.fabric8.forge.camel.commands.project.model.CamelEndpointDetails;
 // TODO: Camel 2.16.2
 //import org.apache.camel.catalog.EndpointValidationResult;
