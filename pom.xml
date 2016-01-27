@@ -74,11 +74,11 @@
     <maven.compiler.target>1.7</maven.compiler.target>
 
     <fabric8.version>2.2.88</fabric8.version>
-    <fabric8.archetypes.release.version>2.2.93</fabric8.archetypes.release.version>
+    <fabric8.archetypes.release.version>2.2.95</fabric8.archetypes.release.version>
     <fabric8.devops.version>2.2.103</fabric8.devops.version>
 
     <furnace.version>2.23.0.Final</furnace.version>
-    <jboss.forge.version>3.0.0.Beta3</jboss.forge.version>
+    <jboss.forge.version>3.0.0.Beta4</jboss.forge.version>
     <jboss.roaster.version>2.18.0.Final</jboss.roaster.version>
 
     <!-- NOTE these properties are used to generate the addons/utils/src/main/resources/io/fabric8/forge/addon/utils/versions.properties file -->
@@ -278,6 +278,12 @@
       <properties>
         <fabric8.version>2.2.89-SNAPSHOT</fabric8.version>
         <fabric8.dockerPrefix/>
+      </properties>
+    </profile>
+    <profile>
+      <id>forge-snapshot</id>
+      <properties>
+        <jboss.forge.version>3.0.0-SNAPSHOT</jboss.forge.version>
       </properties>
     </profile>
     <profile>
