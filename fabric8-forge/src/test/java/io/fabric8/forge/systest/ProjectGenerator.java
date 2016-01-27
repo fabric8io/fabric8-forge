@@ -151,10 +151,15 @@ public class ProjectGenerator {
         wizardCommandController.setValueFor("archetype", archetypeUri);
 
         validate(wizardCommandController);
-        Result result = wizardCommandController.execute();
-        printResult(result);
+        try {
 
-        useProject(archetype, outputDir, name);
+            Result result = wizardCommandController.execute();
+            printResult(result);
+
+            useProject(archetype, outputDir, name);
+        } catch (Exception e) {
+            LOG.error("Failed to create project " + archetypeUri + " " + e, e);
+        }
     }
 
     protected void useProject(String archetype, File outputDir, String projectName) throws MavenInvocationException {
