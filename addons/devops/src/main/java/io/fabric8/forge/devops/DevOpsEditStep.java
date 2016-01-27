@@ -126,7 +126,7 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
         pipeline.setCompleter(new UICompleter<PipelineDTO>() {
             @Override
             public Iterable<PipelineDTO> getCompletionProposals(UIContext context, InputComponent<?, PipelineDTO> input, String value) {
-                return getPipelines(context);
+                return getPipelines(context, true);
             }
         });
         pipeline.setValueConverter(new Converter<String, PipelineDTO>() {
@@ -326,6 +326,7 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
         }
         // lets default the environments from the pipeline
         PipelineDTO pipelineValue = pipeline.getValue();
+        LOG.info("Using pipeline " + pipelineValue);
         String buildName = config.getBuildName();
         if (Strings.isNotBlank(buildName)) {
             if (pipelineValue != null) {
@@ -474,9 +475,9 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
 
     protected PipelineDTO getPipelineForValue(UIContext context, String value) {
         if (Strings.isNotBlank(value)) {
-            Iterable<PipelineDTO> pipelines = getPipelines(context);
+            Iterable<PipelineDTO> pipelines = getPipelines(context, false);
             for (PipelineDTO pipelineDTO : pipelines) {
-                if (pipelineDTO.getValue().equals(value)) {
+                if (pipelineDTO.getValue().equals(value) || pipelineDTO.toString().equals(value)) {
                     return pipelineDTO;
                 }
             }
@@ -484,9 +485,13 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
         return null;
     }
 
-    protected Iterable<PipelineDTO> getPipelines(UIContext context) {
-        ProjectOverviewDTO projectOveriew = getProjectOverview(context);
-        Set<String> builders = projectOveriew.getBuilders();
+    protected Iterable<PipelineDTO> getPipelines(UIContext context, boolean filterPipelines) {
+        Set<String> builders =  null;
+        ProjectOverviewDTO projectOveriew = null;
+        if (filterPipelines) {
+            projectOveriew = getProjectOverview(context);
+            builders = projectOveriew.getBuilders();
+        }
         File dir = getJenkinsWorkflowFolder(context);
         Set<String> buildersFound = new HashSet<>();
         if (dir != null) {
@@ -518,7 +523,7 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
                     int idx = label.indexOf("/");
                     if (idx > 0) {
                         builder = label.substring(0, idx);
-                        if (!builders.contains(builder)) {
+                        if (filterPipelines && !builders.contains(builder)) {
                             // ignore this builder
                             continue;
                         } else {

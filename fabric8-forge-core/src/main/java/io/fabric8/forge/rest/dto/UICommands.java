@@ -204,16 +204,22 @@ public class UICommands {
                     return null;
                 }
             }
-            Class<?> aClass = Proxies.unwrap(value).getClass();
+            value = Proxies.unwrap(value);
+            Class<?> aClass = value.getClass();
             while (aClass != null && !aClass.equals(Object.class)) {
                 Annotation[] annotations = aClass.getAnnotations();
                 if (annotations != null) {
                     for (Annotation annotation : annotations) {
-                        String text = annotation.toString();
-                        // because of the Forge proxying we can't just use the actual class here...
-                        if (text.indexOf("com.fasterxml.jackson.") >= 0) {
+                        String annotationClassName = annotation.getClass().getName();
+                        if (annotationClassName != null && annotationClassName.startsWith("com.fasterxml.jackson.")) {
                             // lets assume its a JSON DTO!
                             return value;
+                        } else {
+                            String text = annotation.toString();
+                            // because of the Forge proxying we can't just use the actual class here...
+                            if (text.indexOf("com.fasterxml.jackson.") >= 0) {
+                                return value;
+                            }
                         }
                     }
                 }

@@ -296,11 +296,9 @@ public class CommandsResource {
 
             // lets ensure a valid targetLocation for new projects
             if (Objects.equal(PROJECT_NEW_COMMAND, name)) {
-                for (Map<String, String> map : inputList) {
-                    String value = map.get(TARGET_LOCATION_PROPERTY);
-                    if (Strings.isNotBlank(value)) {
-                        map.put(TARGET_LOCATION_PROPERTY, projectFileSystem.getUserProjectFolderLocation(userDetails));
-                    }
+                if (inputList.size() > 0) {
+                    Map<String, String> map = inputList.get(0);
+                    map.put(TARGET_LOCATION_PROPERTY, projectFileSystem.getUserProjectFolderLocation(userDetails));
                 }
             }
             CommandController controller = createController(context, command);
