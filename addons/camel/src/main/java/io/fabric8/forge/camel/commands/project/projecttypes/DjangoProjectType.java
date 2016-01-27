@@ -23,6 +23,6 @@ import org.jboss.forge.addon.maven.projects.archetype.CustomMavenArchetypeProjec
  */
 public class DjangoProjectType extends CustomMavenArchetypeProjectType {
     public DjangoProjectType() {
-        super(GoProjectArchetypeStep.class, "Django");
+        super(DjangoProjectArchetypeStep.class, "Django");
     }
 }
