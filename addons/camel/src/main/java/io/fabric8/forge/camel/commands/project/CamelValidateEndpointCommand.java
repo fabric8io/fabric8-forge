@@ -18,12 +18,13 @@ package io.fabric8.forge.camel.commands.project;
 import java.util.List;
 import javax.inject.Inject;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import io.fabric8.forge.addon.utils.OutputFormatHelper;
+import io.fabric8.forge.addon.utils.dto.OutputFormat;
 import io.fabric8.forge.camel.commands.project.completer.RouteBuilderEndpointsCompleter;
 import io.fabric8.forge.camel.commands.project.completer.XmlEndpointsCompleter;
-import io.fabric8.forge.addon.utils.dto.OutputFormat;
 import io.fabric8.forge.camel.commands.project.model.CamelEndpointDetails;
-// TODO: Camel 2.16.2
-//import org.apache.camel.catalog.EndpointValidationResult;
+import org.apache.camel.catalog.EndpointValidationResult;
 import org.jboss.forge.addon.dependencies.Dependency;
 import org.jboss.forge.addon.parser.java.facets.JavaSourceFacet;
 import org.jboss.forge.addon.projects.Project;
@@ -104,31 +105,27 @@ public class CamelValidateEndpointCommand extends AbstractCamelProjectCommand {
 
         for (CamelEndpointDetails detail : javaEndpoints) {
             String uri = detail.getEndpointUri();
-            // TODO: requires Camel 2.16.2+
-            // TODO: add detail about where the file is located (maybe we can grab the source code lines +2/-2 and print that)
-            //EndpointValidationResult result = getCamelCatalog().validateEndpointProperties(uri);
+            EndpointValidationResult result = getCamelCatalog().validateEndpointProperties(uri);
             // only capture failures
-            //if (!result.isSuccess()) {
-            //    failed = true;
-            //    String msg = formatResult(result);
-            //    if (msg != null) {
-            //        sb.append(msg);
-            //    }
-            //}
+            if (!result.isSuccess()) {
+                failed = true;
+                String msg = formatResult(result);
+                if (msg != null) {
+                    sb.append(msg);
+                }
+            }
         }
         for (CamelEndpointDetails detail : xmlEndpoints) {
             String uri = detail.getEndpointUri();
-            // TODO: requires Camel 2.16.2+
-            // TODO: add detail about where the file is located  (maybe we can grab the source code lines +2/-2 and print that)
-            //EndpointValidationResult result = getCamelCatalog().validateEndpointProperties(uri);
+            EndpointValidationResult result = getCamelCatalog().validateEndpointProperties(uri);
             // only capture failures
-            //if (!result.isSuccess()) {
-            //    failed = true;
-            //    String msg = formatResult(result);
-            //    if (msg != null) {
-            //        sb.append(msg);
-            //    }
-            //}
+            if (!result.isSuccess()) {
+                failed = true;
+                String msg = formatResult(result);
+                if (msg != null) {
+                    sb.append(msg);
+                }
+            }
         }
 
         if (failed) {
@@ -138,14 +135,14 @@ public class CamelValidateEndpointCommand extends AbstractCamelProjectCommand {
         }
     }
 
-    /*protected String formatResult(EndpointValidationResult results) throws JsonProcessingException {
+    protected String formatResult(EndpointValidationResult results) throws JsonProcessingException {
         OutputFormat outputFormat = format.getValue();
         switch (outputFormat) {
             case JSON:
                 return OutputFormatHelper.toJson(results);
             default:
-                return results.summaryErrorMessage();
+                return results.summaryErrorMessage(false);
         }
-    }*/
+    }
 
 }

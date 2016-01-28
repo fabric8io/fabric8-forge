@@ -8,7 +8,7 @@
   <name>Fabric8 :: Quickstarts :: Spring :: Camel</name>
   <description>Camel route using Spring XML in a standalone Java container</description>
   <properties>
-    <camel.version>2.16.1</camel.version>
+    <camel.version>2.16.2</camel.version>
     <docker.assemblyDescriptorRef>artifact-with-dependencies</docker.assemblyDescriptorRef>
     <docker.from>docker.io/fabric8/s2i-java:1.2</docker.from>
     <docker.image>fabric8/${project.artifactId}:${project.version}</docker.image>
