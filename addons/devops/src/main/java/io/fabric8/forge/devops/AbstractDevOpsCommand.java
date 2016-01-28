@@ -67,6 +67,7 @@ import static io.fabric8.forge.addon.utils.CamelProjectHelper.findCamelCoreDepen
  */
 public abstract class AbstractDevOpsCommand extends AbstractProjectCommand implements UICommand {
     private static final transient Logger LOG = LoggerFactory.getLogger(AbstractDevOpsCommand.class);
+    public static final int ROOT_LEVEL = 1;
 
     public static String CATEGORY = "DevOps";
 
@@ -281,8 +282,19 @@ public abstract class AbstractDevOpsCommand extends AbstractProjectCommand imple
         List<GetOverviewCommand.FileProcessor> answer = new ArrayList<>();
         answer.add(new GetOverviewCommand.FileProcessor() {
                        @Override
-                       public boolean processes(ProjectOverviewDTO overview, File file, String name, String extension) {
-                           if (java.util.Objects.equals(name, "package.json") || java.util.Objects.equals(extension, "js")) {
+                       public boolean processes(ProjectOverviewDTO overview, File file, String name, String extension, int level) {
+                           if (level == ROOT_LEVEL && java.util.Objects.equals(name, "Jenkinsfile")) {
+                               overview.addBuilder("jenkinsfile");
+                               return true;
+                           }
+                           return false;
+                       }
+                   }
+        );
+        answer.add(new GetOverviewCommand.FileProcessor() {
+                       @Override
+                       public boolean processes(ProjectOverviewDTO overview, File file, String name, String extension, int level) {
+                           if ((level == ROOT_LEVEL && java.util.Objects.equals(name, "package.json")) || java.util.Objects.equals(extension, "js")) {
                                overview.addBuilder("node");
                                return true;
                            }
@@ -292,7 +304,7 @@ public abstract class AbstractDevOpsCommand extends AbstractProjectCommand imple
         );
         answer.add(new GetOverviewCommand.FileProcessor() {
                        @Override
-                       public boolean processes(ProjectOverviewDTO overview, File file, String name, String extension) {
+                       public boolean processes(ProjectOverviewDTO overview, File file, String name, String extension, int level) {
                            if (java.util.Objects.equals(extension, "go")) {
                                overview.addBuilder("golang");
                                return true;
@@ -303,7 +315,7 @@ public abstract class AbstractDevOpsCommand extends AbstractProjectCommand imple
         );
         answer.add(new GetOverviewCommand.FileProcessor() {
                        @Override
-                       public boolean processes(ProjectOverviewDTO overview, File file, String name, String extension) {
+                       public boolean processes(ProjectOverviewDTO overview, File file, String name, String extension, int level) {
                            if (java.util.Objects.equals(name, "Rakefile") || java.util.Objects.equals(extension, "rb")) {
                                overview.addBuilder("ruby");
                                return true;
@@ -314,7 +326,7 @@ public abstract class AbstractDevOpsCommand extends AbstractProjectCommand imple
         );
         answer.add(new GetOverviewCommand.FileProcessor() {
                        @Override
-                       public boolean processes(ProjectOverviewDTO overview, File file, String name, String extension) {
+                       public boolean processes(ProjectOverviewDTO overview, File file, String name, String extension, int level) {
                            if (java.util.Objects.equals(extension, "swift")) {
                                overview.addBuilder("swift");
                                return true;
@@ -325,7 +337,7 @@ public abstract class AbstractDevOpsCommand extends AbstractProjectCommand imple
         );
         answer.add(new GetOverviewCommand.FileProcessor() {
                        @Override
-                       public boolean processes(ProjectOverviewDTO overview, File file, String name, String extension) {
+                       public boolean processes(ProjectOverviewDTO overview, File file, String name, String extension, int level) {
                            if (java.util.Objects.equals(name, "urls.py") || java.util.Objects.equals(extension, "wsgi.py")) {
                                overview.addBuilder("django");
                                return true;
@@ -342,7 +354,7 @@ public abstract class AbstractDevOpsCommand extends AbstractProjectCommand imple
             String name = file.getName();
             String extension = Files.getExtension(name);
             for (GetOverviewCommand.FileProcessor processor : new ArrayList<>(processors)) {
-                if (processor.processes(overview, file, name, extension)) {
+                if (processor.processes(overview, file, name, extension, level)) {
                     processors.remove(processor);
                 }
             }
@@ -389,6 +401,6 @@ public abstract class AbstractDevOpsCommand extends AbstractProjectCommand imple
     }
 
     protected interface FileProcessor {
-        boolean processes(ProjectOverviewDTO overview, File file, String name, String extension);
+        boolean processes(ProjectOverviewDTO overview, File file, String name, String extension, int level);
     }
 }
