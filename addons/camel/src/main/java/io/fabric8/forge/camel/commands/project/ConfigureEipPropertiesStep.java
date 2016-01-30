@@ -159,7 +159,7 @@ public abstract class ConfigureEipPropertiesStep extends AbstractCamelProjectCom
 
             // special for expression
             boolean expressionKey = isModelExpressionKind(camelCatalog, eipName, key);
-            boolean expressionValue = key.endsWith("-value");
+            boolean expressionValue = key.endsWith("_value");
 
             // only use the value if a value was set (and the value is not the same as the default value)
             if (input.hasValue()) {
@@ -209,7 +209,7 @@ public abstract class ConfigureEipPropertiesStep extends AbstractCamelProjectCom
             for (Map.Entry<String, String> entry : expressionKeys.entrySet()) {
                 String name = entry.getKey();
                 String language = entry.getValue();
-                String text = expressionValues.get(name + "-value");
+                String text = expressionValues.get(name + "_value");
 
                 // build the model
                 String lanJavaType = getModelJavaType(camelCatalog, language);

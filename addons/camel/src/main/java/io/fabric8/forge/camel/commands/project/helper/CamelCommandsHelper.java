@@ -610,8 +610,8 @@ public final class CamelCommandsHelper {
 
                                 // if its an expression then we need to add a 2nd input for the actual value
                                 if ("expression".equals(kind)) {
-                                    currentValue = currentValues != null ? currentValues.get(name + "-value") : null;
-                                    InputComponent input2 = createUIInput(ui.getProvider(), componentFactory, converterFactory, name + "-value", String.class, required, currentValue, null, null, description, promptInInteractiveMode, false, null);
+                                    currentValue = currentValues != null ? currentValues.get(name + "_value") : null;
+                                    InputComponent input2 = createUIInput(ui.getProvider(), componentFactory, converterFactory, name + "_value", String.class, required, currentValue, null, null, description, promptInInteractiveMode, false, null);
                                     if (input2 != null) {
                                         inputs.add(input2);
                                     }
