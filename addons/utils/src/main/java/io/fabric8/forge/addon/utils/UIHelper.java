@@ -164,6 +164,12 @@ public final class UIHelper {
      * Returns the text in human readable title/camel case format
      */
     public static String asTitleCase(String text) {
+        // special for _value, eg we want to let underscore be like a space
+        text = text.replace('_', ' ');
+
+        // remove double spaces
+        text = text.replaceAll("\\s+", " ");
+
         // see: http://stackoverflow.com/questions/2559759/how-do-i-convert-camelcase-into-human-readable-names-in-java
         text = text.replaceAll(
                 String.format("%s|%s|%s",

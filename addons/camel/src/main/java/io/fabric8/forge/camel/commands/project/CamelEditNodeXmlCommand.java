@@ -157,7 +157,7 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
                     String text = exp.getExpression();
                     String lan = exp.getLanguage();
                     options.put(k, lan);
-                    options.put(k + "-value", text);
+                    options.put(k + "_value", text);
                 } else {
                     // convert the value to a text based
                     String text = v != null ? v.toString() : null;
