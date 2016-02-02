@@ -136,6 +136,7 @@ public abstract class ConfigureEipPropertiesStep extends AbstractCamelProjectCom
     protected Result executeXml(UIExecutionContext context, Map<Object, Object> attributeMap) throws Exception {
         String mode = mandatoryAttributeValue(attributeMap, "mode");
         String xml = mandatoryAttributeValue(attributeMap, "xml");
+        String pattern = mandatoryAttributeValue(attributeMap, "pattern");
 
         // line number for the parent node
         String lineNumber = mandatoryAttributeValue(attributeMap, "lineNumber");
@@ -245,21 +246,21 @@ public abstract class ConfigureEipPropertiesStep extends AbstractCamelProjectCom
         if (file == null || !file.exists()) {
             return Results.fail("Cannot find XML file " + xml);
         }
-        return addOrEditModelXml(file, modelXml, xml, lineNumber, lineNumberEnd, mode);
+        return addOrEditModelXml(file, pattern, modelXml, xml, lineNumber, lineNumberEnd, mode);
     }
 
-    protected Result addOrEditModelXml(FileResource file, String modelXml, String xml, String lineNumber, String lineNumberEnd, String mode) throws Exception {
+    protected Result addOrEditModelXml(FileResource file, String pattern, String modelXml, String xml, String lineNumber, String lineNumberEnd, String mode) throws Exception {
         List<String> lines = LineNumberHelper.readLines(file.getResourceInputStream());
         if ("add".equals(mode)) {
-            return addModelXml(lines, lineNumber, lineNumberEnd, modelXml, file, xml);
+            return addModelXml(pattern, lines, lineNumber, lineNumberEnd, modelXml, file, xml);
         } else {
-            return editModelXml(lines, lineNumber, lineNumberEnd, modelXml, file, xml);
+            return editModelXml(pattern, lines, lineNumber, lineNumberEnd, modelXml, file, xml);
         }
     }
 
-    protected abstract Result addModelXml(List<String> lines, String lineNumber, String lineNumberEnd, String modelXml, FileResource file, String xml) throws Exception;
+    protected abstract Result addModelXml(String pattern, List<String> lines, String lineNumber, String lineNumberEnd, String modelXml, FileResource file, String xml) throws Exception;
 
-    protected abstract Result editModelXml(List<String> lines, String lineNumber, String lineNumberEnd, String modelXml, FileResource file, String xml) throws Exception;
+    protected abstract Result editModelXml(String pattern, List<String> lines, String lineNumber, String lineNumberEnd, String modelXml, FileResource file, String xml) throws Exception;
 
     /**
      * Returns the mandatory String value of the given name

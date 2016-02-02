@@ -126,6 +126,7 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
         attributeMap.put("node", key);
         String nodeName = editNode.getPattern();
         attributeMap.put("nodeName", nodeName);
+        attributeMap.put("pattern", editNode.getPattern());
 
         Element selectedElement = getSelectedCamelElementNode(project, xmlResourceName, key);
         if (selectedElement == null) {

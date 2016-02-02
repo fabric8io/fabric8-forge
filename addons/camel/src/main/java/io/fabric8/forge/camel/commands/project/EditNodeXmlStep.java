@@ -47,7 +47,7 @@ public class EditNodeXmlStep extends ConfigureEipPropertiesStep {
     }
 
     @Override
-    protected Result editModelXml(List<String> lines, String lineNumber, String lineNumberEnd, String modelXml, FileResource file, String xml) throws Exception {
+    protected Result editModelXml(String pattern, List<String> lines, String lineNumber, String lineNumberEnd, String modelXml, FileResource file, String xml) throws Exception {
         // the list is 0-based, and line number is 1-based
         int idx = Integer.valueOf(lineNumber) - 1;
         int idx2 = Integer.valueOf(lineNumberEnd) - 1;
@@ -73,7 +73,7 @@ public class EditNodeXmlStep extends ConfigureEipPropertiesStep {
     }
 
     @Override
-    protected Result addModelXml(List<String> lines, String lineNumber, String lineNumberEnd, String modelXml, FileResource file, String xml) throws Exception {
+    protected Result addModelXml(String pattern, List<String> lines, String lineNumber, String lineNumberEnd, String modelXml, FileResource file, String xml) throws Exception {
         // noop
         return null;
     }
