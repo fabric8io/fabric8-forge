@@ -90,6 +90,10 @@ public abstract class ConfigureEipPropertiesStep extends AbstractCamelProjectCom
         return total;
     }
 
+    public String getEipName() {
+        return eipName;
+    }
+
     @Override
     public UICommandMetadata getMetadata(UIContext context) {
         return Metadata.forCommand(ConfigureEipPropertiesStep.class).name(
