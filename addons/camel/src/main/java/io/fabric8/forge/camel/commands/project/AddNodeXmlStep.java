@@ -47,9 +47,15 @@ public class AddNodeXmlStep extends ConfigureEipPropertiesStep {
     }
 
     @Override
-    protected Result addModelXml(List<String> lines, String lineNumber, String lineNumberEnd, String modelXml, FileResource file, String xml) throws Exception {
+    protected Result addModelXml(String pattern, List<String> lines, String lineNumber, String lineNumberEnd, String modelXml, FileResource file, String xml) throws Exception {
+
         // the list is 0-based, and line number is 1-based
         int idx = Integer.valueOf(lineNumberEnd);
+        if ("route".equals(pattern)) {
+            // we want to add at the end of the existing route, not after the route
+            idx = idx - 1;
+        }
+
         // use the same indent from the parent line
         int spaces = LineNumberHelper.leadingSpaces(lines, idx - 1);
         String line = LineNumberHelper.padString(modelXml, spaces);
@@ -63,7 +69,7 @@ public class AddNodeXmlStep extends ConfigureEipPropertiesStep {
     }
 
     @Override
-    protected Result editModelXml(List<String> lines, String lineNumber, String lineNumberEnd, String modelXml, FileResource file, String xml) throws Exception {
+    protected Result editModelXml(String pattern, List<String> lines, String lineNumber, String lineNumberEnd, String modelXml, FileResource file, String xml) throws Exception {
         // noop
         return null;
     }
