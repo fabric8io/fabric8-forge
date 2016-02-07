@@ -73,7 +73,7 @@
     <maven.compiler.source>1.7</maven.compiler.source>
     <maven.compiler.target>1.7</maven.compiler.target>
 
-    <fabric8.version>2.2.89</fabric8.version>
+    <fabric8.version>2.2.91</fabric8.version>
     <fabric8.archetypes.release.version>2.2.96</fabric8.archetypes.release.version>
     <fabric8.devops.version>2.2.105</fabric8.devops.version>
 
@@ -276,7 +276,7 @@
     <profile>
       <id>fabric8-snapshot</id>
       <properties>
-        <fabric8.version>2.2.90-SNAPSHOT</fabric8.version>
+        <fabric8.version>2.2.92-SNAPSHOT</fabric8.version>
         <fabric8.dockerPrefix/>
       </properties>
     </profile>
