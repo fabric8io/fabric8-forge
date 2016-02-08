@@ -18,7 +18,7 @@ package io.fabric8.forge.camel.commands.project.projecttypes;
 import org.jboss.forge.addon.maven.projects.archetype.CustomMavenArchetypeProjectType;
 
 /**
- * A project type for Camel integration projects
+ * A project type for a Vert.x project
  */
 public class VertxProjectType extends CustomMavenArchetypeProjectType {
     public VertxProjectType() {
