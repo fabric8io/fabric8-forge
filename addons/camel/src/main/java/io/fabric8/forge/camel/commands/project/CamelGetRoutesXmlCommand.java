@@ -78,7 +78,7 @@ public class CamelGetRoutesXmlCommand extends AbstractCamelProjectCommand {
         Project project = getSelectedProject(context);
 
         String xmlResourceName = xml.getValue();
-        List<ContextDto> camelContexts = CamelXmlHelper.loadCamelContext(context.getUIContext(), project, xmlResourceName);
+        List<ContextDto> camelContexts = CamelXmlHelper.loadCamelContext(getCamelCatalog(), context.getUIContext(), project, xmlResourceName);
         if (camelContexts == null) {
             return Results.fail("No file found for: " + xmlResourceName);
         }

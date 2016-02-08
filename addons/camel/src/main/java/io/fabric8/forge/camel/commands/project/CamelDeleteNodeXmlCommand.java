@@ -87,7 +87,7 @@ public class CamelDeleteNodeXmlCommand extends AbstractCamelProjectCommand {
             return Results.fail("Cannot find XML file " + xmlResourceName);
         }
 
-        List<ContextDto> camelContexts = CamelXmlHelper.loadCamelContext(context.getUIContext(), project, xmlResourceName);
+        List<ContextDto> camelContexts = CamelXmlHelper.loadCamelContext(getCamelCatalog(), context.getUIContext(), project, xmlResourceName);
         if (camelContexts == null) {
             return Results.fail("No file found for: " + xmlResourceName);
         }

@@ -28,7 +28,7 @@ public class ContextDto extends NodeDto {
     }
 
     public ContextDto(String key, String id, String label, String description, List<NodeDto> children) {
-        super(key, id, label, PATTERN, description, children);
+        super(key, id, label, PATTERN, description, true, children);
     }
 
     public ContextDto(String name) {

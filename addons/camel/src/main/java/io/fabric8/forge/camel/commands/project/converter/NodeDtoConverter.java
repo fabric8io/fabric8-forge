@@ -23,6 +23,7 @@ import io.fabric8.forge.camel.commands.project.dto.ContextDto;
 import io.fabric8.forge.camel.commands.project.dto.NodeDto;
 import io.fabric8.forge.camel.commands.project.dto.NodeDtos;
 import io.fabric8.forge.camel.commands.project.helper.CamelXmlHelper;
+import org.apache.camel.catalog.CamelCatalog;
 import org.jboss.forge.addon.convert.Converter;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.ui.context.UIContext;
@@ -31,11 +32,13 @@ import org.jboss.forge.addon.ui.input.UISelectOne;
 public class NodeDtoConverter implements Converter<String, NodeDto> {
     private static final Logger LOG = Logger.getLogger(NodeDtoConverter.class.getName());
 
+    private final CamelCatalog camelCatalog;
     private final Project project;
     private final UIContext context;
     private final UISelectOne<String> xml;
 
-    public NodeDtoConverter(Project project, UIContext context, UISelectOne<String> xml) {
+    public NodeDtoConverter(CamelCatalog camelCatalog, Project project, UIContext context, UISelectOne<String> xml) {
+        this.camelCatalog = camelCatalog;
         this.project = project;
         this.context = context;
         this.xml = xml;
@@ -46,7 +49,7 @@ public class NodeDtoConverter implements Converter<String, NodeDto> {
         String xmlResourceName = xml.getValue();
         NodeDto answer = null;
         try {
-            List<ContextDto> camelContexts = CamelXmlHelper.loadCamelContext(context, project, xmlResourceName);
+            List<ContextDto> camelContexts = CamelXmlHelper.loadCamelContext(camelCatalog, context, project, xmlResourceName);
             answer = NodeDtos.findNodeByKey(camelContexts, name);
         } catch (Exception e) {
             LOG.log(Level.FINE, "Error converting to NodeDto due " + e.getMessage(), e);

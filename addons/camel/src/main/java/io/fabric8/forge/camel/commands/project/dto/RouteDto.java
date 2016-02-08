@@ -26,7 +26,7 @@ public class RouteDto extends NodeDto {
     }
 
     public RouteDto(String key, String id, String label, String description, List<NodeDto> children) {
-        super(key, id, label, PATTERN, description, children);
+        super(key, id, label, PATTERN, description, true, children);
     }
 
     @Override

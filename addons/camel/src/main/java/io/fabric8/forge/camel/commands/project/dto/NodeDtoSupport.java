@@ -31,16 +31,18 @@ public abstract class NodeDtoSupport {
     private String pattern;
     private String label;
     private String description;
+    private boolean supportOutput;
 
     public NodeDtoSupport() {
     }
 
-    public NodeDtoSupport(String key, String id, String label, String pattern, String description) {
+    public NodeDtoSupport(String key, String id, String label, String pattern, String description, boolean supportOutput) {
         this.key = key;
         this.id = id;
         this.label = label;
         this.pattern = pattern;
         this.description = description;
+        this.supportOutput = supportOutput;
     }
 
     @Override
@@ -104,6 +106,14 @@ public abstract class NodeDtoSupport {
 
     public void setPattern(String pattern) {
         this.pattern = pattern;
+    }
+
+    public boolean isSupportOutput() {
+        return supportOutput;
+    }
+
+    public void setSupportOutput(boolean supportOutput) {
+        this.supportOutput = supportOutput;
     }
 
     public String getKey() {
