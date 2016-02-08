@@ -334,6 +334,31 @@ public final class CamelCatalogHelper {
     }
 
     /**
+     * Whether the EIP supports outputs
+     *
+     * @param modelName the model name
+     * @return <tt>true</tt> if output supported, <tt>false</tt> otherwise
+     */
+    public static boolean isModelSupportOutput(CamelCatalog camelCatalog, String modelName) {
+        // use the camel catalog
+        String json = camelCatalog.modelJSonSchema(modelName);
+        if (json == null) {
+            throw new IllegalArgumentException("Could not find catalog entry for model name: " + modelName);
+        }
+
+        List<Map<String, String>> data = JSonSchemaHelper.parseJsonSchema("model", json, false);
+        if (data != null) {
+            for (Map<String, String> propertyMap : data) {
+                String output = propertyMap.get("output");
+                if (output != null) {
+                    return "true".equals(output);
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      * Whether the component is consumer only
      */
     public static boolean isComponentConsumerOnly(CamelCatalog camelCatalog, String scheme) {

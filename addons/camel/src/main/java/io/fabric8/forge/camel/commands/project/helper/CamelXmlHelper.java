@@ -40,6 +40,7 @@ import io.fabric8.forge.camel.commands.project.dto.RouteDto;
 import io.fabric8.utils.Files;
 import io.fabric8.utils.Objects;
 import io.fabric8.utils.Strings;
+import org.apache.camel.catalog.CamelCatalog;
 import org.apache.camel.model.FromDefinition;
 import org.apache.camel.model.OptionalIdentifiedDefinition;
 import org.apache.camel.model.ProcessorDefinition;
@@ -248,7 +249,7 @@ public final class CamelXmlHelper {
         return directory.getValue() != null ? directory.getValue() + File.separator + name.getValue() : name.getValue();
     }
 
-    public static List<ContextDto> loadCamelContext(UIContext context, Project project, String xmlResourceName) throws Exception {
+    public static List<ContextDto> loadCamelContext(CamelCatalog camelCatalog, UIContext context, Project project, String xmlResourceName) throws Exception {
         List<ContextDto> camelContexts = null;
 
         // try with src/main/resources or src/main/webapp/WEB-INF
@@ -259,12 +260,12 @@ public final class CamelXmlHelper {
             xmlFile = CommandHelpers.getProjectContextFile(context, project, xmlFileName);
         }
         if (Files.isFile(xmlFile)) {
-            camelContexts = parseCamelContexts(xmlFile);
+            camelContexts = parseCamelContexts(camelCatalog, xmlFile);
         }
         return camelContexts;
     }
 
-    protected static List<ContextDto> parseCamelContexts(File xmlFile) throws Exception {
+    protected static List<ContextDto> parseCamelContexts(CamelCatalog camelCatalog, File xmlFile) throws Exception {
         List<ContextDto> camelContexts = new ArrayList<>();
 
         RouteXml routeXml = new RouteXml();
@@ -281,12 +282,12 @@ public final class CamelXmlHelper {
             key = "_camelContext" + camelContexts.size();
         }
         context.setKey(key);
-        List<NodeDto> routes = createRouteDtos(routeDefs, context);
+        List<NodeDto> routes = createRouteDtos(camelCatalog, routeDefs, context);
         context.setChildren(routes);
         return camelContexts;
     }
 
-    protected static List<NodeDto> createRouteDtos(List<RouteDefinition> routeDefs, ContextDto context) {
+    protected static List<NodeDto> createRouteDtos(CamelCatalog camelCatalog, List<RouteDefinition> routeDefs, ContextDto context) {
         List<NodeDto> answer = new ArrayList<>();
         Map<String, Integer> nodeCounts = new HashMap<>();
         for (RouteDefinition def : routeDefs) {
@@ -297,27 +298,27 @@ public final class CamelXmlHelper {
             answer.add(route);
             route.defaultKey(context, nodeCounts);
 
-            addInputs(route, def.getInputs());
-            addOutputs(route, def.getOutputs());
+            addInputs(camelCatalog, route, def.getInputs());
+            addOutputs(camelCatalog, route, def.getOutputs());
         }
         return answer;
     }
 
-    protected static void addInputs(NodeDto owner, List<FromDefinition> inputs) {
+    protected static void addInputs(CamelCatalog camelCatalog, NodeDto owner, List<FromDefinition> inputs) {
         Map<String, Integer> nodeCounts = new HashMap<>();
         for (FromDefinition input : inputs) {
-            addChild(owner, input, nodeCounts);
+            addChild(camelCatalog, owner, input, nodeCounts);
         }
     }
 
-    protected static void addOutputs(NodeDto owner, List<ProcessorDefinition<?>> outputs) {
+    protected static void addOutputs(CamelCatalog camelCatalog, NodeDto owner, List<ProcessorDefinition<?>> outputs) {
         Map<String, Integer> nodeCounts = new HashMap<>();
         for (ProcessorDefinition<?> output : outputs) {
-            addChild(owner, output, nodeCounts);
+            addChild(camelCatalog, owner, output, nodeCounts);
         }
     }
 
-    private static NodeDto addChild(NodeDto owner, OptionalIdentifiedDefinition definition, Map<String, Integer> nodeCounts) {
+    private static NodeDto addChild(CamelCatalog camelCatalog, NodeDto owner, OptionalIdentifiedDefinition definition, Map<String, Integer> nodeCounts) {
         NodeDto node = new NodeDto();
         node.setId(definition.getId());
         node.setLabel(CamelModelHelper.getDisplayText(definition));
@@ -325,7 +326,7 @@ public final class CamelXmlHelper {
         node.setPattern(CamelModelHelper.getPatternName(definition));
         owner.addChild(node);
         node.defaultKey(owner, nodeCounts);
-
+        node.setSupportOutput(CamelCatalogHelper.isModelSupportOutput(camelCatalog, node.getPattern()));
         if (definition instanceof FromDefinition) {
             FromDefinition endpointDef = (FromDefinition) definition;
             node.setProperty("uri", endpointDef.getUri());
@@ -336,7 +337,7 @@ public final class CamelXmlHelper {
         }
         if (definition instanceof ProcessorDefinition) {
             ProcessorDefinition processorDefinition = (ProcessorDefinition) definition;
-            addOutputs(node, processorDefinition.getOutputs());
+            addOutputs(camelCatalog, node, processorDefinition.getOutputs());
         }
         return node;
     }

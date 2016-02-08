@@ -77,8 +77,8 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
     @Inject
     private CamelCatalog camelCatalog;
 
-    protected static void configureNode(final UIContext context, final Project project, final String first, final UISelectOne<String> xml, UISelectOne<NodeDto> node) {
-        node.setValueConverter(new NodeDtoConverter(project, context, xml));
+    protected void configureNode(final UIContext context, final Project project, final String first, final UISelectOne<String> xml, UISelectOne<NodeDto> node) {
+        node.setValueConverter(new NodeDtoConverter(camelCatalog, project, context, xml));
         node.setItemLabelConverter(new NodeDtoLabelConverter());
         node.setValueChoices(new Callable<Iterable<NodeDto>>() {
             @Override
@@ -87,7 +87,7 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
                 if (Strings.isNullOrBlank(xmlResourceName)) {
                     xmlResourceName = first;
                 }
-                List<ContextDto> camelContexts = CamelXmlHelper.loadCamelContext(context, project, xmlResourceName);
+                List<ContextDto> camelContexts = CamelXmlHelper.loadCamelContext(camelCatalog, context, project, xmlResourceName);
                 return NodeDtos.toNodeList(camelContexts);
             }
         });

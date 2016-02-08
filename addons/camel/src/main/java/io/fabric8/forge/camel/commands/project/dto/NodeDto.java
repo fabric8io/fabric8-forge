@@ -28,14 +28,14 @@ public class NodeDto extends NodeDtoSupport {
         children = new ArrayList<>();
     }
 
-    public NodeDto(String key, String id, String label, String pattern, String description, List<NodeDto> children) {
-        super(key, id, label, pattern, description);
+    public NodeDto(String key, String id, String label, String pattern, String description, boolean supportOutput, List<NodeDto> children) {
+        super(key, id, label, pattern, description, supportOutput);
         this.children = children;
     }
 
     @Override
     protected NodeDto copy() {
-        return new NodeDto(getKey(), getId(), getLabel(), getPattern(), getDescription(), new ArrayList<>(children));
+        return new NodeDto(getKey(), getId(), getLabel(), getPattern(), getDescription(), isSupportOutput(), new ArrayList<>(children));
     }
 
     @Override
