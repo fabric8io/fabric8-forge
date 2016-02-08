@@ -15,13 +15,12 @@
  */
 package io.fabric8.forge.camel.commands.project.projecttypes;
 
-import org.jboss.forge.addon.maven.projects.archetype.CustomMavenArchetypeProjectType;
+import io.fabric8.forge.camel.commands.project.archetype.Fabric8ArchetypeCatalogStep;
 
 /**
- * A project type for a Swift project
  */
-public class SwiftProjectType extends CustomMavenArchetypeProjectType {
-    public SwiftProjectType() {
-        super(SwiftProjectArchetypeStep.class, "Swift");
+public class RailsProjectArchetypeStep extends Fabric8ArchetypeCatalogStep {
+    public RailsProjectArchetypeStep() {
+        setArchetypeArtifactId("rails-example-archetype");
     }
 }

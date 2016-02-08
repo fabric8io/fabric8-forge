@@ -64,11 +64,11 @@ public class CamelAddNodeXmlCommand extends AbstractCamelProjectCommand implemen
     private UISelectOne<NodeDto> parent;
 
     @Inject
-    @WithAttributes(label = "Filter", required = false, description = "To filter nodes")
+    @WithAttributes(label = "Filter", required = false, description = "To filter patterns")
     private UISelectOne<String> nameFilter;
 
     @Inject
-    @WithAttributes(label = "Name", required = true, description = "Name of node to add")
+    @WithAttributes(label = "Pattern", required = true, description = "The pattern to add")
     private UISelectOne<EipDto> name;
 
     @Inject
