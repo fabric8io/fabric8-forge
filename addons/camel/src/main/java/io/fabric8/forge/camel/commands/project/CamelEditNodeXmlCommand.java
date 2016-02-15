@@ -137,6 +137,20 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
         attributeMap.put("lineNumber", lineNumber);
         attributeMap.put("lineNumberEnd", lineNumberEnd);
 
+        // if we edit a node then it may have children. We should then only edit until the first child starts
+        if (editNode.getChildren() != null && !editNode.getChildren().isEmpty()) {
+            NodeDto child = editNode.getChildren().get(0);
+            Element childElement = getSelectedCamelElementNode(project, xmlResourceName, child.getKey());
+            String childLineNumber = (String) childElement.getUserData(XmlLineNumberParser.LINE_NUMBER);
+            if (childLineNumber != null) {
+                int num = Integer.valueOf(childLineNumber) - 1;
+                attributeMap.put("lineNumberEnd", "" + num);
+            }
+            attributeMap.put("nodeChildren", "true");
+        } else {
+            attributeMap.put("nodeChildren", "false");
+        }
+
         // we need to get all the options that are currently configured on the EIP so we have all the current values
         Map<String, String> options = new LinkedHashMap<>();
         try {

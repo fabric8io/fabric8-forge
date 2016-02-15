@@ -229,8 +229,14 @@ public abstract class ConfigureEipPropertiesStep extends AbstractCamelProjectCom
                 }
             }
 
+            // we should only include the end tag if the node does not have childrne
+            boolean includeEndTag = true;
+            String children = optionalAttributeValue(attributeMap, "nodeChildren");
+            if (children != null) {
+                includeEndTag = "false".equals(children);
+            }
             // marshal to xml
-            modelXml = dumpModelAsXml(instance, cl);
+            modelXml = dumpModelAsXml(instance, cl, includeEndTag);
         } catch (Exception e) {
             // ignore
         }
