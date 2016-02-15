@@ -55,16 +55,21 @@ public class EditNodeXmlStep extends ConfigureEipPropertiesStep {
 
         // use the same indent from the eip we are replacing
         int spaces = LineNumberHelper.leadingSpaces(lines, idx);
-        String line = LineNumberHelper.padString(modelXml, spaces);
 
-        // remove the lines
+        // remove the old lines
         while (delta > 0) {
             delta--;
             lines.remove(idx);
         }
 
-        // add the new line at the old starting position
-        lines.add(idx, line);
+        String[] editLines = modelXml.split("\n");
+        for (String line : editLines) {
+            // use the same indent from the eip we are replacing
+            line = LineNumberHelper.padString(line, spaces);
+            // add the new line at the old starting position
+            lines.add(idx, line);
+            idx++;
+        }
 
         // and save the file back
         String content = LineNumberHelper.linesToString(lines);

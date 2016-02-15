@@ -236,7 +236,8 @@ public abstract class ConfigureEipPropertiesStep extends AbstractCamelProjectCom
                 includeEndTag = "false".equals(children);
             }
             // marshal to xml
-            modelXml = dumpModelAsXml(instance, cl, includeEndTag);
+            int indent = 2;
+            modelXml = dumpModelAsXml(instance, cl, includeEndTag, indent);
         } catch (Exception e) {
             // ignore
         }
