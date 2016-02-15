@@ -235,8 +235,13 @@ public abstract class ConfigureEipPropertiesStep extends AbstractCamelProjectCom
             if (children != null) {
                 includeEndTag = "false".equals(children);
             }
-            // marshal to xml
+            // use 2 as default indent
             int indent = 2;
+            String num = optionalAttributeValue(attributeMap, "indent");
+            if (num != null) {
+                indent = Integer.valueOf(num);
+            }
+            // marshal to xml
             modelXml = dumpModelAsXml(instance, cl, includeEndTag, indent);
         } catch (Exception e) {
             // ignore
