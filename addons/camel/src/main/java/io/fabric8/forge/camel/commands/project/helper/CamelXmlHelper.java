@@ -416,7 +416,7 @@ public final class CamelXmlHelper {
      * @return the output in XML (is formatted)
      * @throws JAXBException is throw if error marshalling to XML
      */
-    public static String dumpModelAsXml(Object definition, ClassLoader classLoader) throws JAXBException, XMLStreamException {
+    public static String dumpModelAsXml(Object definition, ClassLoader classLoader, boolean includeEndTag) throws JAXBException, XMLStreamException {
         JAXBContext jaxbContext = JAXBContext.newInstance(JAXB_CONTEXT_PACKAGES, classLoader);
 
         StringWriter buffer = new StringWriter();
@@ -439,6 +439,14 @@ public final class CamelXmlHelper {
         if (writer.getElements() == 1) {
             String token = "></" + writer.getRootElementName() + ">";
             answer = answer.replaceFirst(token, "/>");
+        }
+
+        if (!includeEndTag) {
+            // remove last end tag
+            int pos = answer.indexOf("</" + writer.getRootElementName() + ">");
+            if (pos != -1) {
+                answer = answer.substring(0, pos);
+            }
         }
 
         return answer;
