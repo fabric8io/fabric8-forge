@@ -416,14 +416,14 @@ public final class CamelXmlHelper {
      * @return the output in XML (is formatted)
      * @throws JAXBException is throw if error marshalling to XML
      */
-    public static String dumpModelAsXml(Object definition, ClassLoader classLoader, boolean includeEndTag) throws JAXBException, XMLStreamException {
+    public static String dumpModelAsXml(Object definition, ClassLoader classLoader, boolean includeEndTag, int indent) throws JAXBException, XMLStreamException {
         JAXBContext jaxbContext = JAXBContext.newInstance(JAXB_CONTEXT_PACKAGES, classLoader);
 
         StringWriter buffer = new StringWriter();
 
         // we do not want to output namespace
         XMLStreamWriter delegate = XMLOutputFactory.newInstance().createXMLStreamWriter(buffer);
-        JaxbNoNamespaceWriter writer = new JaxbNoNamespaceWriter(delegate);
+        JaxbNoNamespaceWriter writer = new JaxbNoNamespaceWriter(delegate, indent);
         // we do not want to include the customId attribute
         writer.setSkipAttributes("customId");
 
@@ -447,6 +447,8 @@ public final class CamelXmlHelper {
             if (pos != -1) {
                 answer = answer.substring(0, pos);
             }
+            // and trim leading/ending spaces/newlines
+            answer = answer.trim();
         }
 
         return answer;
