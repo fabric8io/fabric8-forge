@@ -202,6 +202,14 @@ public abstract class ConfigureEipPropertiesStep extends AbstractCamelProjectCom
             return Results.fail("Cannot find javaType for " + eipName);
         }
 
+        FileResource file = facet != null ? facet.getResource(xml) : null;
+        if (file == null || !file.exists()) {
+            file = webResourcesFacet != null ? webResourcesFacet.getWebResource(xml) : null;
+        }
+        if (file == null || !file.exists()) {
+            return Results.fail("Cannot find XML file " + xml);
+        }
+
         String modelXml = null;
         try {
             ClassLoader cl = CamelCatalog.class.getClassLoader();
@@ -229,18 +237,14 @@ public abstract class ConfigureEipPropertiesStep extends AbstractCamelProjectCom
                 }
             }
 
-            // we should only include the end tag if the node does not have childrne
+            // we should only include the end tag if the node does not have children
             boolean includeEndTag = true;
             String children = optionalAttributeValue(attributeMap, "nodeChildren");
             if (children != null) {
                 includeEndTag = "false".equals(children);
             }
-            // use 2 as default indent
-            int indent = 2;
-            String num = optionalAttributeValue(attributeMap, "indent");
-            if (num != null) {
-                indent = Integer.valueOf(num);
-            }
+            // calculate indent to use
+            int indent = calculateIndent(file, lineNumber);
             // marshal to xml
             modelXml = dumpModelAsXml(instance, cl, includeEndTag, indent);
         } catch (Exception e) {
@@ -251,14 +255,24 @@ public abstract class ConfigureEipPropertiesStep extends AbstractCamelProjectCom
             return Results.fail("Cannot create XML model of the node");
         }
 
-        FileResource file = facet != null ? facet.getResource(xml) : null;
-        if (file == null || !file.exists()) {
-            file = webResourcesFacet != null ? webResourcesFacet.getWebResource(xml) : null;
-        }
-        if (file == null || !file.exists()) {
-            return Results.fail("Cannot find XML file " + xml);
-        }
         return addOrEditModelXml(file, pattern, modelXml, xml, lineNumber, lineNumberEnd, mode);
+    }
+
+    protected int calculateIndent(FileResource file, String lineNumber) throws Exception {
+        List<String> lines = LineNumberHelper.readLines(file.getResourceInputStream());
+
+        int idx = Integer.valueOf(lineNumber);
+
+        int spaces = LineNumberHelper.leadingSpaces(lines, idx - 1);
+        int spaces1 = LineNumberHelper.leadingSpaces(lines, idx);
+        int spaces2 = LineNumberHelper.leadingSpaces(lines, idx + 1);
+
+        int delta = Math.abs(spaces1 - spaces);
+        int delta2 = Math.abs(spaces2 - spaces1);
+
+        int answer = delta2 > 0 ? delta2 : delta;
+        // the indent must minimum be 2 spaces
+        return Math.max(answer, 2);
     }
 
     protected Result addOrEditModelXml(FileResource file, String pattern, String modelXml, String xml, String lineNumber, String lineNumberEnd, String mode) throws Exception {

@@ -171,7 +171,6 @@ public class CamelAddNodeXmlCommand extends AbstractCamelProjectCommand implemen
         String lineNumberEnd = (String) selectedElement.getUserData(XmlLineNumberParser.LINE_NUMBER_END);
         attributeMap.put("lineNumber", lineNumber);
         attributeMap.put("lineNumberEnd", lineNumberEnd);
-        attributeMap.put("indent", "2");
 
         UIContext ui = context.getUIContext();
         List<InputOptionByGroup> groups = createUIInputsForCamelEIP(nodeName, CamelAddEndpointDefinitionXmlCommand.MAX_OPTIONS,

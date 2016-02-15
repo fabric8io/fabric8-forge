@@ -74,7 +74,10 @@ public class LineNumberHelper {
         int spaces = 0;
         // get the last indent used so we can use same indent
         for (int i = 0; i <= index; i++) {
-            String line = lines.get(i);
+            String line = "";
+            if (i < lines.size()) {
+                line = lines.get(i);
+            }
             if (!line.isEmpty()) {
                 spaces = 0;
                 while (line.charAt(spaces) == ' ' && spaces < line.length()) {
