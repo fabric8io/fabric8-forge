@@ -136,7 +136,6 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
         String lineNumberEnd = (String) selectedElement.getUserData(XmlLineNumberParser.LINE_NUMBER_END);
         attributeMap.put("lineNumber", lineNumber);
         attributeMap.put("lineNumberEnd", lineNumberEnd);
-        attributeMap.put("indent", "2");
 
         // if we edit a node then it may have children. We should then only edit until the first child starts
         if (editNode.getChildren() != null && !editNode.getChildren().isEmpty()) {
