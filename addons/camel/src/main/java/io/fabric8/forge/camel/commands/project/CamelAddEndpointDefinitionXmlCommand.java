@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import javax.inject.Inject;
 
 import io.fabric8.forge.camel.commands.project.completer.XmlEndpointsCompleter;
@@ -53,7 +52,6 @@ import org.jboss.forge.addon.ui.wizard.UIWizard;
 
 import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.createComponentDto;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.createUIInputsForCamelComponent;
-import static io.fabric8.forge.camel.commands.project.helper.CollectionHelper.first;
 
 /**
  * @deprecated it would be better to use the other add endpoint that adds to an existing route
@@ -116,6 +114,9 @@ public class CamelAddEndpointDefinitionXmlCommand extends AbstractCamelProjectCo
         attributeMap.remove("navigationResult");
 
         Project project = getSelectedProject(builder.getUIContext());
+        String currentFile = getSelectedFile(builder.getUIContext());
+
+        String selected = configureXml(project, xml, currentFile);
 
         componentNameFilter.setValueChoices(CamelCommandsHelper.createComponentLabelValues(project, getCamelCatalog()));
         componentNameFilter.setDefaultValue("<all>");
@@ -178,18 +179,9 @@ public class CamelAddEndpointDefinitionXmlCommand extends AbstractCamelProjectCo
         endpointType.setValueChoices(Arrays.asList(types));
         endpointType.setDefaultValue("<any>");
 
-        XmlFileCompleter xmlFileCompleter = createXmlFileCompleter(project);
-        Set<String> files = xmlFileCompleter.getFiles();
-
         XmlEndpointsCompleter endpointCompleter = createXmlEndpointsCompleter(project);
         instanceName.setDefaultValue(CamelEndpoints.createDefaultNewInstanceName(endpointCompleter.getEndpoints()));
 
-        // use value choices instead of completer as that works better in web console
-        xml.setValueChoices(files);
-        if (files.size() == 1) {
-            // lets default the value if there's only one choice
-            xml.setDefaultValue(first(files));
-        }
         builder.add(componentNameFilter).add(componentName).add(instanceName).add(xml).add(endpointType);
     }
 

@@ -16,7 +16,6 @@
 package io.fabric8.forge.camel.commands.project;
 
 import io.fabric8.forge.addon.utils.Indenter;
-import io.fabric8.forge.camel.commands.project.completer.XmlFileCompleter;
 import io.fabric8.forge.camel.commands.project.dto.ContextDto;
 import io.fabric8.forge.camel.commands.project.dto.NodeDtos;
 import io.fabric8.forge.addon.utils.dto.OutputFormat;
@@ -35,9 +34,7 @@ import org.jboss.forge.addon.ui.util.Metadata;
 
 import javax.inject.Inject;
 import java.util.List;
-import java.util.Set;
 
-import static io.fabric8.forge.camel.commands.project.helper.CollectionHelper.first;
 import static io.fabric8.forge.addon.utils.OutputFormatHelper.toJson;
 
 public class CamelGetRoutesXmlCommand extends AbstractCamelProjectCommand {
@@ -60,16 +57,9 @@ public class CamelGetRoutesXmlCommand extends AbstractCamelProjectCommand {
     @Override
     public void initializeUI(UIBuilder builder) throws Exception {
         Project project = getSelectedProject(builder.getUIContext());
+        String currentFile = getSelectedFile(builder.getUIContext());
 
-        XmlFileCompleter xmlFileCompleter = createXmlFileCompleter(project);
-        Set<String> files = xmlFileCompleter.getFiles();
-
-        // use value choices instead of completer as that works better in web console
-        xml.setValueChoices(files);
-        if (files.size() == 1) {
-            // lets default the value if there's only one choice
-            xml.setDefaultValue(first(files));
-        }
+        String selected = configureXml(project, xml, currentFile);
         builder.add(xml).add(format);
     }
 
