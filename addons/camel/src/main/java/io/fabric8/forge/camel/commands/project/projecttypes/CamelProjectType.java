@@ -21,7 +21,14 @@ import org.jboss.forge.addon.maven.projects.archetype.CustomMavenArchetypeProjec
  * A project type for Camel integration projects
  */
 public class CamelProjectType extends CustomMavenArchetypeProjectType {
+
     public CamelProjectType() {
         super(CamelProjectArchetypeStep.class, "Integration");
     }
+
+    @Override
+    public int priority() {
+        return super.priority() + 8001;
+    }
+
 }
