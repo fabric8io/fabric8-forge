@@ -100,9 +100,10 @@ public class CamelAddNodeXmlCommand extends AbstractCamelProjectCommand implemen
         attributeMap.remove("navigationResult");
 
         Project project = getSelectedProject(context);
+        String currentFile = getSelectedFile(context);
 
-        String first = configureXml(project, xml);
-        configureNode(context, project, first, xml, parent);
+        String selected = configureXml(project, xml, currentFile);
+        configureNode(context, project, selected, xml, parent);
 
         nameFilter.setValueChoices(CamelCommandsHelper.createEipLabelValues(project, getCamelCatalog()));
         nameFilter.setDefaultValue("<all>");

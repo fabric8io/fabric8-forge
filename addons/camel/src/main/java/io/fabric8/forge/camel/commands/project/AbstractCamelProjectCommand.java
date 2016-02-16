@@ -17,6 +17,7 @@ package io.fabric8.forge.camel.commands.project;
 
 import java.io.PrintStream;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import javax.inject.Inject;
@@ -51,6 +52,7 @@ import org.jboss.forge.addon.projects.ui.AbstractProjectCommand;
 import org.jboss.forge.addon.resource.FileResource;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
+import org.jboss.forge.addon.ui.context.UIRegion;
 import org.jboss.forge.addon.ui.input.UISelectOne;
 import org.jboss.forge.addon.ui.input.ValueChangeListener;
 import org.jboss.forge.addon.ui.input.events.ValueChangeEvent;
@@ -77,7 +79,7 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
     @Inject
     private CamelCatalog camelCatalog;
 
-    protected void configureNode(final UIContext context, final Project project, final String first, final UISelectOne<String> xml, UISelectOne<NodeDto> node) {
+    protected void configureNode(final UIContext context, final Project project, final String selected, final UISelectOne<String> xml, UISelectOne<NodeDto> node) {
         node.setValueConverter(new NodeDtoConverter(camelCatalog, project, context, xml));
         node.setItemLabelConverter(new NodeDtoLabelConverter());
         node.setValueChoices(new Callable<Iterable<NodeDto>>() {
@@ -85,7 +87,7 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
             public Iterable<NodeDto> call() throws Exception {
                 String xmlResourceName = xml.getValue();
                 if (Strings.isNullOrBlank(xmlResourceName)) {
-                    xmlResourceName = first;
+                    xmlResourceName = selected;
                 }
                 List<ContextDto> camelContexts = CamelXmlHelper.loadCamelContext(camelCatalog, context, project, xmlResourceName);
                 return NodeDtos.toNodeList(camelContexts);
@@ -220,18 +222,29 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
         return file;
     }
 
-    protected String configureXml(Project project, UISelectOne<String> xml) {
+    protected String configureXml(Project project, UISelectOne<String> xml, String currentFile) {
         XmlFileCompleter xmlFileCompleter = createXmlFileCompleter(project);
         Set<String> files = xmlFileCompleter.getFiles();
 
         // use value choices instead of completer as that works better in web console
         final String first = first(files);
+        String answer = first;
+
         xml.setValueChoices(files);
         if (files.size() == 1) {
             // lets default the value if there's only one choice
             xml.setDefaultValue(first);
+        } else if (currentFile != null) {
+            // lets default to the current file
+            for (String name : files) {
+                if (currentFile.endsWith(name)) {
+                    xml.setDefaultValue(name);
+                    answer = name;
+                    break;
+                }
+            }
         }
-        return first;
+        return answer;
     }
 
     protected void configureComponentName(Project project, final UISelectOne<ComponentDto> componentName, boolean consumerOnly, boolean producerOnly) {
@@ -275,5 +288,16 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
             }
         }
         return selectedElement;
+    }
+
+    protected String getSelectedFile(UIContext context) {
+        String currentFile = null;
+        // get selected file
+        Optional<UIRegion<Object>> region = context.getSelection().getRegion();
+        if (region.isPresent()) {
+            Object resource = region.get().getResource();
+            currentFile = resource.toString();
+        }
+        return currentFile;
     }
 }
