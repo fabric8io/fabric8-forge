@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import javax.inject.Inject;
 
 import io.fabric8.forge.addon.utils.XmlLineNumberParser;
@@ -34,10 +33,8 @@ import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
 import org.jboss.forge.addon.ui.context.UINavigationContext;
-import org.jboss.forge.addon.ui.context.UIRegion;
 import org.jboss.forge.addon.ui.input.InputComponent;
 import org.jboss.forge.addon.ui.input.InputComponentFactory;
-import org.jboss.forge.addon.ui.input.UIInput;
 import org.jboss.forge.addon.ui.input.UISelectOne;
 import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
 import org.jboss.forge.addon.ui.metadata.WithAttributes;
@@ -98,7 +95,7 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
         String currentFile = getSelectedFile(context);
 
         String selected = configureXml(project, xml, currentFile);
-        configureNode(context, project, selected, xml, node);
+        configureXmlNode(context, project, selected, xml, node);
 
         builder.add(xml).add(node);
     }

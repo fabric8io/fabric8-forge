@@ -66,7 +66,7 @@ public class CamelDeleteNodeXmlCommand extends AbstractCamelProjectCommand {
         String currentFile = getSelectedFile(context);
 
         String selected = configureXml(project, xml, currentFile);
-        configureNode(context, project, selected, xml, node);
+        configureXmlNode(context, project, selected, xml, node);
         builder.add(xml).add(node);
     }
 

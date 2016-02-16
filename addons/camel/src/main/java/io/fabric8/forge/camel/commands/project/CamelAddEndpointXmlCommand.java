@@ -99,7 +99,7 @@ public class CamelAddEndpointXmlCommand extends AbstractCamelProjectCommand impl
         configureComponentName(project, componentName, false, false);
 
         String selected = configureXml(project, xml, currentFile);
-        configureNode(context, project, selected, xml, node);
+        configureXmlNode(context, project, selected, xml, node);
 
         builder.add(xml).add(node).add(componentName);
     }

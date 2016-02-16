@@ -79,7 +79,7 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
     @Inject
     private CamelCatalog camelCatalog;
 
-    protected void configureNode(final UIContext context, final Project project, final String selected, final UISelectOne<String> xml, UISelectOne<NodeDto> node) {
+    protected void configureXmlNode(final UIContext context, final Project project, final String selected, final UISelectOne<String> xml, final UISelectOne<NodeDto> node) {
         node.setValueConverter(new NodeDtoConverter(camelCatalog, project, context, xml));
         node.setItemLabelConverter(new NodeDtoLabelConverter());
         node.setValueChoices(new Callable<Iterable<NodeDto>>() {
@@ -90,8 +90,13 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
                     xmlResourceName = selected;
                 }
                 List<ContextDto> camelContexts = CamelXmlHelper.loadCamelContext(camelCatalog, context, project, xmlResourceName);
-                return NodeDtos.toNodeList(camelContexts);
-            }
+                List<NodeDto> nodes = NodeDtos.toNodeList(camelContexts);
+                // if there is one CamelContext then pre-select the first node (which is the route)
+                if (camelContexts.size() == 1 && nodes.size() > 1)  {
+                    node.setDefaultValue(nodes.get(1));
+                }
+                return nodes;
+            };
         });
     }
 
