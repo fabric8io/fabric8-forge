@@ -21,7 +21,13 @@ import org.jboss.forge.addon.maven.projects.archetype.CustomMavenArchetypeProjec
  * A project type for a Vert.x project
  */
 public class VertxProjectType extends CustomMavenArchetypeProjectType {
+
     public VertxProjectType() {
         super(VertxProjectArchetypeStep.class, "Vert.x");
+    }
+
+    @Override
+    public int priority() {
+        return super.priority() + 8007;
     }
 }

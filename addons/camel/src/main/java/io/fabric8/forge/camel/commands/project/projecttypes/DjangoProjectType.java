@@ -21,7 +21,14 @@ import org.jboss.forge.addon.maven.projects.archetype.CustomMavenArchetypeProjec
  * A project type for a Django project
  */
 public class DjangoProjectType extends CustomMavenArchetypeProjectType {
+
     public DjangoProjectType() {
         super(DjangoProjectArchetypeStep.class, "Django");
     }
+
+    @Override
+    public int priority() {
+        return super.priority() + 8002;
+    }
+
 }

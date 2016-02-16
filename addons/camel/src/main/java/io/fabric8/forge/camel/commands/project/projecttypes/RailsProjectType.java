@@ -21,7 +21,14 @@ import org.jboss.forge.addon.maven.projects.archetype.CustomMavenArchetypeProjec
  * A project type for a Rails project
  */
 public class RailsProjectType extends CustomMavenArchetypeProjectType {
+
     public RailsProjectType() {
         super(RailsProjectArchetypeStep.class, "Rails");
     }
+
+    @Override
+    public int priority() {
+        return super.priority() + 8005;
+    }
+
 }

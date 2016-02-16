@@ -21,7 +21,14 @@ import org.jboss.forge.addon.maven.projects.archetype.CustomMavenArchetypeProjec
  * A project type for a Swift project
  */
 public class SwiftProjectType extends CustomMavenArchetypeProjectType {
+
     public SwiftProjectType() {
         super(SwiftProjectArchetypeStep.class, "Swift");
     }
+
+    @Override
+    public int priority() {
+        return super.priority() + 8006;
+    }
+
 }

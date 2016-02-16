@@ -21,7 +21,14 @@ import org.jboss.forge.addon.maven.projects.archetype.CustomMavenArchetypeProjec
  * A project type for a NodeJS project
  */
 public class NodeProjectType extends CustomMavenArchetypeProjectType {
+
     public NodeProjectType() {
         super(NodeProjectArchetypeStep.class, "NodeJS");
     }
+
+    @Override
+    public int priority() {
+        return super.priority() + 8004;
+    }
+
 }

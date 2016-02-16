@@ -21,7 +21,14 @@ import org.jboss.forge.addon.maven.projects.archetype.CustomMavenArchetypeProjec
  * A project type for a Go project
  */
 public class GoProjectType extends CustomMavenArchetypeProjectType {
+
     public GoProjectType() {
         super(GoProjectArchetypeStep.class, "Go");
     }
+
+    @Override
+    public int priority() {
+        return super.priority() + 8003;
+    }
+
 }
