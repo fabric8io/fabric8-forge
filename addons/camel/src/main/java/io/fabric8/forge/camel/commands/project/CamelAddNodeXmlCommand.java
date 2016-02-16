@@ -103,7 +103,7 @@ public class CamelAddNodeXmlCommand extends AbstractCamelProjectCommand implemen
         String currentFile = getSelectedFile(context);
 
         String selected = configureXml(project, xml, currentFile);
-        configureNode(context, project, selected, xml, parent);
+        configureXmlNode(context, project, selected, xml, parent);
 
         nameFilter.setValueChoices(CamelCommandsHelper.createEipLabelValues(project, getCamelCatalog()));
         nameFilter.setDefaultValue("<all>");
