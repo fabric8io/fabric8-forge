@@ -94,11 +94,12 @@ public class CamelAddEndpointXmlCommand extends AbstractCamelProjectCommand impl
         attributeMap.remove("navigationResult");
 
         Project project = getSelectedProject(context);
+        String currentFile = getSelectedFile(context);
 
         configureComponentName(project, componentName, false, false);
 
-        String first = configureXml(project, xml);
-        configureNode(context, project, first, xml, node);
+        String selected = configureXml(project, xml, currentFile);
+        configureNode(context, project, selected, xml, node);
 
         builder.add(xml).add(node).add(componentName);
     }

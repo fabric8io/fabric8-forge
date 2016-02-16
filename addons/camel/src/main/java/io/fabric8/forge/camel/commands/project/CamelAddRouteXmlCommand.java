@@ -90,10 +90,11 @@ public class CamelAddRouteXmlCommand extends AbstractCamelProjectCommand impleme
         attributeMap.remove("navigationResult");
 
         Project project = getSelectedProject(builder.getUIContext());
+        String currentFile = getSelectedFile(builder.getUIContext());
 
         // we only want components that is able to consume because this is to add a new route
         configureComponentName(project, componentName, true, false);
-        configureXml(project, xml);
+        configureXml(project, xml, currentFile);
 
         builder.add(xml).add(id).add(componentName);
     }

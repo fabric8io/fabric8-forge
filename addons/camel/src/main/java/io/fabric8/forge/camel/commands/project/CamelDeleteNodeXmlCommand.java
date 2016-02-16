@@ -63,9 +63,10 @@ public class CamelDeleteNodeXmlCommand extends AbstractCamelProjectCommand {
     public void initializeUI(UIBuilder builder) throws Exception {
         UIContext context = builder.getUIContext();
         Project project = getSelectedProject(context);
+        String currentFile = getSelectedFile(context);
 
-        String first = configureXml(project, xml);
-        configureNode(context, project, first, xml, node);
+        String selected = configureXml(project, xml, currentFile);
+        configureNode(context, project, selected, xml, node);
         builder.add(xml).add(node);
     }
 
