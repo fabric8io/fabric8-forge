@@ -163,14 +163,9 @@ public class CamelAddEndpointCommand extends AbstractCamelProjectCommand impleme
         RouteBuilderEndpointsCompleter endpointCompleter = createRouteBuilderEndpointsCompleter(builder.getUIContext());
         instanceName.setDefaultValue(CamelEndpoints.createDefaultNewInstanceName(endpointCompleter.getEndpoints()));
 
-        Set<String> routeBuilders = new RouteBuilderCompleter(facet).getRouteBuilders();
+        String currentFile = getSelectedFile(builder.getUIContext());
+        configureRouteBuilder(project, routeBuilder, currentFile);
 
-        // use value choices instead of completer as that works better in web console
-        routeBuilder.setValueChoices(routeBuilders);
-        if (routeBuilders.size() == 1) {
-            // lets default the value if there's only one choice
-            routeBuilder.setDefaultValue(first(routeBuilders));
-        }
         builder.add(componentNameFilter).add(componentName).add(instanceName).add(routeBuilder).add(endpointType);
     }
 

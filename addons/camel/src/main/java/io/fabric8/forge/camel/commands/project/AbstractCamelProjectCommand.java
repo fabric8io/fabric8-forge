@@ -24,6 +24,7 @@ import javax.inject.Inject;
 
 import io.fabric8.forge.addon.utils.CamelProjectHelper;
 import io.fabric8.forge.addon.utils.XmlLineNumberParser;
+import io.fabric8.forge.camel.commands.project.completer.RouteBuilderCompleter;
 import io.fabric8.forge.camel.commands.project.completer.RouteBuilderEndpointsCompleter;
 import io.fabric8.forge.camel.commands.project.completer.XmlEndpointsCompleter;
 import io.fabric8.forge.camel.commands.project.completer.XmlFileCompleter;
@@ -176,6 +177,11 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
         return createCoordinate("org.apache.camel", artifactId, version);
     }
 
+    protected RouteBuilderCompleter createRouteBuilderCompleter(Project project) {
+        JavaSourceFacet facet = project.getFacet(JavaSourceFacet.class);
+        return new RouteBuilderCompleter(facet);
+    }
+
     protected RouteBuilderEndpointsCompleter createRouteBuilderEndpointsCompleter(UIContext context) {
         Project project = getSelectedProject(context);
         return createRouteBuilderEndpointsCompleter(project);
@@ -244,6 +250,34 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
             for (String name : files) {
                 if (currentFile.endsWith(name)) {
                     xml.setDefaultValue(name);
+                    answer = name;
+                    break;
+                }
+            }
+        }
+        return answer;
+    }
+
+    protected String configureRouteBuilder(Project project, UISelectOne<String> routeBuilders, String currentFile) {
+        RouteBuilderCompleter completer = createRouteBuilderCompleter(project);
+        Set<String> builders = completer.getRouteBuilders();
+
+        // use value choices instead of completer as that works better in web console
+        final String first = first(builders);
+        String answer = first;
+
+        routeBuilders.setValueChoices(builders);
+        if (builders.size() == 1) {
+            // lets default the value if there's only one choice
+            routeBuilders.setDefaultValue(first);
+        } else if (currentFile != null) {
+            // lets default to the current file
+            if (currentFile.endsWith(".java")) {
+                currentFile = currentFile.substring(0, currentFile.length() - 5);
+            }
+            for (String name : builders) {
+                if (currentFile.endsWith(name)) {
+                    routeBuilders.setDefaultValue(name);
                     answer = name;
                     break;
                 }
