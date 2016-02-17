@@ -179,6 +179,10 @@ public class AnonymousMethodSource implements MethodSource<JavaClassSource> {
         return null;
     }
 
+    // TODO: until RC1 is in IDEA @Override
+    public void removeAllAnnotations() {
+    }
+
     @Override
     public MethodSource<JavaClassSource> removeParameter(ParameterSource<JavaClassSource> parameterSource) {
         return null;
