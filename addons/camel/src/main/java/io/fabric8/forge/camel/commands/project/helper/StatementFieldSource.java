@@ -106,6 +106,10 @@ public class StatementFieldSource implements FieldSource {
         return null;
     }
 
+    // TODO: until RC1 is in IDEA @Override
+    public void removeAllAnnotations() {
+    }
+
     @Override
     public Object removeAnnotation(Annotation annotation) {
         return null;
