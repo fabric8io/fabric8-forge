@@ -91,7 +91,7 @@ public class CamelGetOverviewCommand extends AbstractCamelProjectCommand {
         JavaSourceFacet javaSourceFacet = project.getFacet(JavaSourceFacet.class);
 
         // use value choices instead of completer as that works better in web console
-        RouteBuilderEndpointsCompleter javaEndpointsCompleter = new RouteBuilderEndpointsCompleter(javaSourceFacet);
+        RouteBuilderEndpointsCompleter javaEndpointsCompleter = new RouteBuilderEndpointsCompleter(javaSourceFacet, null);
 
         camelProject.addEndpoints(javaEndpointsCompleter.getEndpoints());
         camelProject.addEndpoints(xmlEndpointCompleter.getEndpoints());

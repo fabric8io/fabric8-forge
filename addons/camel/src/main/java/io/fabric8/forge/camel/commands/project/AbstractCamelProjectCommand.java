@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.function.Function;
 import javax.inject.Inject;
 
 import io.fabric8.forge.addon.utils.CamelProjectHelper;
@@ -182,14 +183,14 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
         return new RouteBuilderCompleter(facet);
     }
 
-    protected RouteBuilderEndpointsCompleter createRouteBuilderEndpointsCompleter(UIContext context) {
+    protected RouteBuilderEndpointsCompleter createRouteBuilderEndpointsCompleter(UIContext context, Function<String, Boolean> filter) {
         Project project = getSelectedProject(context);
-        return createRouteBuilderEndpointsCompleter(project);
+        return createRouteBuilderEndpointsCompleter(project, filter);
     }
 
-    protected RouteBuilderEndpointsCompleter createRouteBuilderEndpointsCompleter(Project project) {
+    protected RouteBuilderEndpointsCompleter createRouteBuilderEndpointsCompleter(Project project, Function<String, Boolean> filter) {
         JavaSourceFacet facet = project.getFacet(JavaSourceFacet.class);
-        return new RouteBuilderEndpointsCompleter(facet);
+        return new RouteBuilderEndpointsCompleter(facet, filter);
     }
 
     protected XmlEndpointsCompleter createXmlEndpointsCompleter(UIContext context) {

@@ -17,8 +17,8 @@ package io.fabric8.forge.camel.commands.project.completer;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
-import io.fabric8.forge.camel.commands.project.helper.CamelEndpoints;
 import io.fabric8.forge.camel.commands.project.model.CamelEndpointDetails;
 import org.jboss.forge.addon.parser.java.facets.JavaSourceFacet;
 import org.jboss.forge.addon.parser.java.resources.JavaResourceVisitor;
@@ -33,10 +33,10 @@ public class RouteBuilderEndpointsCompleter implements UICompleter<String> {
 
     private final List<CamelEndpointDetails> endpoints = new ArrayList<>();
 
-    public RouteBuilderEndpointsCompleter(final JavaSourceFacet facet) {
+    public RouteBuilderEndpointsCompleter(final JavaSourceFacet facet, Function<String, Boolean> filter) {
         // find package names in the source code
         if (facet != null) {
-            JavaResourceVisitor visitor = new RouteBuilderCamelEndpointsVisitor(facet, endpoints);
+            JavaResourceVisitor visitor = new RouteBuilderCamelEndpointsVisitor(facet, endpoints, filter);
             facet.visitJavaSources(visitor);
         }
     }

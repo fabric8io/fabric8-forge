@@ -15,41 +15,36 @@
  */
 package io.fabric8.forge.camel.commands.project;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import javax.inject.Inject;
 
 import io.fabric8.forge.camel.commands.project.completer.RouteBuilderEndpointsCompleter;
 import io.fabric8.forge.camel.commands.project.model.CamelEndpointDetails;
-import io.fabric8.forge.camel.commands.project.model.InputOptionByGroup;
 import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
 import org.jboss.forge.addon.ui.context.UINavigationContext;
-import org.jboss.forge.addon.ui.input.InputComponent;
+import org.jboss.forge.addon.ui.context.UIRegion;
 import org.jboss.forge.addon.ui.input.InputComponentFactory;
-import org.jboss.forge.addon.ui.input.UISelectOne;
+import org.jboss.forge.addon.ui.input.UIInput;
 import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
 import org.jboss.forge.addon.ui.metadata.WithAttributes;
 import org.jboss.forge.addon.ui.result.NavigationResult;
 import org.jboss.forge.addon.ui.result.Result;
 import org.jboss.forge.addon.ui.result.Results;
-import org.jboss.forge.addon.ui.result.navigation.NavigationResultBuilder;
 import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
 import org.jboss.forge.addon.ui.wizard.UIWizard;
 
-import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.createUIInputsForCamelComponent;
-
-public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implements UIWizard {
+public class CamelEditCommand extends AbstractCamelProjectCommand implements UIWizard {
 
     private static final int MAX_OPTIONS = 20;
 
     @Inject
-    @WithAttributes(label = "Endpoints", required = true, description = "The endpoints from the project")
-    private UISelectOne<String> endpoints;
+    @WithAttributes(label = "Debug", required = true)
+    private UIInput<String> debug;
 
     @Inject
     private InputComponentFactory componentFactory;
@@ -57,13 +52,11 @@ public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implem
     @Inject
     private DependencyInstaller dependencyInstaller;
 
-    private RouteBuilderEndpointsCompleter completer;
-
     @Override
     public UICommandMetadata getMetadata(UIContext context) {
-        return Metadata.forCommand(CamelEditEndpointCommand.class).name(
-                "Camel: Edit Endpoint").category(Categories.create(CATEGORY))
-                .description("Edit Camel endpoint from an existing RouteBuilder class");
+        return Metadata.forCommand(CamelEditCommand.class).name(
+                "Camel: Edit").category(Categories.create(CATEGORY))
+                .description("Edit Camel endpoint or EIP from the current cursor position");
     }
 
     @Override
@@ -71,40 +64,54 @@ public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implem
         Map<Object, Object> attributeMap = builder.getUIContext().getAttributeMap();
         attributeMap.remove("navigationResult");
 
-        // use value choices instead of completer as that works better in web console
-        completer = createRouteBuilderEndpointsCompleter(builder.getUIContext(), null);
-        // must add dummy <select> in the dropdown as otherwise there is problems with auto selecting
-        // the first element where its a different between its auto selected vs end user clicked and selected
-        // it, which also affects all this next() callback issue from forge
-        List<String> uris = completer.getEndpointUris();
-        uris.add(0, "<select>");
-        endpoints.setValueChoices(uris);
+        final String currentFile = getSelectedFile(builder.getUIContext());
+        if (currentFile == null) {
+            attributeMap.remove("endpointUri");
+            debug.setValue("No current file");
+        } else {
+            Optional<UIRegion<Object>> region = builder.getUIContext().getSelection().getRegion();
+            if (region.isPresent()) {
+                int lineNumber = region.get().getStartLine();
+                int lineNumberEnd = region.get().getEndLine();
+                int pos = region.get().getStartPosition();
+                int endPos = region.get().getEndPosition();
+                String text = region.get().getText().orElse("");
+                String res = region.get().getResource().toString();
+                String msg = String.format("line %s(%s)-%s(%s): %s | %s", lineNumber, pos, lineNumberEnd, endPos, text, res);
 
-        builder.add(endpoints);
+                // find all the endpoints in the current file
+                RouteBuilderEndpointsCompleter completer = createRouteBuilderEndpointsCompleter(builder.getUIContext(), currentFile::equals);
+
+                // and find the endpoints that are on the same line number as the cursor
+                for (CamelEndpointDetails detail : completer.getEndpoints()) {
+                    if (detail.getLineNumber() != null && Integer.valueOf(detail.getLineNumber()) == lineNumber) {
+                        msg = detail.getEndpointUri();
+                        break;
+                    }
+                }
+
+                debug.setValue(currentFile + "@" + msg);
+            } else {
+                debug.setValue(currentFile);
+            }
+        }
+
+        builder.add(debug);
     }
 
     @Override
     public NavigationResult next(UINavigationContext context) throws Exception {
+        return null;
+        /*
         Map<Object, Object> attributeMap = context.getUIContext().getAttributeMap();
 
-        String selectedUri = endpoints.getValue();
-        if ("<select>".equals(selectedUri)) {
-            // no choice yet
-            attributeMap.remove("navigationResult");
-            return null;
+        NavigationResult navigationResult = (NavigationResult) attributeMap.get("navigationResult");
+        if (navigationResult != null) {
+            return navigationResult;
         }
 
-        // must be same component name to allow reusing existing navigation result
-        String previous = (String) attributeMap.get("endpointUri");
-        if (previous != null && previous.equals(endpoints.getValue())) {
-            NavigationResult navigationResult = (NavigationResult) attributeMap.get("navigationResult");
-            if (navigationResult != null) {
-                return navigationResult;
-            }
-        }
-
-        CamelEndpointDetails detail = completer.getEndpointDetail(selectedUri);
-        if (detail == null) {
+        String endpointUri = (String) attributeMap.get("endpointUri");
+        if (endpointUri == null) {
             return null;
         }
 
@@ -151,17 +158,12 @@ public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implem
 
         NavigationResult navigationResult = builder.build();
         attributeMap.put("navigationResult", navigationResult);
-        return navigationResult;
+        return navigationResult;*/
     }
 
     @Override
     public Result execute(UIExecutionContext context) throws Exception {
-        boolean empty = !endpoints.getValueChoices().iterator().hasNext();
-        if (empty) {
-            return Results.fail("No Camel endpoints found");
-        } else {
-            return Results.success();
-        }
+        return Results.success();
     }
 
 }

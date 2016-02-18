@@ -34,8 +34,8 @@
     <testExclusionPattern>**/*KubernetesTest.java</testExclusionPattern>
 
     <docker.image>${docker.registryPrefix}fabric8/${project.artifactId}:${project.version}</docker.image>
-    <maven.compiler.target>1.7</maven.compiler.target>
-    <maven.compiler.source>1.7</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+    <maven.compiler.source>1.8</maven.compiler.source>
     <docker.from>fabric8/java</docker.from>
     <docker.port.container.jolokia>8778</docker.port.container.jolokia>
     <fabric8.label.group>quickstarts</fabric8.label.group>
