@@ -33,6 +33,7 @@ import org.jboss.forge.addon.ui.context.UINavigationContext;
 import org.jboss.forge.addon.ui.context.UIRegion;
 import org.jboss.forge.addon.ui.input.InputComponent;
 import org.jboss.forge.addon.ui.input.InputComponentFactory;
+import org.jboss.forge.addon.ui.input.UIInput;
 import org.jboss.forge.addon.ui.input.UISelectOne;
 import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
 import org.jboss.forge.addon.ui.metadata.WithAttributes;
@@ -55,9 +56,9 @@ public class CamelEditCommand extends AbstractCamelProjectCommand implements UIW
     private UISelectOne<String> endpoints;
 
     // TODO: remove me when no longer needed
-//    @Inject
-//    @WithAttributes(label = "Debug5", required = true)
-//    private UIInput<String> debug;
+    //@Inject
+    //@WithAttributes(label = "Debug5", required = true)
+    //private UIInput<String> debug;
 
     @Inject
     private InputComponentFactory componentFactory;
@@ -93,15 +94,13 @@ public class CamelEditCommand extends AbstractCamelProjectCommand implements UIW
 
         int cursorLineNumber = -1;
         final String currentFile = getSelectedFile(builder.getUIContext());
-        if (currentFile == null) {
-            return;
-        }
 
         Optional<UIRegion<Object>> region = builder.getUIContext().getSelection().getRegion();
         if (region.isPresent()) {
             cursorLineNumber = region.get().getStartLine();
         }
 
+        // whether its an xml file or not
         boolean xmlFile = currentFile.endsWith(".xml");
 
         if (!xmlFile) {
@@ -113,13 +112,20 @@ public class CamelEditCommand extends AbstractCamelProjectCommand implements UIW
                 for (CamelEndpointDetails detail : javaCompleter.getEndpoints()) {
                     if (detail.getLineNumber() != null && Integer.valueOf(detail.getLineNumber()) == cursorLineNumber) {
                         endpoints.setValue(detail.getEndpointUri());
+                        endpoints.setRequired(false);
                         found = true;
                         break;
                     }
                 }
             }
             if (!found && !javaCompleter.getEndpoints().isEmpty()) {
-                endpoints.setValueChoices(javaCompleter.getEndpointUris());
+
+                // must add dummy <select> in the dropdown as otherwise there is problems with auto selecting
+                // the first element where its a different between its auto selected vs end user clicked and selected
+                // it, which also affects all this next() callback issue from forge
+                List<String> uris = javaCompleter.getEndpointUris();
+                uris.add(0, "<select>");
+                endpoints.setValueChoices(uris);
 
                 // show the UI where you can chose the endpoint to select
                 builder.add(endpoints);
@@ -133,13 +139,20 @@ public class CamelEditCommand extends AbstractCamelProjectCommand implements UIW
                 for (CamelEndpointDetails detail : xmlCompleter.getEndpoints()) {
                     if (detail.getLineNumber() != null && Integer.valueOf(detail.getLineNumber()) == cursorLineNumber) {
                         endpoints.setValue(detail.getEndpointUri());
+                        endpoints.setRequired(false);
                         found = true;
                         break;
                     }
                 }
             }
             if (!found && !xmlCompleter.getEndpoints().isEmpty()) {
-                endpoints.setValueChoices(xmlCompleter.getEndpointUris());
+
+                // must add dummy <select> in the dropdown as otherwise there is problems with auto selecting
+                // the first element where its a different between its auto selected vs end user clicked and selected
+                // it, which also affects all this next() callback issue from forge
+                List<String> uris = xmlCompleter.getEndpointUris();
+                uris.add(0, "<select>");
+                endpoints.setValueChoices(uris);
 
                 // show the UI where you can chose the endpoint to select
                 builder.add(endpoints);
