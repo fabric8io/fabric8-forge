@@ -184,12 +184,7 @@ public class CamelEditEndpointDefinitionXmlCommand extends AbstractCamelProjectC
 
     @Override
     public Result execute(UIExecutionContext context) throws Exception {
-        boolean empty = !endpoints.getValueChoices().iterator().hasNext();
-        if (empty) {
-            return Results.fail("No Camel endpoints found");
-        } else {
-            return Results.success();
-        }
+        return Results.success();
     }
 
 }
