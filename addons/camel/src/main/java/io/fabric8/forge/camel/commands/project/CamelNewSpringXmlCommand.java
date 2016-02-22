@@ -103,7 +103,7 @@ public class CamelNewSpringXmlCommand extends AbstractCamelProjectCommand {
         name.getFacet(HintsFacet.class).setInputType(InputType.FILE_PICKER);
         directory.getFacet(HintsFacet.class).setInputType(InputType.DIRECTORY_PICKER);
 
-        XmlFileCompleter xmlFileCompleter = createXmlFileCompleter(builder.getUIContext());
+        XmlFileCompleter xmlFileCompleter = createXmlFileCompleter(builder.getUIContext(), null);
         Set<String> directories = xmlFileCompleter.getDirectories();
         if (directories.size() == 1) {
             directory.setDefaultValue(first(directories));
@@ -117,7 +117,7 @@ public class CamelNewSpringXmlCommand extends AbstractCamelProjectCommand {
 
     @Override
     public void validate(UIValidationContext validator) {
-        XmlFileCompleter xmlFileCompleter = createXmlFileCompleter(validator.getUIContext());
+        XmlFileCompleter xmlFileCompleter = createXmlFileCompleter(validator.getUIContext(), null);
         xmlFileCompleter.validateFileDoesNotExist(directory, name, validator);
 
         super.validate(validator);

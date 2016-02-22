@@ -160,7 +160,7 @@ public class CamelAddEndpointCommand extends AbstractCamelProjectCommand impleme
         endpointType.setValueChoices(Arrays.asList(types));
         endpointType.setDefaultValue("<any>");
 
-        RouteBuilderEndpointsCompleter endpointCompleter = createRouteBuilderEndpointsCompleter(builder.getUIContext());
+        RouteBuilderEndpointsCompleter endpointCompleter = createRouteBuilderEndpointsCompleter(builder.getUIContext(), null);
         instanceName.setDefaultValue(CamelEndpoints.createDefaultNewInstanceName(endpointCompleter.getEndpoints()));
 
         String currentFile = getSelectedFile(builder.getUIContext());

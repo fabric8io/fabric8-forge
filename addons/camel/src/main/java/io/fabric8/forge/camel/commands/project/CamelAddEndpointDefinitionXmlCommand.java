@@ -179,7 +179,7 @@ public class CamelAddEndpointDefinitionXmlCommand extends AbstractCamelProjectCo
         endpointType.setValueChoices(Arrays.asList(types));
         endpointType.setDefaultValue("<any>");
 
-        XmlEndpointsCompleter endpointCompleter = createXmlEndpointsCompleter(project);
+        XmlEndpointsCompleter endpointCompleter = createXmlEndpointsCompleter(project, null);
         instanceName.setDefaultValue(CamelEndpoints.createDefaultNewInstanceName(endpointCompleter.getEndpoints()));
 
         builder.add(componentNameFilter).add(componentName).add(instanceName).add(xml).add(endpointType);

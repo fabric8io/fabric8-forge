@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.function.Function;
 import javax.inject.Inject;
 
 import io.fabric8.forge.addon.utils.CamelProjectHelper;
@@ -182,42 +183,42 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
         return new RouteBuilderCompleter(facet);
     }
 
-    protected RouteBuilderEndpointsCompleter createRouteBuilderEndpointsCompleter(UIContext context) {
+    protected RouteBuilderEndpointsCompleter createRouteBuilderEndpointsCompleter(UIContext context, Function<String, Boolean> filter) {
         Project project = getSelectedProject(context);
-        return createRouteBuilderEndpointsCompleter(project);
+        return createRouteBuilderEndpointsCompleter(project, filter);
     }
 
-    protected RouteBuilderEndpointsCompleter createRouteBuilderEndpointsCompleter(Project project) {
+    protected RouteBuilderEndpointsCompleter createRouteBuilderEndpointsCompleter(Project project, Function<String, Boolean> filter) {
         JavaSourceFacet facet = project.getFacet(JavaSourceFacet.class);
-        return new RouteBuilderEndpointsCompleter(facet);
+        return new RouteBuilderEndpointsCompleter(facet, filter);
     }
 
-    protected XmlEndpointsCompleter createXmlEndpointsCompleter(UIContext context) {
+    protected XmlEndpointsCompleter createXmlEndpointsCompleter(UIContext context, Function<String, Boolean> filter) {
         Project project = getSelectedProject(context);
-        return createXmlEndpointsCompleter(project);
+        return createXmlEndpointsCompleter(project, filter);
     }
 
-    protected XmlEndpointsCompleter createXmlEndpointsCompleter(Project project) {
+    protected XmlEndpointsCompleter createXmlEndpointsCompleter(Project project, Function<String, Boolean> filter) {
         final ResourcesFacet resourcesFacet = project.getFacet(ResourcesFacet.class);
         WebResourcesFacet webResourcesFacet = null;
         if (project.hasFacet(WebResourcesFacet.class)) {
             webResourcesFacet = project.getFacet(WebResourcesFacet.class);
         }
-        return new XmlEndpointsCompleter(resourcesFacet, webResourcesFacet);
+        return new XmlEndpointsCompleter(resourcesFacet, webResourcesFacet, filter);
     }
 
-    protected XmlFileCompleter createXmlFileCompleter(Project project) {
+    protected XmlFileCompleter createXmlFileCompleter(Project project, Function<String, Boolean> filter) {
         final ResourcesFacet resourcesFacet = project.getFacet(ResourcesFacet.class);
         WebResourcesFacet webResourcesFacet = null;
         if (project.hasFacet(WebResourcesFacet.class)) {
             webResourcesFacet = project.getFacet(WebResourcesFacet.class);
         }
-        return new XmlFileCompleter(resourcesFacet, webResourcesFacet);
+        return new XmlFileCompleter(resourcesFacet, webResourcesFacet, filter);
     }
 
-    protected XmlFileCompleter createXmlFileCompleter(UIContext context) {
+    protected XmlFileCompleter createXmlFileCompleter(UIContext context, Function<String, Boolean> filter) {
         Project project = getSelectedProject(context);
-        return createXmlFileCompleter(project);
+        return createXmlFileCompleter(project, filter);
     }
 
     protected FileResource getXmlResourceFile(Project project, String xmlResourceName) {
@@ -234,7 +235,7 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
     }
 
     protected String configureXml(Project project, UISelectOne<String> xml, String currentFile) {
-        XmlFileCompleter xmlFileCompleter = createXmlFileCompleter(project);
+        XmlFileCompleter xmlFileCompleter = createXmlFileCompleter(project, null);
         Set<String> files = xmlFileCompleter.getFiles();
 
         // use value choices instead of completer as that works better in web console

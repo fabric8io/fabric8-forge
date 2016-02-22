@@ -17,6 +17,7 @@ package io.fabric8.forge.camel.commands.project.completer;
 
 import java.io.InputStream;
 import java.util.List;
+import java.util.function.Function;
 
 import io.fabric8.forge.camel.commands.project.helper.XmlRouteParser;
 import io.fabric8.forge.camel.commands.project.model.CamelEndpointDetails;
@@ -29,27 +30,39 @@ public class XmlResourcesCamelEndpointsVisitor implements ResourceVisitor {
 
     private final ResourcesFacet facet;
     private final List<CamelEndpointDetails> endpoints;
+    private final Function<String, Boolean> filter;
 
-    public XmlResourcesCamelEndpointsVisitor(ResourcesFacet facet, List<CamelEndpointDetails> endpoints) {
+    public XmlResourcesCamelEndpointsVisitor(ResourcesFacet facet, List<CamelEndpointDetails> endpoints, Function<String, Boolean> filter) {
         this.facet = facet;
         this.endpoints = endpoints;
+        this.filter = filter;
     }
 
     @Override
     public void visit(VisitContext visitContext, Resource<?> resource) {
         String name = resource.getName();
         if (name.endsWith(".xml")) {
-            // must contain <camelContext...
-            boolean camel = resource.getContents().contains("<camelContext");
-            if (camel) {
-                // find all the endpoints (currently only <endpoint> and within <route>)
-                try {
-                    InputStream is = resource.getResourceInputStream();
-                    String fqn = resource.getFullyQualifiedName();
-                    String baseDir = facet.getResourceDirectory().getFullyQualifiedName();
-                    XmlRouteParser.parseXmlRouteEndpoints(is, baseDir, fqn, endpoints);
-                } catch (Throwable e) {
-                    // ignore
+
+            boolean include = true;
+            if (filter != null) {
+                String fqn = resource.getFullyQualifiedName();
+                Boolean out = filter.apply(fqn);
+                include = out == null || out;
+            }
+
+            if (include) {
+                // must contain <camelContext...
+                boolean camel = resource.getContents().contains("<camelContext");
+                if (camel) {
+                    // find all the endpoints (currently only <endpoint> and within <route>)
+                    try {
+                        InputStream is = resource.getResourceInputStream();
+                        String fqn = resource.getFullyQualifiedName();
+                        String baseDir = facet.getResourceDirectory().getFullyQualifiedName();
+                        XmlRouteParser.parseXmlRouteEndpoints(is, baseDir, fqn, endpoints);
+                    } catch (Throwable e) {
+                        // ignore
+                    }
                 }
             }
         }

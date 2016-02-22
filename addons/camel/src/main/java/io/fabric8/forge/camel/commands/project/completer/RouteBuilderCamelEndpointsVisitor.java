@@ -16,6 +16,7 @@
 package io.fabric8.forge.camel.commands.project.completer;
 
 import java.util.List;
+import java.util.function.Function;
 
 import io.fabric8.forge.camel.commands.project.helper.RouteBuilderParser;
 import io.fabric8.forge.camel.commands.project.model.CamelEndpointDetails;
@@ -29,10 +30,12 @@ public class RouteBuilderCamelEndpointsVisitor extends JavaResourceVisitor {
 
     private final JavaSourceFacet facet;
     private final List<CamelEndpointDetails> endpoints;
+    private final Function<String, Boolean> filter;
 
-    public RouteBuilderCamelEndpointsVisitor(JavaSourceFacet facet, List<CamelEndpointDetails> endpoints) {
+    public RouteBuilderCamelEndpointsVisitor(JavaSourceFacet facet, List<CamelEndpointDetails> endpoints, Function<String, Boolean> filter) {
         this.facet = facet;
         this.endpoints = endpoints;
+        this.filter = filter;
     }
 
     @Override
@@ -40,8 +43,18 @@ public class RouteBuilderCamelEndpointsVisitor extends JavaResourceVisitor {
         try {
             JavaClassSource clazz = resource.getJavaType();
             String fqn = resource.getFullyQualifiedName();
+            String name = clazz.getQualifiedName();
             String baseDir = facet.getSourceDirectory().getFullyQualifiedName();
-            RouteBuilderParser.parseRouteBuilderEndpoints(clazz, baseDir, fqn, endpoints);
+
+            boolean include = true;
+            if (filter != null) {
+                Boolean out = filter.apply(name);
+                include = out == null || out;
+            }
+
+            if (include) {
+                RouteBuilderParser.parseRouteBuilderEndpoints(clazz, baseDir, fqn, endpoints);
+            }
         } catch (Throwable e) {
             // ignore
         }
