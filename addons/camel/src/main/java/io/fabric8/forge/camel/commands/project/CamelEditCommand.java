@@ -20,6 +20,7 @@ import java.util.Optional;
 import javax.inject.Inject;
 
 import io.fabric8.forge.camel.commands.project.completer.RouteBuilderEndpointsCompleter;
+import io.fabric8.forge.camel.commands.project.completer.XmlEndpointsCompleter;
 import io.fabric8.forge.camel.commands.project.model.CamelEndpointDetails;
 import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
 import org.jboss.forge.addon.ui.context.UIBuilder;
@@ -80,17 +81,35 @@ public class CamelEditCommand extends AbstractCamelProjectCommand implements UIW
                 String msg = String.format("line %s(%s)-%s(%s): %s | %s", lineNumber, pos, lineNumberEnd, endPos, text, res);
 
                 // find all the endpoints in the current file
-                RouteBuilderEndpointsCompleter completer = createRouteBuilderEndpointsCompleter(builder.getUIContext(), currentFile::equals);
-
                 // and find the endpoints that are on the same line number as the cursor
+                boolean found = false;
+                RouteBuilderEndpointsCompleter completer = createRouteBuilderEndpointsCompleter(builder.getUIContext(), currentFile::equals);
                 for (CamelEndpointDetails detail : completer.getEndpoints()) {
                     if (detail.getLineNumber() != null && Integer.valueOf(detail.getLineNumber()) == lineNumber) {
                         msg = detail.getEndpointUri();
+                        found = true;
                         break;
                     }
                 }
 
-                debug.setValue(currentFile + "@" + msg);
+                // find all the endpoints in the current file
+                // and find the endpoints that are on the same line number as the cursor
+                if (!found) {
+                    XmlEndpointsCompleter completer2 = createXmlEndpointsCompleter(builder.getUIContext(), currentFile::equals);
+                    for (CamelEndpointDetails detail : completer2.getEndpoints()) {
+                        if (detail.getLineNumber() != null && Integer.valueOf(detail.getLineNumber()) == lineNumber) {
+                            msg = detail.getEndpointUri();
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (found) {
+                    debug.setValue(currentFile + "@" + msg);
+                } else {
+                    debug.setValue(currentFile + "<not found>@" + msg);
+                }
             } else {
                 debug.setValue(currentFile);
             }

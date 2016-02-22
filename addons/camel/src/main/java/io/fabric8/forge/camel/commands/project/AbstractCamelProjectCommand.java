@@ -193,18 +193,18 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
         return new RouteBuilderEndpointsCompleter(facet, filter);
     }
 
-    protected XmlEndpointsCompleter createXmlEndpointsCompleter(UIContext context) {
+    protected XmlEndpointsCompleter createXmlEndpointsCompleter(UIContext context, Function<String, Boolean> filter) {
         Project project = getSelectedProject(context);
-        return createXmlEndpointsCompleter(project);
+        return createXmlEndpointsCompleter(project, filter);
     }
 
-    protected XmlEndpointsCompleter createXmlEndpointsCompleter(Project project) {
+    protected XmlEndpointsCompleter createXmlEndpointsCompleter(Project project, Function<String, Boolean> filter) {
         final ResourcesFacet resourcesFacet = project.getFacet(ResourcesFacet.class);
         WebResourcesFacet webResourcesFacet = null;
         if (project.hasFacet(WebResourcesFacet.class)) {
             webResourcesFacet = project.getFacet(WebResourcesFacet.class);
         }
-        return new XmlEndpointsCompleter(resourcesFacet, webResourcesFacet);
+        return new XmlEndpointsCompleter(resourcesFacet, webResourcesFacet, filter);
     }
 
     protected XmlFileCompleter createXmlFileCompleter(Project project) {

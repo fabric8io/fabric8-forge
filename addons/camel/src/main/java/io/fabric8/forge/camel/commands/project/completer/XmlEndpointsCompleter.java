@@ -17,6 +17,7 @@ package io.fabric8.forge.camel.commands.project.completer;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 import io.fabric8.forge.camel.commands.project.model.CamelEndpointDetails;
 import org.jboss.forge.addon.projects.facets.ResourcesFacet;
@@ -33,14 +34,14 @@ public class XmlEndpointsCompleter implements UICompleter<String> {
 
     private final List<CamelEndpointDetails> endpoints = new ArrayList<>();
 
-    public XmlEndpointsCompleter(final ResourcesFacet facet, final WebResourcesFacet webFacet) {
+    public XmlEndpointsCompleter(final ResourcesFacet facet, final WebResourcesFacet webFacet, Function<String, Boolean> filter) {
         // find package names in the source code
         if (facet != null) {
-            ResourceVisitor visitor = new XmlResourcesCamelEndpointsVisitor(facet, endpoints);
+            ResourceVisitor visitor = new XmlResourcesCamelEndpointsVisitor(facet, endpoints, filter);
             facet.visitResources(visitor);
         }
         if (webFacet != null) {
-            ResourceVisitor visitor = new XmlWebResourcesCamelEndpointsVisitor(webFacet, endpoints);
+            ResourceVisitor visitor = new XmlWebResourcesCamelEndpointsVisitor(webFacet, endpoints, filter);
             webFacet.visitWebResources(visitor);
         }
     }

@@ -87,7 +87,7 @@ public class CamelGetOverviewCommand extends AbstractCamelProjectCommand {
         }
 
         // use value choices instead of completer as that works better in web console
-        XmlEndpointsCompleter xmlEndpointCompleter = new XmlEndpointsCompleter(resourcesFacet, webResourcesFacet);
+        XmlEndpointsCompleter xmlEndpointCompleter = new XmlEndpointsCompleter(resourcesFacet, webResourcesFacet, null);
         JavaSourceFacet javaSourceFacet = project.getFacet(JavaSourceFacet.class);
 
         // use value choices instead of completer as that works better in web console

@@ -99,7 +99,7 @@ public class CamelEditEndpointDefinitionXmlCommand extends AbstractCamelProjectC
         }
 
         // use value choices instead of completer as that works better in web console
-        completer = new XmlEndpointsCompleter(resourcesFacet, webResourcesFacet);
+        completer = new XmlEndpointsCompleter(resourcesFacet, webResourcesFacet, null);
 
         // must add dummy <select> in the dropdown as otherwise there is problems with auto selecting
         // the first element where its a different between its auto selected vs end user clicked and selected
