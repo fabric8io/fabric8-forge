@@ -48,7 +48,7 @@ public class RouteBuilderCamelEndpointsVisitor extends JavaResourceVisitor {
             boolean include = true;
             if (filter != null) {
                 Boolean out = filter.apply(fqn);
-                include = out == null || "true".equals(out);
+                include = out == null || out;
             }
 
             if (include) {

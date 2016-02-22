@@ -47,7 +47,7 @@ public class XmlWebResourcesCamelEndpointsVisitor implements ResourceVisitor {
             if (filter != null) {
                 String fqn = resource.getFullyQualifiedName();
                 Boolean out = filter.apply(fqn);
-                include = out == null || "true".equals(out);
+                include = out == null || out;
             }
 
             if (include) {

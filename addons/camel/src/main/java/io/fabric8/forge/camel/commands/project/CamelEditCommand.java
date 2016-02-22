@@ -15,6 +15,8 @@
  */
 package io.fabric8.forge.camel.commands.project;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
@@ -22,12 +24,14 @@ import javax.inject.Inject;
 import io.fabric8.forge.camel.commands.project.completer.RouteBuilderEndpointsCompleter;
 import io.fabric8.forge.camel.commands.project.completer.XmlEndpointsCompleter;
 import io.fabric8.forge.camel.commands.project.model.CamelEndpointDetails;
+import io.fabric8.forge.camel.commands.project.model.InputOptionByGroup;
 import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
 import org.jboss.forge.addon.ui.context.UINavigationContext;
 import org.jboss.forge.addon.ui.context.UIRegion;
+import org.jboss.forge.addon.ui.input.InputComponent;
 import org.jboss.forge.addon.ui.input.InputComponentFactory;
 import org.jboss.forge.addon.ui.input.UIInput;
 import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
@@ -35,9 +39,12 @@ import org.jboss.forge.addon.ui.metadata.WithAttributes;
 import org.jboss.forge.addon.ui.result.NavigationResult;
 import org.jboss.forge.addon.ui.result.Result;
 import org.jboss.forge.addon.ui.result.Results;
+import org.jboss.forge.addon.ui.result.navigation.NavigationResultBuilder;
 import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
 import org.jboss.forge.addon.ui.wizard.UIWizard;
+
+import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.createUIInputsForCamelComponent;
 
 public class CamelEditCommand extends AbstractCamelProjectCommand implements UIWizard {
 
@@ -87,6 +94,18 @@ public class CamelEditCommand extends AbstractCamelProjectCommand implements UIW
                 for (CamelEndpointDetails detail : completer.getEndpoints()) {
                     if (detail.getLineNumber() != null && Integer.valueOf(detail.getLineNumber()) == lineNumber) {
                         msg = detail.getEndpointUri();
+
+                        attributeMap.put("componentName", detail.getEndpointComponentName());
+                        attributeMap.put("instanceName", detail.getEndpointInstance());
+                        attributeMap.put("endpointUri", detail.getEndpointUri());
+                        attributeMap.put("lineNumber", detail.getLineNumber());
+                        attributeMap.put("lineNumberEnd", detail.getLineNumberEnd());
+                        attributeMap.put("consumerOnly", detail.isConsumerOnly());
+                        attributeMap.put("producerOnly", detail.isProducerOnly());
+                        attributeMap.put("routeBuilder", detail.getFileName());
+                        attributeMap.put("mode", "edit");
+                        attributeMap.put("kind", "java");
+
                         found = true;
                         break;
                     }
@@ -99,6 +118,18 @@ public class CamelEditCommand extends AbstractCamelProjectCommand implements UIW
                     for (CamelEndpointDetails detail : completer2.getEndpoints()) {
                         if (detail.getLineNumber() != null && Integer.valueOf(detail.getLineNumber()) == lineNumber) {
                             msg = detail.getEndpointUri();
+
+                            attributeMap.put("componentName", detail.getEndpointComponentName());
+                            attributeMap.put("instanceName", detail.getEndpointInstance());
+                            attributeMap.put("endpointUri", detail.getEndpointUri());
+                            attributeMap.put("lineNumber", detail.getLineNumber());
+                            attributeMap.put("lineNumberEnd", detail.getLineNumberEnd());
+                            attributeMap.put("consumerOnly", detail.isConsumerOnly());
+                            attributeMap.put("producerOnly", detail.isProducerOnly());
+                            attributeMap.put("xml", detail.getFileName());
+                            attributeMap.put("mode", "edit");
+                            attributeMap.put("kind", "xml");
+
                             found = true;
                             break;
                         }
@@ -120,8 +151,6 @@ public class CamelEditCommand extends AbstractCamelProjectCommand implements UIW
 
     @Override
     public NavigationResult next(UINavigationContext context) throws Exception {
-        return null;
-        /*
         Map<Object, Object> attributeMap = context.getUIContext().getAttributeMap();
 
         NavigationResult navigationResult = (NavigationResult) attributeMap.get("navigationResult");
@@ -129,31 +158,20 @@ public class CamelEditCommand extends AbstractCamelProjectCommand implements UIW
             return navigationResult;
         }
 
-        String endpointUri = (String) attributeMap.get("endpointUri");
-        if (endpointUri == null) {
+        String uri = (String) attributeMap.get("endpointUri");
+        if (uri == null) {
             return null;
         }
 
-        attributeMap.put("componentName", detail.getEndpointComponentName());
-        attributeMap.put("instanceName", detail.getEndpointInstance());
-        attributeMap.put("endpointUri", detail.getEndpointUri());
-        attributeMap.put("lineNumber", detail.getLineNumber());
-        attributeMap.put("lineNumberEnd", detail.getLineNumberEnd());
-        attributeMap.put("routeBuilder", detail.getFileName());
-        attributeMap.put("mode", "edit");
-        attributeMap.put("kind", "java");
-
         // we need to figure out how many options there is so we can as many steps we need
-        String camelComponentName = detail.getEndpointComponentName();
-        String uri = detail.getEndpointUri();
-
+        String camelComponentName = (String) attributeMap.get("componentName");
         String json = getCamelCatalog().componentJSonSchema(camelComponentName);
         if (json == null) {
             throw new IllegalArgumentException("Could not find catalog entry for component name: " + camelComponentName);
         }
 
-        boolean consumerOnly = detail.isConsumerOnly();
-        boolean producerOnly = detail.isProducerOnly();
+        boolean consumerOnly = (Boolean) attributeMap.get("consumerOnly");
+        boolean producerOnly = (Boolean) attributeMap.get("producerOnly");
 
         UIContext ui = context.getUIContext();
         List<InputOptionByGroup> groups = createUIInputsForCamelComponent(camelComponentName, uri, MAX_OPTIONS, consumerOnly, producerOnly,
@@ -175,14 +193,21 @@ public class CamelEditCommand extends AbstractCamelProjectCommand implements UIW
             builder.add(step);
         }
 
-        NavigationResult navigationResult = builder.build();
+        navigationResult = builder.build();
         attributeMap.put("navigationResult", navigationResult);
-        return navigationResult;*/
+        return navigationResult;
     }
 
     @Override
     public Result execute(UIExecutionContext context) throws Exception {
-        return Results.success();
+        Map<Object, Object> attributeMap = context.getUIContext().getAttributeMap();
+
+        String uri = (String) attributeMap.get("endpointUri");
+        if (uri == null) {
+            return Results.fail("No Camel endpoint found at cursor position");
+        } else {
+            return Results.success();
+        }
     }
 
 }

@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.Function;
 
 import io.fabric8.forge.camel.commands.project.helper.CamelXmlHelper;
 import org.jboss.forge.addon.projects.facets.ResourcesFacet;
@@ -38,14 +39,14 @@ public class XmlFileCompleter implements UICompleter<String> {
     private final Set<String> files = new TreeSet<String>();
     private final Set<String> directories = new TreeSet<String>();
 
-    public XmlFileCompleter(final ResourcesFacet facet, final WebResourcesFacet webFacet) {
+    public XmlFileCompleter(final ResourcesFacet facet, final WebResourcesFacet webFacet, Function<String, Boolean> filter) {
         // find Camel XML files
         if (facet != null) {
-            ResourceVisitor visitor = new XmlResourcesCamelFilesVisitor(facet, files, directories);
+            ResourceVisitor visitor = new XmlResourcesCamelFilesVisitor(facet, files, directories, filter);
             facet.visitResources(visitor);
         }
         if (webFacet != null) {
-            ResourceVisitor visitor = new XmlWebResourcesCamelFilesVisitor(webFacet, files, directories);
+            ResourceVisitor visitor = new XmlWebResourcesCamelFilesVisitor(webFacet, files, directories, filter);
             webFacet.visitWebResources(visitor);
         }
     }
