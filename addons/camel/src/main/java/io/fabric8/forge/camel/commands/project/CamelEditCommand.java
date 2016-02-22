@@ -33,7 +33,7 @@ import org.jboss.forge.addon.ui.context.UINavigationContext;
 import org.jboss.forge.addon.ui.context.UIRegion;
 import org.jboss.forge.addon.ui.input.InputComponent;
 import org.jboss.forge.addon.ui.input.InputComponentFactory;
-import org.jboss.forge.addon.ui.input.UIInput;
+import org.jboss.forge.addon.ui.input.UISelectOne;
 import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
 import org.jboss.forge.addon.ui.metadata.WithAttributes;
 import org.jboss.forge.addon.ui.result.NavigationResult;
@@ -50,6 +50,10 @@ public class CamelEditCommand extends AbstractCamelProjectCommand implements UIW
 
     private static final int MAX_OPTIONS = 20;
 
+    @Inject
+    @WithAttributes(label = "Endpoints", required = true, description = "The endpoints from the project")
+    private UISelectOne<String> endpoints;
+
     // TODO: remove me when no longer needed
 //    @Inject
 //    @WithAttributes(label = "Debug5", required = true)
@@ -61,6 +65,9 @@ public class CamelEditCommand extends AbstractCamelProjectCommand implements UIW
     @Inject
     private DependencyInstaller dependencyInstaller;
 
+    private RouteBuilderEndpointsCompleter javaCompleter;
+    private XmlEndpointsCompleter xmlCompleter;
+
     @Override
     public UICommandMetadata getMetadata(UIContext context) {
         return Metadata.forCommand(CamelEditCommand.class).name(
@@ -69,110 +76,133 @@ public class CamelEditCommand extends AbstractCamelProjectCommand implements UIW
     }
 
     @Override
+    public boolean isEnabled(UIContext context) {
+        boolean answer = super.isEnabled(context);
+        if (answer) {
+            // we are only enabled if there is a file open in the editor
+            final String currentFile = getSelectedFile(context);
+            answer = currentFile != null;
+        }
+        return answer;
+    }
+
+    @Override
     public void initializeUI(UIBuilder builder) throws Exception {
         Map<Object, Object> attributeMap = builder.getUIContext().getAttributeMap();
         attributeMap.remove("navigationResult");
 
+        int cursorLineNumber = -1;
         final String currentFile = getSelectedFile(builder.getUIContext());
         if (currentFile == null) {
-            attributeMap.remove("endpointUri");
-        } else {
-            Optional<UIRegion<Object>> region = builder.getUIContext().getSelection().getRegion();
-            if (region.isPresent()) {
-                int lineNumber = region.get().getStartLine();
-                int lineNumberEnd = region.get().getEndLine();
-                int pos = region.get().getStartPosition();
-                int endPos = region.get().getEndPosition();
-                String text = region.get().getText().orElse("");
-                String res = region.get().getResource().toString();
-                String msg = String.format("line %s(%s)-%s(%s): %s | %s", lineNumber, pos, lineNumberEnd, endPos, text, res);
+            return;
+        }
 
-                // find all the endpoints in the current file
-                // and find the endpoints that are on the same line number as the cursor
-                boolean found = false;
-                RouteBuilderEndpointsCompleter completer = createRouteBuilderEndpointsCompleter(builder.getUIContext(), currentFile::equals);
-                for (CamelEndpointDetails detail : completer.getEndpoints()) {
-                    if (detail.getLineNumber() != null && Integer.valueOf(detail.getLineNumber()) == lineNumber) {
-                        msg = detail.getEndpointUri();
+        Optional<UIRegion<Object>> region = builder.getUIContext().getSelection().getRegion();
+        if (region.isPresent()) {
+            cursorLineNumber = region.get().getStartLine();
+        }
 
-                        attributeMap.put("componentName", detail.getEndpointComponentName());
-                        attributeMap.put("instanceName", detail.getEndpointInstance());
-                        attributeMap.put("endpointUri", detail.getEndpointUri());
-                        attributeMap.put("lineNumber", detail.getLineNumber());
-                        attributeMap.put("lineNumberEnd", detail.getLineNumberEnd());
-                        attributeMap.put("consumerOnly", detail.isConsumerOnly());
-                        attributeMap.put("producerOnly", detail.isProducerOnly());
-                        attributeMap.put("routeBuilder", detail.getFileName());
-                        attributeMap.put("mode", "edit");
-                        attributeMap.put("kind", "java");
+        boolean xmlFile = currentFile.endsWith(".xml");
 
+        if (!xmlFile) {
+            // find all endpoints
+            javaCompleter = createRouteBuilderEndpointsCompleter(builder.getUIContext(), currentFile::equals);
+
+            boolean found = false;
+            if (cursorLineNumber != -1) {
+                for (CamelEndpointDetails detail : javaCompleter.getEndpoints()) {
+                    if (detail.getLineNumber() != null && Integer.valueOf(detail.getLineNumber()) == cursorLineNumber) {
+                        endpoints.setValue(detail.getEndpointUri());
                         found = true;
                         break;
                     }
                 }
+            }
+            if (!found && !javaCompleter.getEndpoints().isEmpty()) {
+                endpoints.setValueChoices(javaCompleter.getEndpointUris());
 
-                // find all the endpoints in the current file
-                // and find the endpoints that are on the same line number as the cursor
-                if (!found) {
-                    XmlEndpointsCompleter completer2 = createXmlEndpointsCompleter(builder.getUIContext(), currentFile::equals);
-                    for (CamelEndpointDetails detail : completer2.getEndpoints()) {
-                        if (detail.getLineNumber() != null && Integer.valueOf(detail.getLineNumber()) == lineNumber) {
-                            msg = detail.getEndpointUri();
+                // show the UI where you can chose the endpoint to select
+                builder.add(endpoints);
+            }
+        } else {
+            // find all endpoints
+            xmlCompleter = createXmlEndpointsCompleter(builder.getUIContext(), currentFile::equals);
 
-                            attributeMap.put("componentName", detail.getEndpointComponentName());
-                            attributeMap.put("instanceName", detail.getEndpointInstance());
-                            attributeMap.put("endpointUri", detail.getEndpointUri());
-                            attributeMap.put("lineNumber", detail.getLineNumber());
-                            attributeMap.put("lineNumberEnd", detail.getLineNumberEnd());
-                            attributeMap.put("consumerOnly", detail.isConsumerOnly());
-                            attributeMap.put("producerOnly", detail.isProducerOnly());
-                            attributeMap.put("xml", detail.getFileName());
-                            attributeMap.put("mode", "edit");
-                            attributeMap.put("kind", "xml");
-
-                            found = true;
-                            break;
-                        }
+            boolean found = false;
+            if (cursorLineNumber != -1) {
+                for (CamelEndpointDetails detail : xmlCompleter.getEndpoints()) {
+                    if (detail.getLineNumber() != null && Integer.valueOf(detail.getLineNumber()) == cursorLineNumber) {
+                        endpoints.setValue(detail.getEndpointUri());
+                        found = true;
+                        break;
                     }
                 }
+            }
+            if (!found && !xmlCompleter.getEndpoints().isEmpty()) {
+                endpoints.setValueChoices(xmlCompleter.getEndpointUris());
 
-//                if (found) {
-//                    debug.setValue(currentFile + "@" + msg);
-//                } else {
-//                    debug.setValue(currentFile + "<not found>@" + msg);
-//                }
-//            } else {
-//                debug.setValue(currentFile);
-//            }
+                // show the UI where you can chose the endpoint to select
+                builder.add(endpoints);
             }
         }
-
-//        builder.add(debug);
     }
 
     @Override
     public NavigationResult next(UINavigationContext context) throws Exception {
         Map<Object, Object> attributeMap = context.getUIContext().getAttributeMap();
 
-        NavigationResult navigationResult = (NavigationResult) attributeMap.get("navigationResult");
-        if (navigationResult != null) {
-            return navigationResult;
-        }
-
-        String uri = (String) attributeMap.get("endpointUri");
-        if (uri == null) {
+        String selectedUri = endpoints.getValue();
+        if ("<select>".equals(selectedUri)) {
+            // no choice yet
+            attributeMap.remove("navigationResult");
             return null;
         }
 
+        // must be same component name to allow reusing existing navigation result
+        String previous = (String) attributeMap.get("endpointUri");
+        if (previous != null && previous.equals(endpoints.getValue())) {
+            NavigationResult navigationResult = (NavigationResult) attributeMap.get("navigationResult");
+            if (navigationResult != null) {
+                return navigationResult;
+            }
+        }
+
+        CamelEndpointDetails detail = null;
+        if (javaCompleter != null) {
+            detail = javaCompleter.getEndpointDetail(selectedUri);
+        } else if (xmlCompleter != null) {
+            detail = xmlCompleter.getEndpointDetail(selectedUri);
+        }
+        if (detail == null) {
+            return null;
+        }
+
+        attributeMap.put("componentName", detail.getEndpointComponentName());
+        attributeMap.put("instanceName", detail.getEndpointInstance());
+        attributeMap.put("endpointUri", detail.getEndpointUri());
+        attributeMap.put("lineNumber", detail.getLineNumber());
+        attributeMap.put("lineNumberEnd", detail.getLineNumberEnd());
+        attributeMap.put("mode", "edit");
+
+        if (javaCompleter != null) {
+            attributeMap.put("routeBuilder", detail.getFileName());
+            attributeMap.put("kind", "java");
+        } else {
+            attributeMap.put("xml", detail.getFileName());
+            attributeMap.put("kind", "xml");
+        }
+
         // we need to figure out how many options there is so we can as many steps we need
-        String camelComponentName = (String) attributeMap.get("componentName");
+        String camelComponentName = detail.getEndpointComponentName();
+        String uri = detail.getEndpointUri();
+
         String json = getCamelCatalog().componentJSonSchema(camelComponentName);
         if (json == null) {
             throw new IllegalArgumentException("Could not find catalog entry for component name: " + camelComponentName);
         }
 
-        boolean consumerOnly = (Boolean) attributeMap.get("consumerOnly");
-        boolean producerOnly = (Boolean) attributeMap.get("producerOnly");
+        boolean consumerOnly = detail.isConsumerOnly();
+        boolean producerOnly = detail.isProducerOnly();
 
         UIContext ui = context.getUIContext();
         List<InputOptionByGroup> groups = createUIInputsForCamelComponent(camelComponentName, uri, MAX_OPTIONS, consumerOnly, producerOnly,
@@ -194,21 +224,14 @@ public class CamelEditCommand extends AbstractCamelProjectCommand implements UIW
             builder.add(step);
         }
 
-        navigationResult = builder.build();
+        NavigationResult navigationResult = builder.build();
         attributeMap.put("navigationResult", navigationResult);
         return navigationResult;
     }
 
     @Override
     public Result execute(UIExecutionContext context) throws Exception {
-        Map<Object, Object> attributeMap = context.getUIContext().getAttributeMap();
-
-        String uri = (String) attributeMap.get("endpointUri");
-        if (uri == null) {
-            return Results.fail("No Camel endpoint found at cursor position");
-        } else {
-            return Results.success();
-        }
+        return Results.success();
     }
 
 }
