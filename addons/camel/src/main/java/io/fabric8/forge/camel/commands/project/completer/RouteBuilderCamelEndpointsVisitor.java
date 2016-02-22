@@ -43,11 +43,12 @@ public class RouteBuilderCamelEndpointsVisitor extends JavaResourceVisitor {
         try {
             JavaClassSource clazz = resource.getJavaType();
             String fqn = resource.getFullyQualifiedName();
+            String name = clazz.getQualifiedName();
             String baseDir = facet.getSourceDirectory().getFullyQualifiedName();
 
             boolean include = true;
             if (filter != null) {
-                Boolean out = filter.apply(fqn);
+                Boolean out = filter.apply(name);
                 include = out == null || out;
             }
 

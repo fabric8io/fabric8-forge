@@ -50,9 +50,10 @@ public class CamelEditCommand extends AbstractCamelProjectCommand implements UIW
 
     private static final int MAX_OPTIONS = 20;
 
-    @Inject
-    @WithAttributes(label = "Debug", required = true)
-    private UIInput<String> debug;
+    // TODO: remove me when no longer needed
+//    @Inject
+//    @WithAttributes(label = "Debug5", required = true)
+//    private UIInput<String> debug;
 
     @Inject
     private InputComponentFactory componentFactory;
@@ -75,7 +76,6 @@ public class CamelEditCommand extends AbstractCamelProjectCommand implements UIW
         final String currentFile = getSelectedFile(builder.getUIContext());
         if (currentFile == null) {
             attributeMap.remove("endpointUri");
-            debug.setValue("No current file");
         } else {
             Optional<UIRegion<Object>> region = builder.getUIContext().getSelection().getRegion();
             if (region.isPresent()) {
@@ -136,17 +136,18 @@ public class CamelEditCommand extends AbstractCamelProjectCommand implements UIW
                     }
                 }
 
-                if (found) {
-                    debug.setValue(currentFile + "@" + msg);
-                } else {
-                    debug.setValue(currentFile + "<not found>@" + msg);
-                }
-            } else {
-                debug.setValue(currentFile);
+//                if (found) {
+//                    debug.setValue(currentFile + "@" + msg);
+//                } else {
+//                    debug.setValue(currentFile + "<not found>@" + msg);
+//                }
+//            } else {
+//                debug.setValue(currentFile);
+//            }
             }
         }
 
-        builder.add(debug);
+//        builder.add(debug);
     }
 
     @Override
