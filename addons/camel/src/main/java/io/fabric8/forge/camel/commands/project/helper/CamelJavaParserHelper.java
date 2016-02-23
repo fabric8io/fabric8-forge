@@ -113,7 +113,6 @@ public class CamelJavaParserHelper {
             for (int i = 0; i < statements.size(); i++) {
                 Statement stmt = (Statement) statements.get(i);
                 Expression exp = null;
-                String methodName = null;
                 if (stmt instanceof ReturnStatement) {
                     ReturnStatement rs = (ReturnStatement) stmt;
                     exp = rs.getExpression();

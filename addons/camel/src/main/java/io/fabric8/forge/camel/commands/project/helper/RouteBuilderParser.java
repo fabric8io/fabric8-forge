@@ -55,10 +55,11 @@ public class RouteBuilderParser {
 
             // is the field annotated with a Camel endpoint
             String uri = null;
+            Expression exp = null;
             for (Annotation ann : field.getAnnotations()) {
                 boolean valid = "org.apache.camel.EndpointInject".equals(ann.getQualifiedName()) || "org.apache.camel.cdi.Uri".equals(ann.getQualifiedName());
                 if (valid) {
-                    Expression exp = (Expression) ann.getInternal();
+                    exp = (Expression) ann.getInternal();
                     if (exp instanceof SingleMemberAnnotation) {
                         exp = ((SingleMemberAnnotation) exp).getValue();
                     } else if (exp instanceof NormalAnnotation) {
@@ -91,8 +92,11 @@ public class RouteBuilderParser {
                 detail.setEndpointInstance(id);
                 detail.setEndpointUri(uri);
                 detail.setEndpointComponentName(endpointComponentName(uri));
-                Object internal = field.getInternal();
-                // find position of field
+
+                // favor the position of the expression which had the actual uri
+                Object internal = exp != null ? exp : field.getInternal();
+
+                // find position of field/expression
                 if (internal instanceof ASTNode) {
                     int pos = ((ASTNode) internal).getStartPosition();
                     int line = findLineNumber(fullyQualifiedFileName, pos);
