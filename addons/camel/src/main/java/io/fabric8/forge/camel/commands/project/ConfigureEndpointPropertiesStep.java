@@ -383,6 +383,7 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
         String camelComponentName = mandatoryAttributeValue(attributeMap, "componentName");
         String endpointInstanceName = optionalAttributeValue(attributeMap, "instanceName");
         String routeBuilder = mandatoryAttributeValue(attributeMap, "routeBuilder");
+        String lineNumber = optionalAttributeValue(attributeMap, "lineNumber");
 
         Project project = getSelectedProject(context);
         JavaSourceFacet facet = project.getFacet(JavaSourceFacet.class);
@@ -472,6 +473,7 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
         JavaClassSource clazz = existing.getJavaType();
 
         boolean updated = true;
+        boolean newCode = false;
 
         if (endpointInstanceName != null) {
             // add the endpoint as a field
@@ -484,36 +486,81 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
                 field.setType("org.apache.camel.Endpoint");
                 field.setPrivate();
                 updated = false;
+                newCode = true;
             }
             boolean cdi = findCamelArtifactDependency(project, "camel-cdi") != null;
             if (cdi) {
                 // cdi uses @Inject @Uri
                 if (!field.hasAnnotation("javax.inject.Inject")) {
                     field.addAnnotation("javax.inject.Inject");
+                    newCode = true;
                 }
                 if (!field.hasAnnotation("org.apache.camel.cdi.Uri")) {
                     field.addAnnotation("org.apache.camel.cdi.Uri");
+                    newCode = true;
                 }
                 annotation = field.getAnnotation("org.apache.camel.cdi.Uri");
                 annotation.setStringValue(uri);
             } else {
                 if (!field.hasAnnotation("org.apache.camel.EndpointInject")) {
                     field.addAnnotation("org.apache.camel.EndpointInject");
+                    newCode = true;
                 }
                 annotation = field.getAnnotation("org.apache.camel.EndpointInject");
                 annotation.setStringValue("uri", uri);
             }
 
-            // make sure to import what we use
-            clazz.addImport("org.apache.camel.Endpoint");
-            if (cdi) {
-                clazz.addImport("javax.inject.Inject");
-                clazz.addImport("org.apache.camel.cdi.Uri");
-            } else {
-                clazz.addImport("org.apache.camel.EndpointInject");
+            if (!clazz.hasImport("org.apache.camel.Endpoint")) {
+                // make sure to import what we use
+                clazz.addImport("org.apache.camel.Endpoint");
+                newCode = true;
             }
 
-            facet.saveJavaSource(clazz);
+            if (cdi) {
+                if (!clazz.hasImport("javax.inject.Inject")) {
+                    clazz.addImport("javax.inject.Inject");
+                    newCode = true;
+                }
+                if (!clazz.hasImport("org.apache.camel.cdi.Uri")) {
+                    clazz.addImport("org.apache.camel.cdi.Uri");
+                    newCode = true;
+                }
+            } else {
+                if (!clazz.hasImport("org.apache.camel.EndpointInject")) {
+                    clazz.addImport("org.apache.camel.EndpointInject");
+                    newCode = true;
+                }
+            }
+
+            // attempt to read the line number and do a search/replace and save, to avoid re-formatting the source code.
+            if (!newCode && lineNumber != null) {
+                List<String> lines = LineNumberHelper.readLines(existing.getResourceInputStream());
+
+                // the list is 0-based, and line number is 1-based
+                int idx = Integer.valueOf(lineNumber) - 1;
+                if (idx <= lines.size()) {
+                    String line = lines.get(idx);
+
+                    // wonder if we should have better way, than a replaceFirst?
+                    String endpointUrl = mandatoryAttributeValue(attributeMap, "endpointUri");
+                    String find = Pattern.quote(endpointUrl);
+                    line = line.replaceFirst(find, uri);
+
+                    // update the line
+                    lines.set(idx, line);
+
+                    // and save the file back
+                    String content = LineNumberHelper.linesToString(lines);
+                    existing.setContents(content);
+                } else {
+                    // okay give up and just use roaster to save it as it if was new-code
+                    newCode = true;
+                }
+            }
+
+            if (newCode) {
+                facet.saveJavaSource(clazz);
+            }
 
             if (updated) {
                 return Results.success("Updated endpoint " + endpointInstanceName + " in " + routeBuilder);
@@ -526,7 +573,7 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
             if (method != null) {
 
                 // we do not want to change the current code formatting so we need to search
-                // replace the unformatted class soure code
+                // replace the unformatted class soucre code
                 String code = clazz.toUnformattedString();
 
                 String endpointUrl = mandatoryAttributeValue(attributeMap, "endpointUri");
