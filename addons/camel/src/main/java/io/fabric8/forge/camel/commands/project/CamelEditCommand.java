@@ -33,7 +33,6 @@ import org.jboss.forge.addon.ui.context.UINavigationContext;
 import org.jboss.forge.addon.ui.context.UIRegion;
 import org.jboss.forge.addon.ui.input.InputComponent;
 import org.jboss.forge.addon.ui.input.InputComponentFactory;
-import org.jboss.forge.addon.ui.input.UIInput;
 import org.jboss.forge.addon.ui.input.UISelectOne;
 import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
 import org.jboss.forge.addon.ui.metadata.WithAttributes;
@@ -54,11 +53,6 @@ public class CamelEditCommand extends AbstractCamelProjectCommand implements UIW
     @Inject
     @WithAttributes(label = "Endpoints", required = true, description = "The endpoints from the project")
     private UISelectOne<String> endpoints;
-
-    // TODO: remove me when no longer needed
-    //@Inject
-    //@WithAttributes(label = "Debug5", required = true)
-    //private UIInput<String> debug;
 
     @Inject
     private InputComponentFactory componentFactory;

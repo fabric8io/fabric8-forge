@@ -166,7 +166,7 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
         String endpointUrl = null;
         if ("edit".equals(mode)) {
             lineNumber = mandatoryAttributeValue(attributeMap, "lineNumber");
-            lineNumberEnd = mandatoryAttributeValue(attributeMap, "lineNumberEnd");
+            lineNumberEnd = optionalAttributeValue(attributeMap, "lineNumberEnd");
             endpointUrl = mandatoryAttributeValue(attributeMap, "endpointUri");
 
             // since this is XML we need to escape & as &amp;
@@ -382,8 +382,18 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
     protected Result executeJava(UIExecutionContext context, Map<Object, Object> attributeMap) throws Exception {
         String camelComponentName = mandatoryAttributeValue(attributeMap, "componentName");
         String endpointInstanceName = optionalAttributeValue(attributeMap, "instanceName");
+        String mode = mandatoryAttributeValue(attributeMap, "mode");
         String routeBuilder = mandatoryAttributeValue(attributeMap, "routeBuilder");
-        String lineNumber = optionalAttributeValue(attributeMap, "lineNumber");
+
+        // edit mode includes the existing uri and line number
+        String lineNumber = null;
+        String lineNumberEnd = null;
+        String endpointUrl = null;
+        if ("edit".equals(mode)) {
+            lineNumber = mandatoryAttributeValue(attributeMap, "lineNumber");
+            lineNumberEnd = optionalAttributeValue(attributeMap, "lineNumberEnd");
+            endpointUrl = mandatoryAttributeValue(attributeMap, "endpointUri");
+        }
 
         Project project = getSelectedProject(context);
         JavaSourceFacet facet = project.getFacet(JavaSourceFacet.class);
@@ -465,12 +475,18 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
             return Results.fail("Cannot create endpoint uri");
         }
 
-        JavaResource existing = facet.getJavaResource(routeBuilder);
-        if (existing == null || !existing.exists()) {
+        JavaResource file = facet.getJavaResource(routeBuilder);
+        if (file == null || !file.exists()) {
             return Results.fail("RouteBuilder " + routeBuilder + " does not exist");
         }
 
-        JavaClassSource clazz = existing.getJavaType();
+        return addOrEditEndpointJava(project, facet, file, uri, endpointUrl, endpointInstanceName, routeBuilder, lineNumber, lineNumberEnd);
+    }
+
+    protected Result addOrEditEndpointJava(Project project, JavaSourceFacet facet, JavaResource file, String uri, String endpointUrl,
+                                           String endpointInstanceName, String routeBuilder, String lineNumber, String lineNumberEnd) throws Exception {
+
+        JavaClassSource clazz = file.getJavaType();
 
         boolean updated = true;
         boolean newCode = false;
@@ -534,7 +550,7 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
 
             // attempt to read the line number and do a search/replace and save, to avoid re-formatting the source code.
             if (!newCode && lineNumber != null) {
-                List<String> lines = LineNumberHelper.readLines(existing.getResourceInputStream());
+                List<String> lines = LineNumberHelper.readLines(file.getResourceInputStream());
 
                 // the list is 0-based, and line number is 1-based
                 int idx = Integer.valueOf(lineNumber) - 1;
@@ -542,7 +558,6 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
                     String line = lines.get(idx);
 
                     // wonder if we should have better way, than a replaceFirst?
-                    String endpointUrl = mandatoryAttributeValue(attributeMap, "endpointUri");
                     String find = Pattern.quote(endpointUrl);
                     line = line.replaceFirst(find, uri);
 
@@ -551,7 +566,7 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
 
                     // and save the file back
                     String content = LineNumberHelper.linesToString(lines);
-                    existing.setContents(content);
+                    file.setContents(content);
                 } else {
                     // okay give up and just use roaster to save it as it if was new-code
                     newCode = true;
@@ -576,13 +591,12 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
                 // replace the unformatted class soucre code
                 String code = clazz.toUnformattedString();
 
-                String endpointUrl = mandatoryAttributeValue(attributeMap, "endpointUri");
                 // wonder if we should have better way, than a replaceFirst?
                 String find = Pattern.quote(endpointUrl);
                 code = code.replaceFirst(find, uri);
 
                 // use this code currently to save content unformatted
-                existing.setContents(new ByteArrayInputStream(code.getBytes()), null);
+                file.setContents(new ByteArrayInputStream(code.getBytes()), null);
 
                 return Results.success("Updated endpoint " + endpointUrl + " -> " + uri + " in " + routeBuilder);
             }
