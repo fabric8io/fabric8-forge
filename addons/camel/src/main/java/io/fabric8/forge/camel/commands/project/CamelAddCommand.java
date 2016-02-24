@@ -18,7 +18,6 @@ package io.fabric8.forge.camel.commands.project;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import javax.inject.Inject;
 
 import io.fabric8.forge.camel.commands.project.dto.ComponentDto;
@@ -31,10 +30,8 @@ import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
 import org.jboss.forge.addon.ui.context.UINavigationContext;
-import org.jboss.forge.addon.ui.context.UIRegion;
 import org.jboss.forge.addon.ui.input.InputComponent;
 import org.jboss.forge.addon.ui.input.InputComponentFactory;
-import org.jboss.forge.addon.ui.input.UIInput;
 import org.jboss.forge.addon.ui.input.UISelectOne;
 import org.jboss.forge.addon.ui.input.ValueChangeListener;
 import org.jboss.forge.addon.ui.input.events.ValueChangeEvent;
@@ -63,11 +60,6 @@ public class CamelAddCommand extends AbstractCamelProjectCommand implements UIWi
     @WithAttributes(label = "Name", required = true, description = "Name of component to use for the endpoint")
     private UISelectOne<ComponentDto> componentName;
 
-    // TODO: remove me when no longer needed
-    @Inject
-    @WithAttributes(label = "Debug", required = true)
-    private UIInput<String> debug;
-
     @Inject
     private InputComponentFactory componentFactory;
 
@@ -85,9 +77,9 @@ public class CamelAddCommand extends AbstractCamelProjectCommand implements UIWi
     public boolean isEnabled(UIContext context) {
         boolean answer = super.isEnabled(context);
         if (answer) {
-            // we are only enabled if there is a file open in the editor
-            final String currentFile = getSelectedFile(context);
-            answer = currentFile != null;
+            // we are only enabled if there is a file open in the editor and we have a cursor position
+            int pos = getCurrentCursorPosition(context);
+            answer = pos > -1;
         }
         return answer;
     }
@@ -125,22 +117,25 @@ public class CamelAddCommand extends AbstractCamelProjectCommand implements UIWi
 
         builder.add(componentNameFilter).add(componentName);
 
-        Optional<UIRegion<Object>> region = builder.getUIContext().getSelection().getRegion();
-        if (region.isPresent()) {
-            int pos = region.get().getStartPosition();
-            attributeMap.put("cursorPosition", pos);
-        }
+        attributeMap.put("cursorPosition", getCurrentCursorPosition(builder.getUIContext()));
 
-        attributeMap.put("routeBuilder", getSelectedFile(builder.getUIContext()));
+        // whether its an xml file or not
+        final String currentFile = getSelectedFile(builder.getUIContext());
+        boolean xmlFile = currentFile.endsWith(".xml");
+
+        attributeMap.put("mode", "add");
+        if (xmlFile) {
+            attributeMap.put("xml", currentFile);
+            attributeMap.put("kind", "xml");
+        } else {
+            attributeMap.put("routeBuilder", currentFile);
+            attributeMap.put("kind", "java");
+        }
     }
 
     @Override
     public NavigationResult next(UINavigationContext context) throws Exception {
         Map<Object, Object> attributeMap = context.getUIContext().getAttributeMap();
-
-        // always refresh these as the end user may have edited the instance name
-        attributeMap.put("mode", "add");
-        attributeMap.put("kind", "java");
 
         ComponentDto component = componentName.getValue();
         String camelComponentName = component.getScheme();
@@ -190,31 +185,6 @@ public class CamelAddCommand extends AbstractCamelProjectCommand implements UIWi
     @Override
     public Result execute(UIExecutionContext context) throws Exception {
         return Results.success();
-
-        /*
-        Map<Object, Object> attributeMap = context.getUIContext().getAttributeMap();
-
-        Optional<UIRegion<Object>> region = context.getUIContext().getSelection().getRegion();
-        if (region.isPresent()) {
-            Object resource = region.get().getResource();
-            if (resource instanceof FileResource) {
-                FileResource fr = (FileResource) resource;
-
-                Integer pos = (Integer) attributeMap.getOrDefault("pos", -1);
-
-                // check if prev and next post is quote, then add that automatic
-
-                if (pos != null && pos > -1) {
-                    StringBuilder sb = new StringBuilder(fr.getContents());
-                    sb.insert(pos, "log:foo");
-
-                    // and save the file back
-                    fr.setContents(sb.toString());
-                }
-            }
-        }
-
-        return Results.success();*/
     }
 
 }

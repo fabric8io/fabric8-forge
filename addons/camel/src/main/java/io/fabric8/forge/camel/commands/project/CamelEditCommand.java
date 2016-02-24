@@ -30,7 +30,6 @@ import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
 import org.jboss.forge.addon.ui.context.UINavigationContext;
-import org.jboss.forge.addon.ui.context.UIRegion;
 import org.jboss.forge.addon.ui.input.InputComponent;
 import org.jboss.forge.addon.ui.input.InputComponentFactory;
 import org.jboss.forge.addon.ui.input.UISelectOne;
@@ -86,13 +85,8 @@ public class CamelEditCommand extends AbstractCamelProjectCommand implements UIW
         Map<Object, Object> attributeMap = builder.getUIContext().getAttributeMap();
         attributeMap.remove("navigationResult");
 
-        int cursorLineNumber = -1;
         final String currentFile = getSelectedFile(builder.getUIContext());
-
-        Optional<UIRegion<Object>> region = builder.getUIContext().getSelection().getRegion();
-        if (region.isPresent()) {
-            cursorLineNumber = region.get().getStartLine();
-        }
+        final int cursorLineNumber = getCurrentCursorPosition(builder.getUIContext());
 
         // whether its an xml file or not
         boolean xmlFile = currentFile.endsWith(".xml");
