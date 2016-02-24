@@ -128,7 +128,7 @@ public class CamelAddCommand extends AbstractCamelProjectCommand implements UIWi
         Optional<UIRegion<Object>> region = builder.getUIContext().getSelection().getRegion();
         if (region.isPresent()) {
             int pos = region.get().getStartPosition();
-            attributeMap.put("pos", pos);
+            attributeMap.put("cursorPosition", pos);
         }
 
         attributeMap.put("routeBuilder", getSelectedFile(builder.getUIContext()));

@@ -480,11 +480,16 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
             return Results.fail("RouteBuilder " + routeBuilder + " does not exist");
         }
 
-        return addOrEditEndpointJava(project, facet, file, uri, endpointUrl, endpointInstanceName, routeBuilder, lineNumber, lineNumberEnd);
+        if ("edit".equals(mode)) {
+            return editEndpointJava(project, facet, file, uri, endpointUrl, endpointInstanceName, routeBuilder, lineNumber, lineNumberEnd);
+        } else {
+            String cursorPosition = mandatoryAttributeValue(attributeMap, "cursorPosition");
+            return addEndpointJava(project, facet, file, uri, endpointInstanceName, routeBuilder, cursorPosition, lineNumber, lineNumberEnd);
+        }
     }
 
-    protected Result addOrEditEndpointJava(Project project, JavaSourceFacet facet, JavaResource file, String uri, String endpointUrl,
-                                           String endpointInstanceName, String routeBuilder, String lineNumber, String lineNumberEnd) throws Exception {
+    protected Result editEndpointJava(Project project, JavaSourceFacet facet, JavaResource file, String uri, String endpointUrl,
+                                      String endpointInstanceName, String routeBuilder, String lineNumber, String lineNumberEnd) throws Exception {
 
         JavaClassSource clazz = file.getJavaType();
 
@@ -591,6 +596,8 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
                 // replace the unformatted class soucre code
                 String code = clazz.toUnformattedString();
 
+                // TODO: we can use the line number to find where we start at least
+
                 // wonder if we should have better way, than a replaceFirst?
                 String find = Pattern.quote(endpointUrl);
                 code = code.replaceFirst(find, uri);
@@ -603,6 +610,36 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
         }
 
         return Results.fail("Cannot update endpoint");
+    }
+
+    protected Result addEndpointJava(Project project, JavaSourceFacet facet, JavaResource file, String uri,
+                                     String endpointInstanceName, String routeBuilder, String cursorPosition,
+                                     String lineNumber, String lineNumberEnd) throws Exception {
+
+        JavaClassSource clazz = file.getJavaType();
+
+        // we do not want to change the current code formatting so we need to search
+        // replace the unformatted class soucre code
+        StringBuilder sb = new StringBuilder(clazz.toUnformattedString());
+
+        int pos = Integer.valueOf(cursorPosition);
+
+        // check if prev and next is a quote and if not then add it automatic
+        int prev = pos - 1;
+        int next = pos + 1;
+        char ch = sb.charAt(prev);
+        char ch2 = sb.charAt(next);
+        if (ch != '"' && ch2 != '"') {
+            uri = "\"" + uri + "\"";
+        }
+
+        // insert uri at position
+        sb.insert(pos, uri);
+
+        // use this code currently to save content unformatted
+        file.setContents(new ByteArrayInputStream(sb.toString().getBytes()), null);
+
+        return Results.success("Added endpoint " + uri + " in " + routeBuilder);
     }
 
     /**
