@@ -32,6 +32,7 @@ import org.jboss.forge.addon.ui.context.UIExecutionContext;
 import org.jboss.forge.addon.ui.context.UINavigationContext;
 import org.jboss.forge.addon.ui.input.InputComponent;
 import org.jboss.forge.addon.ui.input.InputComponentFactory;
+import org.jboss.forge.addon.ui.input.UIInput;
 import org.jboss.forge.addon.ui.input.UISelectOne;
 import org.jboss.forge.addon.ui.input.ValueChangeListener;
 import org.jboss.forge.addon.ui.input.events.ValueChangeEvent;
@@ -59,6 +60,10 @@ public class CamelAddCommand extends AbstractCamelProjectCommand implements UIWi
     @Inject
     @WithAttributes(label = "Name", required = true, description = "Name of component to use for the endpoint")
     private UISelectOne<ComponentDto> componentName;
+
+    @Inject
+    @WithAttributes(label = "Debug", required = true)
+    private UIInput<String> debug;
 
     @Inject
     private InputComponentFactory componentFactory;
@@ -131,6 +136,10 @@ public class CamelAddCommand extends AbstractCamelProjectCommand implements UIWi
             attributeMap.put("routeBuilder", currentFile);
             attributeMap.put("kind", "java");
         }
+
+        int pos = getCurrentCursorPosition(builder.getUIContext());
+        debug.setValue("" + pos + " in file: " + currentFile);
+        builder.add(debug);
     }
 
     @Override

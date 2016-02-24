@@ -386,9 +386,18 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
     }
 
     private Result addEndpointXml(FileResource file, String uri, String endpointInstanceName, String xml, String cursorPosition) throws Exception {
+
+        List<String> lines = LineNumberHelper.readLines(file.getResourceInputStream());
+        lines.add("Hello World at " + cursorPosition + " position");
+        lines.add(uri);
+
+        // and save the file back
+        String content = LineNumberHelper.linesToString(lines);
+        file.setContents(content);
+
         // we do not want to change the current code formatting so we need to search
         // replace the unformatted class source code
-        StringBuilder sb = new StringBuilder(file.getContents());
+/*        StringBuilder sb = new StringBuilder(file.getContents());
 
         int pos = Integer.valueOf(cursorPosition);
 
@@ -405,7 +414,7 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
         sb.insert(pos, uri);
 
         // use this code currently to save content unformatted
-        file.setContents(sb.toString());
+        file.setContents(sb.toString());*/
 
         return Results.success("Added endpoint " + uri + " in " + xml);
     }
