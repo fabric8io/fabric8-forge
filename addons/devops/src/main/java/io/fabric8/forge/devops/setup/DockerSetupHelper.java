@@ -84,7 +84,7 @@ public class DockerSetupHelper {
 
         MavenPluginBuilder pluginBuilder;
         ConfigurationBuilder configurationBuilder;
-        MavenPlugin plugin = MavenHelpers.findPlugin(project, "org.jolokia", "docker-maven-plugin");
+        MavenPlugin plugin = MavenHelpers.findPlugin(project, "io.fabric8", "docker-maven-plugin");
         if (plugin != null) {
             // if there is an existing then leave it as-is
             LOG.info("Found existing docker-maven-plugin");
@@ -93,7 +93,7 @@ public class DockerSetupHelper {
         } else {
             LOG.info("Adding docker-maven-plugin");
             pluginBuilder = MavenPluginBuilder.create()
-                    .setCoordinate(MavenHelpers.createCoordinate("org.jolokia", "docker-maven-plugin", VersionHelper.dockerVersion()));
+                    .setCoordinate(MavenHelpers.createCoordinate("io.fabric8", "docker-maven-plugin", VersionHelper.dockerVersion()));
             configurationBuilder = ConfigurationBuilder.create(pluginBuilder);
             pluginBuilder.setConfiguration(configurationBuilder);
         }
@@ -281,7 +281,7 @@ public class DockerSetupHelper {
         MavenFacet maven = project.getFacet(MavenFacet.class);
         if (maven != null) {
             String answer = null;
-            MavenPlugin plugin = MavenHelpers.findPlugin(project, "org.jolokia", "docker-maven-plugin");
+            MavenPlugin plugin = MavenHelpers.findPlugin(project, "io.fabric8", "docker-maven-plugin");
             if (plugin != null) {
                 Configuration config = plugin.getConfig();
                 ConfigurationElement element = MavenHelpers.getConfigurationElement(config, "images", "image", "build", "env", "JAVA_MAIN_CLASS");
