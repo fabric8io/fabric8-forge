@@ -86,7 +86,7 @@ public class CamelEditCommand extends AbstractCamelProjectCommand implements UIW
         attributeMap.remove("navigationResult");
 
         final String currentFile = getSelectedFile(builder.getUIContext());
-        final int cursorLineNumber = getCurrentCursorPosition(builder.getUIContext());
+        final int cursorLineNumber = getCurrentCursorLine(builder.getUIContext());
 
         // whether its an xml file or not
         boolean xmlFile = currentFile.endsWith(".xml");

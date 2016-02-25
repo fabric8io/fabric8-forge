@@ -153,31 +153,6 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
     }
 
     protected Result executeXml(UIExecutionContext context, Map<Object, Object> attributeMap) throws Exception {
-//        Map<Object, Object> attributeMap = context.getUIContext().getAttributeMap();
-
-        Optional<UIRegion<Object>> region = context.getUIContext().getSelection().getRegion();
-        if (region.isPresent()) {
-            Object resource = region.get().getResource();
-            if (resource instanceof FileResource) {
-                FileResource fr = (FileResource) resource;
-
-                Integer pos = (Integer) attributeMap.getOrDefault("cursorPosition", -1);
-
-                // check if prev and next post is quote, then add that automatic
-
-                if (pos != null && pos > -1) {
-                    StringBuilder sb = new StringBuilder(fr.getContents());
-                    sb.insert(pos, "log:bar2");
-
-                    // and save the file back
-                    fr.setContents(sb.toString());
-                }
-            }
-        }
-
-        return Results.success();
-
-/*
         String camelComponentName = optionalAttributeValue(attributeMap, "componentName");
         String endpointInstanceName = optionalAttributeValue(attributeMap, "instanceName");
         String mode = mandatoryAttributeValue(attributeMap, "mode");
@@ -301,7 +276,7 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
             return addEndpointXml(file, uri, endpointInstanceName, xml, cursorPosition);
         } else {
             return addOrEditEndpointXml(file, uri, endpointUrl, endpointInstanceName, xml, lineNumber, lineNumberEnd);
-        }*/
+        }
     }
 
     protected Result addOrEditEndpointXml(FileResource file, String uri, String endpointUrl, String endpointInstanceName, String xml, String lineNumber, String lineNumberEnd) throws Exception {

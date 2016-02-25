@@ -343,11 +343,20 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
         return currentFile;
     }
 
-    protected int getCurrentCursorPosition(UIContext context) {
+    protected int getCurrentCursorLine(UIContext context) {
         int answer = -1;
         Optional<UIRegion<Object>> region = context.getSelection().getRegion();
         if (region.isPresent()) {
             answer = region.get().getStartLine();
+        }
+        return answer;
+    }
+
+    protected int getCurrentCursorPosition(UIContext context) {
+        int answer = -1;
+        Optional<UIRegion<Object>> region = context.getSelection().getRegion();
+        if (region.isPresent()) {
+            answer = region.get().getStartPosition();
         }
         return answer;
     }
