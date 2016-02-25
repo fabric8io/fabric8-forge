@@ -347,7 +347,7 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
         int answer = -1;
         Optional<UIRegion<Object>> region = context.getSelection().getRegion();
         if (region.isPresent()) {
-            answer = region.get().getStartPosition();
+            answer = region.get().getStartLine();
         }
         return answer;
     }
