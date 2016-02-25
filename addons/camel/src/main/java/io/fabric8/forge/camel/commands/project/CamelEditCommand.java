@@ -30,10 +30,8 @@ import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
 import org.jboss.forge.addon.ui.context.UINavigationContext;
-import org.jboss.forge.addon.ui.context.UIRegion;
 import org.jboss.forge.addon.ui.input.InputComponent;
 import org.jboss.forge.addon.ui.input.InputComponentFactory;
-import org.jboss.forge.addon.ui.input.UIInput;
 import org.jboss.forge.addon.ui.input.UISelectOne;
 import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
 import org.jboss.forge.addon.ui.metadata.WithAttributes;
@@ -54,11 +52,6 @@ public class CamelEditCommand extends AbstractCamelProjectCommand implements UIW
     @Inject
     @WithAttributes(label = "Endpoints", required = true, description = "The endpoints from the project")
     private UISelectOne<String> endpoints;
-
-    // TODO: remove me when no longer needed
-    //@Inject
-    //@WithAttributes(label = "Debug5", required = true)
-    //private UIInput<String> debug;
 
     @Inject
     private InputComponentFactory componentFactory;
@@ -92,13 +85,8 @@ public class CamelEditCommand extends AbstractCamelProjectCommand implements UIW
         Map<Object, Object> attributeMap = builder.getUIContext().getAttributeMap();
         attributeMap.remove("navigationResult");
 
-        int cursorLineNumber = -1;
         final String currentFile = getSelectedFile(builder.getUIContext());
-
-        Optional<UIRegion<Object>> region = builder.getUIContext().getSelection().getRegion();
-        if (region.isPresent()) {
-            cursorLineNumber = region.get().getStartLine();
-        }
+        final int cursorLineNumber = getCurrentCursorLine(builder.getUIContext());
 
         // whether its an xml file or not
         boolean xmlFile = currentFile.endsWith(".xml");
@@ -244,7 +232,7 @@ public class CamelEditCommand extends AbstractCamelProjectCommand implements UIW
 
     @Override
     public Result execute(UIExecutionContext context) throws Exception {
-        return Results.success();
+        return null;
     }
 
 }

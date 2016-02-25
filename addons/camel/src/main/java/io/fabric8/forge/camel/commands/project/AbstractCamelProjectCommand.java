@@ -1,17 +1,17 @@
 /**
- *  Copyright 2005-2015 Red Hat, Inc.
- *
- *  Red Hat licenses this file to you under the Apache License, version
- *  2.0 (the "License"); you may not use this file except in compliance
- *  with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
- *  implied.  See the License for the specific language governing
- *  permissions and limitations under the License.
+ * Copyright 2005-2015 Red Hat, Inc.
+ * <p/>
+ * Red Hat licenses this file to you under the Apache License, version
+ * 2.0 (the "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+ * implied.  See the License for the specific language governing
+ * permissions and limitations under the License.
  */
 package io.fabric8.forge.camel.commands.project;
 
@@ -94,11 +94,13 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
                 List<ContextDto> camelContexts = CamelXmlHelper.loadCamelContext(camelCatalog, context, project, xmlResourceName);
                 List<NodeDto> nodes = NodeDtos.toNodeList(camelContexts);
                 // if there is one CamelContext then pre-select the first node (which is the route)
-                if (camelContexts.size() == 1 && nodes.size() > 1)  {
+                if (camelContexts.size() == 1 && nodes.size() > 1) {
                     node.setDefaultValue(nodes.get(1));
                 }
                 return nodes;
-            };
+            }
+
+            ;
         });
     }
 
@@ -339,5 +341,23 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
             currentFile = resource.toString();
         }
         return currentFile;
+    }
+
+    protected int getCurrentCursorLine(UIContext context) {
+        int answer = -1;
+        Optional<UIRegion<Object>> region = context.getSelection().getRegion();
+        if (region.isPresent()) {
+            answer = region.get().getStartLine();
+        }
+        return answer;
+    }
+
+    protected int getCurrentCursorPosition(UIContext context) {
+        int answer = -1;
+        Optional<UIRegion<Object>> region = context.getSelection().getRegion();
+        if (region.isPresent()) {
+            answer = region.get().getStartPosition();
+        }
+        return answer;
     }
 }

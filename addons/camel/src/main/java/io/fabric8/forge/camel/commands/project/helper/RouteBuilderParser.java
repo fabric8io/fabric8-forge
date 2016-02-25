@@ -23,6 +23,7 @@ import java.util.List;
 
 import io.fabric8.forge.camel.commands.project.model.CamelEndpointDetails;
 import io.fabric8.forge.camel.commands.project.model.CamelSimpleDetails;
+import io.fabric8.utils.Strings;
 import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.ASTNode;
 import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.Expression;
 import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.MemberValuePair;
@@ -77,7 +78,7 @@ public class RouteBuilderParser {
             }
 
             // we only want to add fields which are not used in the route
-            if (uri != null && findEndpointByUri(endpoints, uri) == null) {
+            if (Strings.isNotBlank(uri) && findEndpointByUri(endpoints, uri) == null) {
 
                 // we only want the relative dir name from the
                 String fileName = fullyQualifiedFileName;
@@ -129,8 +130,10 @@ public class RouteBuilderParser {
             // consumers only
             List<ParserResult> uris = CamelJavaParserHelper.parseCamelConsumerUris(configureMethod, true, true);
             for (ParserResult result : uris) {
-                if (!result.isParsed() && unparsable != null) {
-                    unparsable.add(result.getElement());
+                if (!result.isParsed()) {
+                    if (unparsable != null) {
+                        unparsable.add(result.getElement());
+                    }
                 } else {
                     CamelEndpointDetails detail = findEndpointByUri(endpoints, result.getElement());
                     if (detail != null) {
@@ -162,8 +165,10 @@ public class RouteBuilderParser {
             // producer only
             uris = CamelJavaParserHelper.parseCamelProducerUris(configureMethod, true, true);
             for (ParserResult result : uris) {
-                if (!result.isParsed() && unparsable != null) {
-                    unparsable.add(result.getElement());
+                if (!result.isParsed()) {
+                    if (unparsable != null) {
+                        unparsable.add(result.getElement());
+                    }
                 } else {
                     CamelEndpointDetails detail = findEndpointByUri(endpoints, result.getElement());
                     if (detail != null) {
@@ -218,29 +223,29 @@ public class RouteBuilderParser {
         if (method != null) {
             List<ParserResult> expressions = CamelJavaParserHelper.parseCamelSimpleExpressions(method);
             for (ParserResult result : expressions) {
+                if (result.isParsed()) {
+                    String fileName = fullyQualifiedFileName;
+                    if (fileName.startsWith(baseDir)) {
+                        fileName = fileName.substring(baseDir.length() + 1);
+                    }
 
-                String fileName = fullyQualifiedFileName;
-                if (fileName.startsWith(baseDir)) {
-                    fileName = fileName.substring(baseDir.length() + 1);
+                    CamelSimpleDetails details = new CamelSimpleDetails();
+                    details.setFileName(fileName);
+                    details.setClassName(clazz.getQualifiedName());
+                    details.setMethodName("configure");
+                    int line = findLineNumber(fullyQualifiedFileName, result.getPosition());
+                    if (line > -1) {
+                        details.setLineNumber("" + line);
+                    }
+                    details.setSimple(result.getElement());
+
+                    simpleExpressions.add(details);
                 }
-
-                CamelSimpleDetails details = new CamelSimpleDetails();
-                details.setFileName(fileName);
-                details.setClassName(clazz.getQualifiedName());
-                details.setMethodName("configure");
-                int line = findLineNumber(fullyQualifiedFileName, result.getPosition());
-                if (line > -1) {
-                    details.setLineNumber("" + line);
-                }
-                details.setSimple(result.getElement());
-
-                simpleExpressions.add(details);
             }
         }
     }
 
     private static int findLineNumber(String fullyQualifiedFileName, int position) {
-        // TODO: Next version of roaster has this out of the box (LocationCapable)
         int lines = 0;
 
         try {

@@ -19,6 +19,7 @@ import java.io.ByteArrayInputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 import io.fabric8.forge.addon.utils.CamelProjectHelper;
@@ -41,6 +42,7 @@ import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
 import org.jboss.forge.addon.ui.context.UINavigationContext;
+import org.jboss.forge.addon.ui.context.UIRegion;
 import org.jboss.forge.addon.ui.input.InputComponent;
 import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
 import org.jboss.forge.addon.ui.result.NavigationResult;
@@ -97,10 +99,6 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
         // we want to 1-based
         this.index = index + 1;
         this.total = total;
-    }
-
-    protected static void appendText(Node element, String text) {
-        element.appendChild(element.getOwnerDocument().createTextNode(text));
     }
 
     public String getGroup() {
@@ -166,7 +164,7 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
         String endpointUrl = null;
         if ("edit".equals(mode)) {
             lineNumber = mandatoryAttributeValue(attributeMap, "lineNumber");
-            lineNumberEnd = mandatoryAttributeValue(attributeMap, "lineNumberEnd");
+            lineNumberEnd = optionalAttributeValue(attributeMap, "lineNumberEnd");
             endpointUrl = mandatoryAttributeValue(attributeMap, "endpointUri");
 
             // since this is XML we need to escape & as &amp;
@@ -272,7 +270,13 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
         if (file == null || !file.exists()) {
             return Results.fail("Cannot find XML file " + xml);
         }
-        return addOrEditEndpointXml(file, uri, endpointUrl, endpointInstanceName, xml, lineNumber, lineNumberEnd);
+
+        String cursorPosition = optionalAttributeValue(attributeMap, "cursorPosition");
+        if (cursorPosition != null) {
+            return addEndpointXml(file, uri, endpointInstanceName, xml, cursorPosition);
+        } else {
+            return addOrEditEndpointXml(file, uri, endpointUrl, endpointInstanceName, xml, lineNumber, lineNumberEnd);
+        }
     }
 
     protected Result addOrEditEndpointXml(FileResource file, String uri, String endpointUrl, String endpointInstanceName, String xml, String lineNumber, String lineNumberEnd) throws Exception {
@@ -379,11 +383,47 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
         return Results.success("Added endpoint uri: " + uri + " in XML file " + xml);
     }
 
+    private Result addEndpointXml(FileResource file, String uri, String endpointInstanceName, String xml, String cursorPosition) throws Exception {
+
+        // we do not want to change the current code formatting so we need to search
+        // replace the unformatted class source code
+        StringBuilder sb = new StringBuilder(file.getContents());
+
+        int pos = Integer.valueOf(cursorPosition);
+
+        // check if prev and next is a quote and if not then add it automatic
+        int prev = pos - 1;
+        int next = pos + 1;
+        char ch = sb.charAt(prev);
+        char ch2 = sb.charAt(next);
+        if (ch != '"' && ch2 != '"') {
+            uri = "\"" + uri + "\"";
+        }
+
+        // insert uri at position
+        sb.insert(pos, uri);
+
+        // use this code currently to save content unformatted
+        file.setContents(sb.toString());
+
+        return Results.success("Added endpoint " + uri + " in " + xml);
+    }
+
     protected Result executeJava(UIExecutionContext context, Map<Object, Object> attributeMap) throws Exception {
         String camelComponentName = mandatoryAttributeValue(attributeMap, "componentName");
         String endpointInstanceName = optionalAttributeValue(attributeMap, "instanceName");
+        String mode = mandatoryAttributeValue(attributeMap, "mode");
         String routeBuilder = mandatoryAttributeValue(attributeMap, "routeBuilder");
-        String lineNumber = optionalAttributeValue(attributeMap, "lineNumber");
+
+        // edit mode includes the existing uri and line number
+        String lineNumber = null;
+        String lineNumberEnd = null;
+        String endpointUrl = null;
+        if ("edit".equals(mode)) {
+            lineNumber = mandatoryAttributeValue(attributeMap, "lineNumber");
+            lineNumberEnd = optionalAttributeValue(attributeMap, "lineNumberEnd");
+            endpointUrl = mandatoryAttributeValue(attributeMap, "endpointUri");
+        }
 
         Project project = getSelectedProject(context);
         JavaSourceFacet facet = project.getFacet(JavaSourceFacet.class);
@@ -465,12 +505,23 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
             return Results.fail("Cannot create endpoint uri");
         }
 
-        JavaResource existing = facet.getJavaResource(routeBuilder);
-        if (existing == null || !existing.exists()) {
+        JavaResource file = facet.getJavaResource(routeBuilder);
+        if (file == null || !file.exists()) {
             return Results.fail("RouteBuilder " + routeBuilder + " does not exist");
         }
 
-        JavaClassSource clazz = existing.getJavaType();
+        String cursorPosition = optionalAttributeValue(attributeMap, "cursorPosition");
+        if (cursorPosition != null) {
+            return addEndpointJava(project, facet, file, uri, endpointInstanceName, routeBuilder, cursorPosition);
+        } else {
+            return addOrEditEndpointJava(project, facet, file, uri, endpointUrl, endpointInstanceName, routeBuilder, lineNumber, lineNumberEnd);
+        }
+    }
+
+    protected Result addOrEditEndpointJava(Project project, JavaSourceFacet facet, JavaResource file, String uri, String endpointUrl,
+                                           String endpointInstanceName, String routeBuilder, String lineNumber, String lineNumberEnd) throws Exception {
+
+        JavaClassSource clazz = file.getJavaType();
 
         boolean updated = true;
         boolean newCode = false;
@@ -534,7 +585,7 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
 
             // attempt to read the line number and do a search/replace and save, to avoid re-formatting the source code.
             if (!newCode && lineNumber != null) {
-                List<String> lines = LineNumberHelper.readLines(existing.getResourceInputStream());
+                List<String> lines = LineNumberHelper.readLines(file.getResourceInputStream());
 
                 // the list is 0-based, and line number is 1-based
                 int idx = Integer.valueOf(lineNumber) - 1;
@@ -542,7 +593,6 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
                     String line = lines.get(idx);
 
                     // wonder if we should have better way, than a replaceFirst?
-                    String endpointUrl = mandatoryAttributeValue(attributeMap, "endpointUri");
                     String find = Pattern.quote(endpointUrl);
                     line = line.replaceFirst(find, uri);
 
@@ -551,7 +601,7 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
 
                     // and save the file back
                     String content = LineNumberHelper.linesToString(lines);
-                    existing.setContents(content);
+                    file.setContents(content);
                 } else {
                     // okay give up and just use roaster to save it as it if was new-code
                     newCode = true;
@@ -576,19 +626,49 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
                 // replace the unformatted class soucre code
                 String code = clazz.toUnformattedString();
 
-                String endpointUrl = mandatoryAttributeValue(attributeMap, "endpointUri");
+                // TODO: we can use the line number to find where we start at least
+
                 // wonder if we should have better way, than a replaceFirst?
                 String find = Pattern.quote(endpointUrl);
                 code = code.replaceFirst(find, uri);
 
                 // use this code currently to save content unformatted
-                existing.setContents(new ByteArrayInputStream(code.getBytes()), null);
+                file.setContents(new ByteArrayInputStream(code.getBytes()), null);
 
                 return Results.success("Updated endpoint " + endpointUrl + " -> " + uri + " in " + routeBuilder);
             }
         }
 
         return Results.fail("Cannot update endpoint");
+    }
+
+    protected Result addEndpointJava(Project project, JavaSourceFacet facet, JavaResource file, String uri,
+                                     String endpointInstanceName, String routeBuilder, String cursorPosition) throws Exception {
+
+        JavaClassSource clazz = file.getJavaType();
+
+        // we do not want to change the current code formatting so we need to search
+        // replace the unformatted class source code
+        StringBuilder sb = new StringBuilder(clazz.toUnformattedString());
+
+        int pos = Integer.valueOf(cursorPosition);
+
+        // check if prev and next is a quote and if not then add it automatic
+        int prev = pos - 1;
+        int next = pos + 1;
+        char ch = sb.charAt(prev);
+        char ch2 = sb.charAt(next);
+        if (ch != '"' && ch2 != '"') {
+            uri = "\"" + uri + "\"";
+        }
+
+        // insert uri at position
+        sb.insert(pos, uri);
+
+        // use this code currently to save content unformatted
+        file.setContents(sb.toString());
+
+        return Results.success("Added endpoint " + uri + " in " + routeBuilder);
     }
 
     /**
