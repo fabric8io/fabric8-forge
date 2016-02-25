@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import io.fabric8.utils.Strings;
 import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.ASTNode;
 import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
 import org.jboss.forge.roaster._shade.org.eclipse.jdt.core.dom.Block;
@@ -278,7 +279,7 @@ public class CamelJavaParserHelper {
     private static void extractEndpointUriFromArgument(JavaClassSource clazz, Block block, List<ParserResult> uris, Object arg, boolean strings, boolean fields) {
         if (strings) {
             String uri = getLiteralValue(clazz, block, (Expression) arg);
-            if (uri != null) {
+            if (Strings.isNotBlank(uri)) {
                 int position = ((Expression) arg).getStartPosition();
                 uris.add(new ParserResult(position, uri));
                 return;
@@ -307,7 +308,7 @@ public class CamelJavaParserHelper {
                         }
                     }
                     String uri = CamelJavaParserHelper.getLiteralValue(clazz, block, exp);
-                    if (uri != null) {
+                    if (Strings.isNotBlank(uri)) {
                         int position = ((SimpleName) arg).getStartPosition();
                         uris.add(new ParserResult(position, uri));
                     }
@@ -317,7 +318,7 @@ public class CamelJavaParserHelper {
                     if (fi instanceof VariableDeclaration) {
                         Expression exp = ((VariableDeclaration) fi).getInitializer();
                         String uri = CamelJavaParserHelper.getLiteralValue(clazz, block, exp);
-                        if (uri != null) {
+                        if (Strings.isNotBlank(uri)) {
                             // we want the position of the field, and not in the route
                             int position = ((VariableDeclaration) fi).getStartPosition();
                             uris.add(new ParserResult(position, uri));
@@ -328,7 +329,7 @@ public class CamelJavaParserHelper {
         }
 
         // cannot parse it so add a failure
-        uris.add(new ParserResult(-1, arg.toString()));
+        uris.add(new ParserResult(-1, arg.toString(), false));
     }
 
     public static List<ParserResult> parseCamelSimpleExpressions(MethodSource<JavaClassSource> method) {
@@ -380,7 +381,7 @@ public class CamelJavaParserHelper {
                 // it is a String type
                 Object arg = args.get(0);
                 String simple = getLiteralValue(clazz, block, (Expression) arg);
-                if (simple != null && !simple.isEmpty()) {
+                if (Strings.isNotBlank(simple)) {
                     int position = ((Expression) arg).getStartPosition();
                     expressions.add(new ParserResult(position, simple));
                 }

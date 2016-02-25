@@ -121,25 +121,6 @@ public class CamelAddCommand extends AbstractCamelProjectCommand implements UIWi
         });
 
         builder.add(componentNameFilter).add(componentName);
-
-        attributeMap.put("cursorPosition", getCurrentCursorPosition(builder.getUIContext()));
-
-        // whether its an xml file or not
-        final String currentFile = getSelectedFile(builder.getUIContext());
-        boolean xmlFile = currentFile.endsWith(".xml");
-
-        attributeMap.put("mode", "add");
-        if (xmlFile) {
-            attributeMap.put("xml", currentFile);
-            attributeMap.put("kind", "xml");
-        } else {
-            attributeMap.put("routeBuilder", currentFile);
-            attributeMap.put("kind", "java");
-        }
-
-        int pos = getCurrentCursorPosition(builder.getUIContext());
-        debug.setValue("" + pos + " in file: " + currentFile);
-        builder.add(debug);
     }
 
     @Override
@@ -159,6 +140,20 @@ public class CamelAddCommand extends AbstractCamelProjectCommand implements UIWi
         }
 
         attributeMap.put("componentName", camelComponentName);
+
+        // whether its an xml file or not
+        final String currentFile = getSelectedFile(context.getUIContext());
+        boolean xmlFile = currentFile.endsWith(".xml");
+
+        attributeMap.put("mode", "add");
+        if (xmlFile) {
+            attributeMap.put("xml", currentFile);
+            attributeMap.put("kind", "xml");
+        } else {
+            attributeMap.put("routeBuilder", currentFile);
+            attributeMap.put("kind", "java");
+        }
+        attributeMap.put("cursorPosition", getCurrentCursorPosition(context.getUIContext()));
 
         // we need to figure out how many options there is so we can as many steps we need
 
@@ -193,7 +188,30 @@ public class CamelAddCommand extends AbstractCamelProjectCommand implements UIWi
 
     @Override
     public Result execute(UIExecutionContext context) throws Exception {
-        return Results.success();
+        return null;
+        /*Map<Object, Object> attributeMap = context.getUIContext().getAttributeMap();
+
+        Optional<UIRegion<Object>> region = context.getUIContext().getSelection().getRegion();
+        if (region.isPresent()) {
+            Object resource = region.get().getResource();
+            if (resource instanceof FileResource) {
+                FileResource fr = (FileResource) resource;
+
+                Integer pos = (Integer) attributeMap.getOrDefault("cursorPosition", -1);
+
+                // check if prev and next post is quote, then add that automatic
+
+                if (pos != null && pos > -1) {
+                    StringBuilder sb = new StringBuilder(fr.getContents());
+                    sb.insert(pos, "log:foo");
+
+                    // and save the file back
+                    fr.setContents(sb.toString());
+                }
+            }
+        }
+
+        return Results.success();*/
     }
 
 }

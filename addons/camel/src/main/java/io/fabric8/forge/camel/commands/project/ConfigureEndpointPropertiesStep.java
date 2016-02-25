@@ -19,6 +19,7 @@ import java.io.ByteArrayInputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 import io.fabric8.forge.addon.utils.CamelProjectHelper;
@@ -41,6 +42,7 @@ import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
 import org.jboss.forge.addon.ui.context.UINavigationContext;
+import org.jboss.forge.addon.ui.context.UIRegion;
 import org.jboss.forge.addon.ui.input.InputComponent;
 import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
 import org.jboss.forge.addon.ui.result.NavigationResult;
@@ -99,10 +101,6 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
         this.total = total;
     }
 
-    protected static void appendText(Node element, String text) {
-        element.appendChild(element.getOwnerDocument().createTextNode(text));
-    }
-
     public String getGroup() {
         return group;
     }
@@ -155,6 +153,31 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
     }
 
     protected Result executeXml(UIExecutionContext context, Map<Object, Object> attributeMap) throws Exception {
+//        Map<Object, Object> attributeMap = context.getUIContext().getAttributeMap();
+
+        Optional<UIRegion<Object>> region = context.getUIContext().getSelection().getRegion();
+        if (region.isPresent()) {
+            Object resource = region.get().getResource();
+            if (resource instanceof FileResource) {
+                FileResource fr = (FileResource) resource;
+
+                Integer pos = (Integer) attributeMap.getOrDefault("cursorPosition", -1);
+
+                // check if prev and next post is quote, then add that automatic
+
+                if (pos != null && pos > -1) {
+                    StringBuilder sb = new StringBuilder(fr.getContents());
+                    sb.insert(pos, "log:bar2");
+
+                    // and save the file back
+                    fr.setContents(sb.toString());
+                }
+            }
+        }
+
+        return Results.success();
+
+/*
         String camelComponentName = optionalAttributeValue(attributeMap, "componentName");
         String endpointInstanceName = optionalAttributeValue(attributeMap, "instanceName");
         String mode = mandatoryAttributeValue(attributeMap, "mode");
@@ -278,7 +301,7 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
             return addEndpointXml(file, uri, endpointInstanceName, xml, cursorPosition);
         } else {
             return addOrEditEndpointXml(file, uri, endpointUrl, endpointInstanceName, xml, lineNumber, lineNumberEnd);
-        }
+        }*/
     }
 
     protected Result addOrEditEndpointXml(FileResource file, String uri, String endpointUrl, String endpointInstanceName, String xml, String lineNumber, String lineNumberEnd) throws Exception {
@@ -387,17 +410,9 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
 
     private Result addEndpointXml(FileResource file, String uri, String endpointInstanceName, String xml, String cursorPosition) throws Exception {
 
-        List<String> lines = LineNumberHelper.readLines(file.getResourceInputStream());
-        lines.add("Hello World at " + cursorPosition + " position");
-        lines.add(uri);
-
-        // and save the file back
-        String content = LineNumberHelper.linesToString(lines);
-        file.setContents(content);
-
         // we do not want to change the current code formatting so we need to search
         // replace the unformatted class source code
-/*        StringBuilder sb = new StringBuilder(file.getContents());
+        StringBuilder sb = new StringBuilder(file.getContents());
 
         int pos = Integer.valueOf(cursorPosition);
 
@@ -414,7 +429,7 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
         sb.insert(pos, uri);
 
         // use this code currently to save content unformatted
-        file.setContents(sb.toString());*/
+        file.setContents(sb.toString());
 
         return Results.success("Added endpoint " + uri + " in " + xml);
     }

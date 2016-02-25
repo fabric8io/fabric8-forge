@@ -21,6 +21,7 @@ import java.util.List;
 import io.fabric8.forge.addon.utils.XmlLineNumberParser;
 import io.fabric8.forge.camel.commands.project.model.CamelEndpointDetails;
 import io.fabric8.forge.camel.commands.project.model.CamelSimpleDetails;
+import io.fabric8.utils.Strings;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 
@@ -45,9 +46,11 @@ public class XmlRouteParser {
             List<Node> nodes = CamelXmlHelper.findAllEndpoints(dom);
             for (Node node : nodes) {
                 String uri = getSafeAttribute(node, "uri");
-                // trim and remove whitespace noise
                 if (uri != null) {
+                    // trim and remove whitespace noise
                     uri = trimEndpointUri(uri);
+                }
+                if (Strings.isNotBlank(uri)) {
                     String id = getSafeAttribute(node, "id");
                     String lineNumber = (String) node.getUserData(XmlLineNumberParser.LINE_NUMBER);
                     String lineNumberEnd = (String) node.getUserData(XmlLineNumberParser.LINE_NUMBER_END);

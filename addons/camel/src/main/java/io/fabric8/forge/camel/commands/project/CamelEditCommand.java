@@ -232,7 +232,7 @@ public class CamelEditCommand extends AbstractCamelProjectCommand implements UIW
 
     @Override
     public Result execute(UIExecutionContext context) throws Exception {
-        return Results.success();
+        return null;
     }
 
 }
