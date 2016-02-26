@@ -19,13 +19,13 @@ import java.io.ByteArrayInputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.regex.Pattern;
 
 import io.fabric8.forge.addon.utils.CamelProjectHelper;
 import io.fabric8.forge.addon.utils.LineNumberHelper;
 import io.fabric8.forge.addon.utils.XmlLineNumberParser;
 import io.fabric8.forge.camel.commands.project.helper.CamelJavaParserHelper;
+import io.fabric8.forge.camel.commands.project.helper.PoorMansLogger;
 import io.fabric8.forge.camel.commands.project.helper.StringHelper;
 import io.fabric8.forge.camel.commands.project.model.CamelComponentDetails;
 import org.apache.camel.catalog.CamelCatalog;
@@ -42,7 +42,6 @@ import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
 import org.jboss.forge.addon.ui.context.UINavigationContext;
-import org.jboss.forge.addon.ui.context.UIRegion;
 import org.jboss.forge.addon.ui.input.InputComponent;
 import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
 import org.jboss.forge.addon.ui.result.NavigationResult;
@@ -69,6 +68,8 @@ import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper
 import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.loadCamelComponentDetails;
 
 public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand implements UIWizardStep {
+
+    private static final PoorMansLogger LOG = new PoorMansLogger(false);
 
     private final DependencyInstaller dependencyInstaller;
     private final CamelCatalog camelCatalog;
@@ -259,6 +260,7 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
         }
 
         String uri = camelCatalog.asEndpointUriXml(camelComponentName, options, false);
+        LOG.info("Uri created: " + uri);
         if (uri == null) {
             return Results.fail("Cannot create endpoint uri");
         }
@@ -272,6 +274,7 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
         }
 
         String cursorPosition = optionalAttributeValue(attributeMap, "cursorPosition");
+
         if (cursorPosition != null) {
             return addEndpointXml(file, uri, endpointInstanceName, xml, cursorPosition);
         } else {
@@ -299,6 +302,8 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
         // replace uri with new value
         line = StringHelper.replaceAll(line, endpointUrl, uri);
         lines.set(idx, line);
+
+        LOG.info("Updating " + endpointUrl + " to " + uri + " at line " + lineNumber + " in file " + xml);
 
         // and save the file back
         String content = LineNumberHelper.linesToString(lines);
@@ -385,6 +390,8 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
 
     private Result addEndpointXml(FileResource file, String uri, String endpointInstanceName, String xml, String cursorPosition) throws Exception {
 
+        LOG.info("Adding uri " + uri + " at position " + cursorPosition + " in file " + xml);
+
         // we do not want to change the current code formatting so we need to search
         // replace the unformatted class source code
         StringBuilder sb = new StringBuilder(file.getContents());
@@ -403,8 +410,10 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
         // insert uri at position
         sb.insert(pos, uri);
 
+        String text = sb.toString();
+
         // use this code currently to save content unformatted
-        file.setContents(sb.toString());
+        file.setContents(text);
 
         return Results.success("Added endpoint " + uri + " in " + xml);
     }

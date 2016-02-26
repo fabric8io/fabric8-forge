@@ -360,4 +360,37 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
         }
         return answer;
     }
+
+    protected String asRelativeFile(UIContext context, String currentFile) {
+        boolean xmlFile = currentFile != null && currentFile.endsWith(".xml");
+
+        // if its xml file, then we need to have the relative path name
+        String target = null;
+        if (xmlFile) {
+            Project project = getSelectedProject(context);
+            ResourcesFacet facet = project.getFacet(ResourcesFacet.class);
+            if (facet != null) {
+                // we only want the relative dir name from the resource directory, eg WEB-INF/foo.xml
+                String baseDir = facet.getResourceDirectory().getFullyQualifiedName();
+                String fqn = currentFile;
+                if (fqn.startsWith(baseDir)) {
+                    target = fqn.substring(baseDir.length() + 1);
+                }
+            }
+            if (target == null) {
+                // try web-resource
+                WebResourcesFacet facet2 = project.getFacet(WebResourcesFacet.class);
+                if (facet2 != null) {
+                    // we only want the relative dir name from the resource directory, eg WEB-INF/foo.xml
+                    String baseDir = facet2.getWebRootDirectory().getFullyQualifiedName();
+                    String fqn = currentFile;
+                    if (fqn.startsWith(baseDir)) {
+                        target = fqn.substring(baseDir.length() + 1);
+                    }
+                }
+            }
+        }
+
+        return target != null ? target : currentFile;
+    }
 }
