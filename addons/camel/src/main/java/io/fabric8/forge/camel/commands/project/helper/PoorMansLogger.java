@@ -26,17 +26,19 @@ public final class PoorMansLogger {
     private File file;
     private FileOutputStream fos;
 
-    public PoorMansLogger() {
-        try {
-            String home = System.getenv("HOME");
-            if (home == null) {
-                home = ".";
+    public PoorMansLogger(boolean enabled) {
+        if (enabled) {
+            try {
+                String home = System.getenv("HOME");
+                if (home == null) {
+                    home = ".";
+                }
+                file = new File(home + "/fabric8-camel.log");
+                fos = new FileOutputStream(file, true);
+                info("PoorMansLogger created");
+            } catch (Exception e) {
+                // ignore
             }
-            file = new File(home + "/fabric8-camel.log");
-            fos = new FileOutputStream(file, true);
-            info("PoorMansLogger created");
-        } catch (Exception e) {
-            // ignore
         }
     }
 

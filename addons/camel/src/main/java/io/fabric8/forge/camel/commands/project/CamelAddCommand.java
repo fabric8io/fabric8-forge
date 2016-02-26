@@ -22,21 +22,16 @@ import javax.inject.Inject;
 
 import io.fabric8.forge.camel.commands.project.dto.ComponentDto;
 import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
-import io.fabric8.forge.camel.commands.project.helper.PoorMansLogger;
 import io.fabric8.forge.camel.commands.project.model.InputOptionByGroup;
 import org.jboss.forge.addon.convert.Converter;
-import org.jboss.forge.addon.parser.java.facets.JavaSourceFacet;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
-import org.jboss.forge.addon.projects.facets.ResourcesFacet;
-import org.jboss.forge.addon.projects.facets.WebResourcesFacet;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
 import org.jboss.forge.addon.ui.context.UINavigationContext;
 import org.jboss.forge.addon.ui.input.InputComponent;
 import org.jboss.forge.addon.ui.input.InputComponentFactory;
-import org.jboss.forge.addon.ui.input.UIInput;
 import org.jboss.forge.addon.ui.input.UISelectOne;
 import org.jboss.forge.addon.ui.input.ValueChangeListener;
 import org.jboss.forge.addon.ui.input.events.ValueChangeEvent;
@@ -55,21 +50,15 @@ import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper
 
 public class CamelAddCommand extends AbstractCamelProjectCommand implements UIWizard {
 
-    private static final PoorMansLogger LOG2 = new PoorMansLogger();
-
     private static final int MAX_OPTIONS = 20;
 
     @Inject
-    @WithAttributes(label = "Filter7", required = false, description = "To filter components")
+    @WithAttributes(label = "Filter", required = false, description = "To filter components")
     private UISelectOne<String> componentNameFilter;
 
     @Inject
-    @WithAttributes(label = "Name7", required = true, description = "Name of component to use for the endpoint")
+    @WithAttributes(label = "Name", required = true, description = "Name of component to use for the endpoint")
     private UISelectOne<ComponentDto> componentName;
-
-    @Inject
-    @WithAttributes(label = "Debug", required = true)
-    private UIInput<String> debug;
 
     @Inject
     private InputComponentFactory componentFactory;
@@ -97,15 +86,13 @@ public class CamelAddCommand extends AbstractCamelProjectCommand implements UIWi
 
     @Override
     public void initializeUI(UIBuilder builder) throws Exception {
-        LOG2.info("initializeUI");
-
         Map<Object, Object> attributeMap = builder.getUIContext().getAttributeMap();
         attributeMap.remove("navigationResult");
 
         Project project = getSelectedProject(builder.getUIContext());
-        final String currentFile = getSelectedFile(builder.getUIContext());
+        String selectedFile = getSelectedFile(builder.getUIContext());
+        final String currentFile = asRelativeFile(builder.getUIContext(), selectedFile);
         attributeMap.put("currentFile", currentFile);
-        LOG2.info("Current file: " + currentFile);
 
         componentNameFilter.setValueChoices(CamelCommandsHelper.createComponentLabelValues(project, getCamelCatalog()));
         componentNameFilter.setDefaultValue("<all>");
@@ -132,9 +119,6 @@ public class CamelAddCommand extends AbstractCamelProjectCommand implements UIWi
         });
 
         builder.add(componentNameFilter).add(componentName);
-
-        debug.setValue(currentFile);
-        builder.add(debug);
     }
 
     @Override
@@ -155,42 +139,8 @@ public class CamelAddCommand extends AbstractCamelProjectCommand implements UIWi
 
         attributeMap.put("componentName", camelComponentName);
 
-        // whether its an xml file or not
         String currentFile = (String) attributeMap.get("currentFile");
         boolean xmlFile = currentFile != null && currentFile.endsWith(".xml");
-
-        // if its xml file, then we need to have the relative path name
-        String target = null;
-        if (xmlFile) {
-            Project project = getSelectedProject(context);
-            ResourcesFacet facet = project.getFacet(ResourcesFacet.class);
-            if (facet != null) {
-                // we only want the relative dir name from the resource directory, eg WEB-INF/foo.xml
-                String baseDir = facet.getResourceDirectory().getFullyQualifiedName();
-                String fqn = currentFile;
-                if (fqn.startsWith(baseDir)) {
-                    target = fqn.substring(baseDir.length() + 1);
-                    LOG2.info("XML file found in resource directory");
-                }
-            }
-            if (target == null) {
-                // try web-resource
-                WebResourcesFacet facet2 = project.getFacet(WebResourcesFacet.class);
-                if (facet2 != null) {
-                    // we only want the relative dir name from the resource directory, eg WEB-INF/foo.xml
-                    String baseDir = facet2.getWebRootDirectory().getFullyQualifiedName();
-                    String fqn = currentFile;
-                    if (fqn.startsWith(baseDir)) {
-                        target = fqn.substring(baseDir.length() + 1);
-                        LOG2.info("XML file found in web-resource directory");
-                    }
-                }
-            }
-        }
-        if (target != null) {
-            LOG2.info("XML relative path " + target);
-            currentFile = target;
-        }
 
         attributeMap.put("mode", "add");
         if (xmlFile) {
@@ -202,8 +152,6 @@ public class CamelAddCommand extends AbstractCamelProjectCommand implements UIWi
         }
         int pos = getCurrentCursorPosition(context.getUIContext());
         attributeMap.put("cursorPosition", pos);
-
-        LOG2.info("next xmlFile: " + xmlFile + " cursorPosition: " + pos);
 
         // we need to figure out how many options there is so we can as many steps we need
 

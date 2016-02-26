@@ -69,7 +69,7 @@ import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper
 
 public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand implements UIWizardStep {
 
-    private static final PoorMansLogger LOG2 = new PoorMansLogger();
+    private static final PoorMansLogger LOG = new PoorMansLogger(false);
 
     private final DependencyInstaller dependencyInstaller;
     private final CamelCatalog camelCatalog;
@@ -143,7 +143,6 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
         // only execute if we are last
         if (last) {
             String kind = mandatoryAttributeValue(attributeMap, "kind");
-LOG2.info("last kind " + kind);
             if ("xml".equals(kind)) {
                 return executeXml(context, attributeMap);
             } else {
@@ -261,26 +260,20 @@ LOG2.info("last kind " + kind);
         }
 
         String uri = camelCatalog.asEndpointUriXml(camelComponentName, options, false);
+        LOG.info("Uri created: " + uri);
         if (uri == null) {
             return Results.fail("Cannot create endpoint uri");
         }
-
-LOG2.info("Uri to add: " + uri);
-LOG2.info("Xml file to load: " + xml);
-LOG2.info("Facet " + facet);
-LOG2.info("Web-Facet " + webResourcesFacet);
 
         FileResource file = facet != null ? facet.getResource(xml) : null;
         if (file == null || !file.exists()) {
             file = webResourcesFacet != null ? webResourcesFacet.getWebResource(xml) : null;
         }
-LOG2.info("File " + file);
         if (file == null || !file.exists()) {
             return Results.fail("Cannot find XML file " + xml);
         }
 
         String cursorPosition = optionalAttributeValue(attributeMap, "cursorPosition");
-LOG2.info("CursorPosition: " + cursorPosition);
 
         if (cursorPosition != null) {
             return addEndpointXml(file, uri, endpointInstanceName, xml, cursorPosition);
@@ -309,6 +302,8 @@ LOG2.info("CursorPosition: " + cursorPosition);
         // replace uri with new value
         line = StringHelper.replaceAll(line, endpointUrl, uri);
         lines.set(idx, line);
+
+        LOG.info("Updating " + endpointUrl + " to " + uri + " at line " + lineNumber + " in file " + xml);
 
         // and save the file back
         String content = LineNumberHelper.linesToString(lines);
@@ -395,6 +390,8 @@ LOG2.info("CursorPosition: " + cursorPosition);
 
     private Result addEndpointXml(FileResource file, String uri, String endpointInstanceName, String xml, String cursorPosition) throws Exception {
 
+        LOG.info("Adding uri " + uri + " at position " + cursorPosition + " in file " + xml);
+
         // we do not want to change the current code formatting so we need to search
         // replace the unformatted class source code
         StringBuilder sb = new StringBuilder(file.getContents());
@@ -414,7 +411,6 @@ LOG2.info("CursorPosition: " + cursorPosition);
         sb.insert(pos, uri);
 
         String text = sb.toString();
-        LOG2.info("XML edited:\n" + text);
 
         // use this code currently to save content unformatted
         file.setContents(text);
