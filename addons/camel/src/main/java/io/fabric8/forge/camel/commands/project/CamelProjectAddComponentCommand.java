@@ -39,7 +39,7 @@ import org.jboss.forge.addon.ui.util.Metadata;
 
 import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.createComponentDto;
 
-public class CamelAddComponentCommand extends AbstractCamelProjectCommand {
+public class CamelProjectAddComponentCommand extends AbstractCamelProjectCommand {
 
     @Inject
     @WithAttributes(label = "Filter", required = false, description = "To filter components")
@@ -54,8 +54,8 @@ public class CamelAddComponentCommand extends AbstractCamelProjectCommand {
 
     @Override
     public UICommandMetadata getMetadata(UIContext context) {
-        return Metadata.forCommand(CamelAddComponentCommand.class).name(
-                "Camel: Add Component").category(Categories.create(CATEGORY))
+        return Metadata.forCommand(CamelProjectAddComponentCommand.class).name(
+                "Camel: Project Add Component").category(Categories.create(CATEGORY))
                 .description("Adds a Camel component to your project dependencies");
     }
 
