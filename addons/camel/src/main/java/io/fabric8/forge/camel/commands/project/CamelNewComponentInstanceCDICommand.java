@@ -53,7 +53,10 @@ import org.jboss.forge.roaster.model.util.Strings;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.createComponentDto;
 
 @FacetConstraint({JavaSourceFacet.class, ResourcesFacet.class, ClassLoaderFacet.class})
+@Deprecated
 public class CamelNewComponentInstanceCDICommand extends AbstractCamelProjectCommand implements UIWizard {
+
+    // TODO: combine with spring so its just one command
 
     @Inject
     @WithAttributes(label = "Filter", required = false, description = "To filter components")

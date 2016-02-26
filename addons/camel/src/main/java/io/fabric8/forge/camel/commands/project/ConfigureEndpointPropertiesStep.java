@@ -183,12 +183,6 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
             webResourcesFacet = project.getFacet(WebResourcesFacet.class);
         }
 
-        // does the project already have camel?
-        Dependency core = CamelProjectHelper.findCamelCoreDependency(project);
-        if (core == null) {
-            return Results.fail("The project does not include camel-core");
-        }
-
         // lets find the camel component class
         CamelComponentDetails details = new CamelComponentDetails();
         Result result = loadCamelComponentDetails(camelCatalog, camelComponentName, details);
@@ -436,12 +430,6 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
 
         Project project = getSelectedProject(context);
         JavaSourceFacet facet = project.getFacet(JavaSourceFacet.class);
-
-        // does the project already have camel?
-        Dependency core = CamelProjectHelper.findCamelCoreDependency(project);
-        if (core == null) {
-            return Results.fail("The project does not include camel-core");
-        }
 
         // lets find the camel component class
         CamelComponentDetails details = new CamelComponentDetails();

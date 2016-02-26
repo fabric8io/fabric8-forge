@@ -85,10 +85,11 @@ public class CamelAddNodeXmlCommand extends AbstractCamelProjectCommand implemen
     public boolean isEnabled(UIContext context) {
         boolean enabled = super.isEnabled(context);
         if (enabled) {
-            // must be spring or blueprint project for editing xml files
-            boolean spring = CamelCommandsHelper.isSpringProject(getSelectedProject(context));
-            boolean blueprint = CamelCommandsHelper.isBlueprintProject(getSelectedProject(context));
-            return spring || blueprint;
+            // must have xml files with camel routes to be enabled
+            Project project = getSelectedProject(context);
+            String currentFile = getSelectedFile(context);
+            String selected = configureXml(project, xml, currentFile);
+            return selected != null;
         }
         return false;
     }
@@ -174,7 +175,7 @@ public class CamelAddNodeXmlCommand extends AbstractCamelProjectCommand implemen
         attributeMap.put("lineNumberEnd", lineNumberEnd);
 
         UIContext ui = context.getUIContext();
-        List<InputOptionByGroup> groups = createUIInputsForCamelEIP(nodeName, CamelAddEndpointDefinitionXmlCommand.MAX_OPTIONS,
+        List<InputOptionByGroup> groups = createUIInputsForCamelEIP(nodeName, MAX_OPTIONS,
                 null, getCamelCatalog(), componentFactory, converterFactory, ui);
 
         // need all inputs in a list as well

@@ -61,7 +61,8 @@ public class CamelSetupCommand extends AbstractCamelProjectCommand {
             // must have a project
             return false;
         } else {
-            return true;
+            // and the project must not have camel already
+            return !isCamelProject(project);
         }
     }
 
@@ -135,6 +136,11 @@ public class CamelSetupCommand extends AbstractCamelProjectCommand {
         MavenPluginFacet pluginFacet = project.getFacet(MavenPluginFacet.class);
         MavenPluginBuilder plugin = MavenPluginBuilder.create()
                 .setCoordinate(createCamelCoordinate("camel-maven-plugin", camelVersion));
+        pluginFacet.addPlugin(plugin);
+
+        // add fabric8-camel-maven-plugin
+        plugin = MavenPluginBuilder.create()
+                .setCoordinate(createCoordinate("io.fabric8.forge", "fabric8-camel-maven-plugin", VersionHelper.fabric8Version()));
         pluginFacet.addPlugin(plugin);
 
         // add hawtio-maven-plugin using latest version

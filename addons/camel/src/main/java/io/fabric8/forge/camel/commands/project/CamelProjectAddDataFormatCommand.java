@@ -17,8 +17,8 @@ package io.fabric8.forge.camel.commands.project;
 
 import javax.inject.Inject;
 
-import io.fabric8.forge.camel.commands.project.completer.CamelLanguagesCompleter;
-import io.fabric8.forge.camel.commands.project.dto.LanguageDto;
+import io.fabric8.forge.camel.commands.project.completer.CamelDataFormatsCompleter;
+import io.fabric8.forge.camel.commands.project.dto.DataFormatDto;
 import org.jboss.forge.addon.convert.Converter;
 import org.jboss.forge.addon.dependencies.Dependency;
 import org.jboss.forge.addon.dependencies.builder.DependencyBuilder;
@@ -37,43 +37,43 @@ import org.jboss.forge.addon.ui.result.Results;
 import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
 
-import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.createLanguageDto;
+import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.createDataFormatDto;
 
-public class CamelAddLanguageCommand extends AbstractCamelProjectCommand {
+public class CamelProjectAddDataFormatCommand extends AbstractCamelProjectCommand {
 
     @Inject
-    @WithAttributes(label = "Name", required = true, description = "Name of language to add")
-    private UISelectOne<LanguageDto> name;
+    @WithAttributes(label = "Name", required = true, description = "Name of dataformat to add")
+    private UISelectOne<DataFormatDto> name;
 
     @Inject
     private DependencyInstaller dependencyInstaller;
 
     @Override
     public UICommandMetadata getMetadata(UIContext context) {
-        return Metadata.forCommand(CamelAddLanguageCommand.class).name(
-                "Camel: Add Language").category(Categories.create(CATEGORY))
-                .description("Adds a Camel language to your project dependencies");
+        return Metadata.forCommand(CamelProjectAddDataFormatCommand.class).name(
+                "Camel: Project Add DataFormat").category(Categories.create(CATEGORY))
+                .description("Adds a Camel dataformat to your project dependencies");
     }
 
     @Override
     public void initializeUI(UIBuilder builder) throws Exception {
         Project project = getSelectedProject(builder);
         // use value choices instead of completer as that works better in web console
-        name.setValueChoices(new CamelLanguagesCompleter(project, getCamelCatalog()).getValueChoices());
+        name.setValueChoices(new CamelDataFormatsCompleter(project, getCamelCatalog()).getValueChoices());
         // include converter from string->dto
-        name.setValueConverter(new Converter<String, LanguageDto>() {
+        name.setValueConverter(new Converter<String, DataFormatDto>() {
             @Override
-            public LanguageDto convert(String text) {
-                return createLanguageDto(getCamelCatalog(), text);
+            public DataFormatDto convert(String text) {
+                return createDataFormatDto(getCamelCatalog(), text);
             }
         });
-        // show note about the chosen language
+        // show note about the chosen data format
         name.addValueChangeListener(new ValueChangeListener() {
             @Override
             public void valueChanged(ValueChangeEvent event) {
-                LanguageDto language = (LanguageDto) event.getNewValue();
-                if (language != null) {
-                    String description = language.getDescription();
+                DataFormatDto dataFormat = (DataFormatDto) event.getNewValue();
+                if (dataFormat != null) {
+                    String description = dataFormat.getDescription();
                     name.setNote(description != null ? description : "");
                 } else {
                     name.setNote("");
@@ -94,7 +94,7 @@ public class CamelAddLanguageCommand extends AbstractCamelProjectCommand {
             return Results.fail("The project does not include camel-core");
         }
 
-        LanguageDto dto = name.getValue();
+        DataFormatDto dto = name.getValue();
         if (dto != null) {
 
             // we want to use same version as camel-core
@@ -104,9 +104,9 @@ public class CamelAddLanguageCommand extends AbstractCamelProjectCommand {
             // install the component
             dependencyInstaller.install(project, component);
 
-            return Results.success("Added Camel language " + dto.getName() + " (" + dto.getArtifactId() + ") to the project");
+            return Results.success("Added Camel dataformat " + dto.getName() + " (" + dto.getArtifactId() + ") to the project");
         } else {
-            return Results.fail("Unknown Camel language");
+            return Results.fail("Unknown Camel dataformat");
         }
     }
 }

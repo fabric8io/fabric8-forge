@@ -21,6 +21,7 @@ import java.util.Map;
 import javax.inject.Inject;
 
 import io.fabric8.forge.camel.commands.project.completer.RouteBuilderEndpointsCompleter;
+import io.fabric8.forge.camel.commands.project.completer.XmlEndpointsCompleter;
 import io.fabric8.forge.camel.commands.project.model.CamelEndpointDetails;
 import io.fabric8.forge.camel.commands.project.model.InputOptionByGroup;
 import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
@@ -57,13 +58,25 @@ public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implem
     @Inject
     private DependencyInstaller dependencyInstaller;
 
-    private RouteBuilderEndpointsCompleter completer;
+    private RouteBuilderEndpointsCompleter javaCompleter;
+    private XmlEndpointsCompleter xmlCompleter;
 
     @Override
     public UICommandMetadata getMetadata(UIContext context) {
         return Metadata.forCommand(CamelEditEndpointCommand.class).name(
                 "Camel: Edit Endpoint").category(Categories.create(CATEGORY))
-                .description("Edit Camel endpoint from an existing RouteBuilder class");
+                .description("Edit Camel endpoint in the current file");
+    }
+
+    @Override
+    public boolean isEnabled(UIContext context) {
+        boolean answer = super.isEnabled(context);
+        if (answer) {
+            // we are only enabled if there is a file open in the editor
+            final String currentFile = getSelectedFile(context);
+            answer = currentFile != null;
+        }
+        return answer;
     }
 
     @Override
@@ -71,16 +84,67 @@ public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implem
         Map<Object, Object> attributeMap = builder.getUIContext().getAttributeMap();
         attributeMap.remove("navigationResult");
 
-        // use value choices instead of completer as that works better in web console
-        completer = createRouteBuilderEndpointsCompleter(builder.getUIContext(), null);
-        // must add dummy <select> in the dropdown as otherwise there is problems with auto selecting
-        // the first element where its a different between its auto selected vs end user clicked and selected
-        // it, which also affects all this next() callback issue from forge
-        List<String> uris = completer.getEndpointUris();
-        uris.add(0, "<select>");
-        endpoints.setValueChoices(uris);
+        final String currentFile = getSelectedFile(builder.getUIContext());
+        final int cursorLineNumber = getCurrentCursorLine(builder.getUIContext());
 
-        builder.add(endpoints);
+        // whether its an xml file or not
+        boolean xmlFile = currentFile.endsWith(".xml");
+
+        if (!xmlFile) {
+            // find all endpoints
+            javaCompleter = createRouteBuilderEndpointsCompleter(builder.getUIContext(), currentFile::equals);
+
+            boolean found = false;
+            if (cursorLineNumber != -1) {
+                for (CamelEndpointDetails detail : javaCompleter.getEndpoints()) {
+                    if (detail.getLineNumber() != null && Integer.valueOf(detail.getLineNumber()) == cursorLineNumber) {
+                        endpoints.setValue(detail.getEndpointUri());
+                        endpoints.setRequired(false);
+                        found = true;
+                        break;
+                    }
+                }
+            }
+            if (!found && !javaCompleter.getEndpoints().isEmpty()) {
+
+                // must add dummy <select> in the dropdown as otherwise there is problems with auto selecting
+                // the first element where its a different between its auto selected vs end user clicked and selected
+                // it, which also affects all this next() callback issue from forge
+                List<String> uris = javaCompleter.getEndpointUris();
+                uris.add(0, "<select>");
+                endpoints.setValueChoices(uris);
+
+                // show the UI where you can chose the endpoint to select
+                builder.add(endpoints);
+            }
+        } else {
+            // find all endpoints
+            xmlCompleter = createXmlEndpointsCompleter(builder.getUIContext(), currentFile::equals);
+
+            boolean found = false;
+            if (cursorLineNumber != -1) {
+                for (CamelEndpointDetails detail : xmlCompleter.getEndpoints()) {
+                    if (detail.getLineNumber() != null && Integer.valueOf(detail.getLineNumber()) == cursorLineNumber) {
+                        endpoints.setValue(detail.getEndpointUri());
+                        endpoints.setRequired(false);
+                        found = true;
+                        break;
+                    }
+                }
+            }
+            if (!found && !xmlCompleter.getEndpoints().isEmpty()) {
+
+                // must add dummy <select> in the dropdown as otherwise there is problems with auto selecting
+                // the first element where its a different between its auto selected vs end user clicked and selected
+                // it, which also affects all this next() callback issue from forge
+                List<String> uris = xmlCompleter.getEndpointUris();
+                uris.add(0, "<select>");
+                endpoints.setValueChoices(uris);
+
+                // show the UI where you can chose the endpoint to select
+                builder.add(endpoints);
+            }
+        }
     }
 
     @Override
@@ -103,7 +167,12 @@ public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implem
             }
         }
 
-        CamelEndpointDetails detail = completer.getEndpointDetail(selectedUri);
+        CamelEndpointDetails detail = null;
+        if (javaCompleter != null) {
+            detail = javaCompleter.getEndpointDetail(selectedUri);
+        } else if (xmlCompleter != null) {
+            detail = xmlCompleter.getEndpointDetail(selectedUri);
+        }
         if (detail == null) {
             return null;
         }
@@ -113,9 +182,15 @@ public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implem
         attributeMap.put("endpointUri", detail.getEndpointUri());
         attributeMap.put("lineNumber", detail.getLineNumber());
         attributeMap.put("lineNumberEnd", detail.getLineNumberEnd());
-        attributeMap.put("routeBuilder", detail.getFileName());
         attributeMap.put("mode", "edit");
-        attributeMap.put("kind", "java");
+
+        if (javaCompleter != null) {
+            attributeMap.put("routeBuilder", detail.getFileName());
+            attributeMap.put("kind", "java");
+        } else {
+            attributeMap.put("xml", detail.getFileName());
+            attributeMap.put("kind", "xml");
+        }
 
         // we need to figure out how many options there is so we can as many steps we need
         String camelComponentName = detail.getEndpointComponentName();
@@ -156,12 +231,7 @@ public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implem
 
     @Override
     public Result execute(UIExecutionContext context) throws Exception {
-        boolean empty = !endpoints.getValueChoices().iterator().hasNext();
-        if (empty) {
-            return Results.fail("No Camel endpoints found");
-        } else {
-            return Results.success();
-        }
+        return null;
     }
 
 }

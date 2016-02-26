@@ -135,7 +135,7 @@ public class CamelAddEndpointXmlCommand extends AbstractCamelProjectCommand impl
 
         // we need to figure out how many options there is so we can as many steps we need
         UIContext ui = context.getUIContext();
-        List<InputOptionByGroup> groups = createUIInputsForCamelComponent(camelComponentName, null, CamelAddEndpointDefinitionXmlCommand.MAX_OPTIONS, consumerOnly, producerOnly,
+        List<InputOptionByGroup> groups = createUIInputsForCamelComponent(camelComponentName, null, MAX_OPTIONS, consumerOnly, producerOnly,
                 getCamelCatalog(), componentFactory, converterFactory, ui);
 
         // need all inputs in a list as well

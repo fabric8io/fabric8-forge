@@ -71,6 +71,7 @@ import static io.fabric8.forge.camel.commands.project.helper.CollectionHelper.fi
 public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand {
 
     public static String CATEGORY = "Camel";
+    public static int MAX_OPTIONS = 20;
 
     @Inject
     protected ProjectFactory projectFactory;
@@ -136,6 +137,10 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
         return Projects.getSelectedProject(this.getProjectFactory(), context);
     }
 
+    protected boolean isRunningInGui(UIContext context) {
+        return context.getProvider().isGUI();
+    }
+
     protected boolean requiresCamelSetup() {
         return true;
     }
@@ -155,6 +160,11 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
 
     protected PrintStream getOutput(UIExecutionContext context) {
         return context.getUIContext().getProvider().getOutput().out();
+    }
+
+    protected boolean isCamelProject(Project project) {
+        // is there any camel dependency?
+        return !findCamelArtifacts(project).isEmpty();
     }
 
     protected Dependency findCamelCoreDependency(Project project) {

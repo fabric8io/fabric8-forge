@@ -22,7 +22,6 @@ import io.fabric8.forge.addon.utils.LineNumberHelper;
 import io.fabric8.forge.addon.utils.XmlLineNumberParser;
 import io.fabric8.forge.camel.commands.project.dto.ContextDto;
 import io.fabric8.forge.camel.commands.project.dto.NodeDto;
-import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
 import io.fabric8.forge.camel.commands.project.helper.CamelXmlHelper;
 import io.fabric8.utils.Strings;
 import org.jboss.forge.addon.projects.Project;
@@ -51,10 +50,11 @@ public class CamelDeleteNodeXmlCommand extends AbstractCamelProjectCommand {
     public boolean isEnabled(UIContext context) {
         boolean enabled = super.isEnabled(context);
         if (enabled) {
-            // must be spring or blueprint project for editing xml files
-            boolean spring = CamelCommandsHelper.isSpringProject(getSelectedProject(context));
-            boolean blueprint = CamelCommandsHelper.isBlueprintProject(getSelectedProject(context));
-            return spring || blueprint;
+            // must have xml files with camel routes to be enabled
+            Project project = getSelectedProject(context);
+            String currentFile = getSelectedFile(context);
+            String selected = configureXml(project, xml, currentFile);
+            return selected != null;
         }
         return false;
     }
