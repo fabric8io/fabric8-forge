@@ -48,7 +48,7 @@ import org.jboss.forge.addon.ui.wizard.UIWizard;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.createComponentDto;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.createUIInputsForCamelComponent;
 
-public class CamelAddCommand extends AbstractCamelProjectCommand implements UIWizard {
+public class CamelAddEndpointCommand extends AbstractCamelProjectCommand implements UIWizard {
 
     private static final int MAX_OPTIONS = 20;
 
@@ -68,9 +68,9 @@ public class CamelAddCommand extends AbstractCamelProjectCommand implements UIWi
 
     @Override
     public UICommandMetadata getMetadata(UIContext context) {
-        return Metadata.forCommand(CamelAddCommand.class).name(
-                "Camel: Add").category(Categories.create(CATEGORY))
-                .description("Add Camel endpoint from the current cursor position");
+        return Metadata.forCommand(CamelAddEndpointCommand.class).name(
+                "Camel: Add Endpoint").category(Categories.create(CATEGORY))
+                .description("Add Camel endpoint to the current file");
     }
 
     @Override

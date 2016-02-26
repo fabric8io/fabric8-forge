@@ -18,7 +18,6 @@ package io.fabric8.forge.camel.commands.project;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import javax.inject.Inject;
 
 import io.fabric8.forge.camel.commands.project.completer.RouteBuilderEndpointsCompleter;
@@ -45,7 +44,7 @@ import org.jboss.forge.addon.ui.wizard.UIWizard;
 
 import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.createUIInputsForCamelComponent;
 
-public class CamelEditCommand extends AbstractCamelProjectCommand implements UIWizard {
+public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implements UIWizard {
 
     private static final int MAX_OPTIONS = 20;
 
@@ -64,9 +63,9 @@ public class CamelEditCommand extends AbstractCamelProjectCommand implements UIW
 
     @Override
     public UICommandMetadata getMetadata(UIContext context) {
-        return Metadata.forCommand(CamelEditCommand.class).name(
-                "Camel: Edit").category(Categories.create(CATEGORY))
-                .description("Edit Camel endpoint from the current cursor position");
+        return Metadata.forCommand(CamelEditEndpointCommand.class).name(
+                "Camel: Edit Endpoint").category(Categories.create(CATEGORY))
+                .description("Edit Camel endpoint in the current file");
     }
 
     @Override
