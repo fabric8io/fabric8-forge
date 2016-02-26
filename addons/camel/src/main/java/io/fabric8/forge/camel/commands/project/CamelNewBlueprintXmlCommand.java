@@ -57,6 +57,7 @@ import org.jboss.forge.addon.ui.util.Metadata;
 import static io.fabric8.forge.camel.commands.project.helper.CollectionHelper.first;
 
 @FacetConstraint({ResourcesFacet.class})
+@Deprecated
 public class CamelNewBlueprintXmlCommand extends AbstractCamelProjectCommand {
 
     @Inject
@@ -82,8 +83,6 @@ public class CamelNewBlueprintXmlCommand extends AbstractCamelProjectCommand {
         boolean enabled = super.isEnabled(context);
         if (enabled) {
             Project project = getSelectedProject(context);
-            // not enable for cdi or spring projects
-            // TODO: only enabled for blueprint!
             boolean cdi = CamelCommandsHelper.isCdiProject(project);
             boolean spring = CamelCommandsHelper.isSpringProject(project);
             return !cdi && !spring;

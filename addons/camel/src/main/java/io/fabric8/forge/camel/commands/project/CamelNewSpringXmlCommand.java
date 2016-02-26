@@ -57,9 +57,8 @@ import org.jboss.forge.addon.ui.util.Metadata;
 import static io.fabric8.forge.camel.commands.project.helper.CollectionHelper.first;
 
 @FacetConstraint({ResourcesFacet.class})
+@Deprecated
 public class CamelNewSpringXmlCommand extends AbstractCamelProjectCommand {
-
-    // TODO: should support blueprint
 
     @Inject
     @WithAttributes(label = "Directory", required = false, defaultValue = "META-INF/spring",

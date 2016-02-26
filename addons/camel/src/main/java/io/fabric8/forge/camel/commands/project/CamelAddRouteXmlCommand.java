@@ -69,7 +69,7 @@ public class CamelAddRouteXmlCommand extends AbstractCamelProjectCommand impleme
     public UICommandMetadata getMetadata(UIContext context) {
         return Metadata.forCommand(CamelAddRouteXmlCommand.class).name(
                 "Camel: Add Route XML").category(Categories.create(CATEGORY))
-                .description("Adds a Camel route to an existing XML file");
+                .description("Adds a Camel route to an existing or new XML file");
     }
 
     @Override

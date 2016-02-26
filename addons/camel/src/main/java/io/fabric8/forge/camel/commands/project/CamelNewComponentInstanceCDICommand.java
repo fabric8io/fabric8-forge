@@ -53,6 +53,7 @@ import org.jboss.forge.roaster.model.util.Strings;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.createComponentDto;
 
 @FacetConstraint({JavaSourceFacet.class, ResourcesFacet.class, ClassLoaderFacet.class})
+@Deprecated
 public class CamelNewComponentInstanceCDICommand extends AbstractCamelProjectCommand implements UIWizard {
 
     @Inject
