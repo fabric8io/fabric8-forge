@@ -51,6 +51,9 @@ public class CamelDeleteNodeXmlCommand extends AbstractCamelProjectCommand {
     public boolean isEnabled(UIContext context) {
         boolean enabled = super.isEnabled(context);
         if (enabled) {
+
+            // TODO: must have xml files with camel routes
+
             // must be spring or blueprint project for editing xml files
             boolean spring = CamelCommandsHelper.isSpringProject(getSelectedProject(context));
             boolean blueprint = CamelCommandsHelper.isBlueprintProject(getSelectedProject(context));

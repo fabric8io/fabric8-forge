@@ -55,6 +55,17 @@ public class CamelGetRoutesXmlCommand extends AbstractCamelProjectCommand {
     }
 
     @Override
+    public boolean isEnabled(UIContext context) {
+        boolean answer = super.isEnabled(context);
+        if (answer) {
+            // we should only be enabled in non gui
+            boolean gui = isRunningInGui(context);
+            answer = !gui;
+        }
+        return answer;
+    }
+
+    @Override
     public void initializeUI(UIBuilder builder) throws Exception {
         Project project = getSelectedProject(builder.getUIContext());
         String currentFile = getSelectedFile(builder.getUIContext());

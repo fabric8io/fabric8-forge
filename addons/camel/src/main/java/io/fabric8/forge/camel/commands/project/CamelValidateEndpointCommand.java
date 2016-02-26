@@ -57,7 +57,9 @@ public class CamelValidateEndpointCommand extends AbstractCamelProjectCommand {
             // must have a project
             return false;
         } else {
-            return true;
+            // must be in non gui mode
+            boolean gui = isRunningInGui(context);
+            return !gui;
         }
     }
 

@@ -189,7 +189,7 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
 
 
         UIContext ui = context.getUIContext();
-        List<InputOptionByGroup> groups = createUIInputsForCamelEIP(nodeName, CamelAddEndpointDefinitionXmlCommand.MAX_OPTIONS,
+        List<InputOptionByGroup> groups = createUIInputsForCamelEIP(nodeName, MAX_OPTIONS,
                 options, getCamelCatalog(), componentFactory, converterFactory, ui);
 
         // need all inputs in a list as well

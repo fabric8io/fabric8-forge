@@ -71,6 +71,7 @@ import static io.fabric8.forge.camel.commands.project.helper.CollectionHelper.fi
 public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand {
 
     public static String CATEGORY = "Camel";
+    public static int MAX_OPTIONS = 20;
 
     @Inject
     protected ProjectFactory projectFactory;
@@ -134,6 +135,10 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
 
     protected Project getSelectedProjectOrNull(UIContext context) {
         return Projects.getSelectedProject(this.getProjectFactory(), context);
+    }
+
+    protected boolean isRunningInGui(UIContext context) {
+        return context.getProvider().isGUI();
     }
 
     protected boolean requiresCamelSetup() {

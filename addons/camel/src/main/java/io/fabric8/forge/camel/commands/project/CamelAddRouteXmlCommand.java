@@ -76,6 +76,9 @@ public class CamelAddRouteXmlCommand extends AbstractCamelProjectCommand impleme
     public boolean isEnabled(UIContext context) {
         boolean enabled = super.isEnabled(context);
         if (enabled) {
+
+            // TODO: must be an xml file to chose from
+
             // must be spring or blueprint project for editing xml files
             boolean spring = CamelCommandsHelper.isSpringProject(getSelectedProject(context));
             boolean blueprint = CamelCommandsHelper.isBlueprintProject(getSelectedProject(context));
@@ -129,7 +132,7 @@ public class CamelAddRouteXmlCommand extends AbstractCamelProjectCommand impleme
             boolean producerOnly = false;
 
             UIContext ui = context.getUIContext();
-            List<InputOptionByGroup> groups = createUIInputsForCamelComponent(camelComponentName, null, CamelAddEndpointDefinitionXmlCommand.MAX_OPTIONS, consumerOnly, producerOnly,
+            List<InputOptionByGroup> groups = createUIInputsForCamelComponent(camelComponentName, null, MAX_OPTIONS, consumerOnly, producerOnly,
                     getCamelCatalog(), componentFactory, converterFactory, ui);
 
             // need all inputs in a list as well

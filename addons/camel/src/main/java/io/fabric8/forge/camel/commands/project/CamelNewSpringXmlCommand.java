@@ -59,6 +59,8 @@ import static io.fabric8.forge.camel.commands.project.helper.CollectionHelper.fi
 @FacetConstraint({ResourcesFacet.class})
 public class CamelNewSpringXmlCommand extends AbstractCamelProjectCommand {
 
+    // TODO: should support blueprint
+
     @Inject
     @WithAttributes(label = "Directory", required = false, defaultValue = "META-INF/spring",
             description = "The directory name where this type will be created")

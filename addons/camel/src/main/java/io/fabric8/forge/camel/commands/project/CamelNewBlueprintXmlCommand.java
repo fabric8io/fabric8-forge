@@ -83,6 +83,7 @@ public class CamelNewBlueprintXmlCommand extends AbstractCamelProjectCommand {
         if (enabled) {
             Project project = getSelectedProject(context);
             // not enable for cdi or spring projects
+            // TODO: only enabled for blueprint!
             boolean cdi = CamelCommandsHelper.isCdiProject(project);
             boolean spring = CamelCommandsHelper.isSpringProject(project);
             return !cdi && !spring;

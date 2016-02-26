@@ -66,7 +66,7 @@ public class CamelEditCommand extends AbstractCamelProjectCommand implements UIW
     public UICommandMetadata getMetadata(UIContext context) {
         return Metadata.forCommand(CamelEditCommand.class).name(
                 "Camel: Edit").category(Categories.create(CATEGORY))
-                .description("Edit Camel endpoint or EIP from the current cursor position");
+                .description("Edit Camel endpoint from the current cursor position");
     }
 
     @Override

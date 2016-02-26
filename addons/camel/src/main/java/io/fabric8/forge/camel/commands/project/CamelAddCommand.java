@@ -70,7 +70,7 @@ public class CamelAddCommand extends AbstractCamelProjectCommand implements UIWi
     public UICommandMetadata getMetadata(UIContext context) {
         return Metadata.forCommand(CamelAddCommand.class).name(
                 "Camel: Add").category(Categories.create(CATEGORY))
-                .description("Add Camel endpoint or EIP from the current cursor position");
+                .description("Add Camel endpoint from the current cursor position");
     }
 
     @Override
