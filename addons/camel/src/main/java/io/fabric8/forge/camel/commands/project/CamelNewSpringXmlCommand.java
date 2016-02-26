@@ -60,6 +60,8 @@ import static io.fabric8.forge.camel.commands.project.helper.CollectionHelper.fi
 @Deprecated
 public class CamelNewSpringXmlCommand extends AbstractCamelProjectCommand {
 
+    // TODO: combine with blueprint as you only have either one
+
     @Inject
     @WithAttributes(label = "Directory", required = false, defaultValue = "META-INF/spring",
             description = "The directory name where this type will be created")
@@ -83,10 +85,8 @@ public class CamelNewSpringXmlCommand extends AbstractCamelProjectCommand {
         boolean enabled = super.isEnabled(context);
         if (enabled) {
             Project project = getSelectedProject(context);
-            // not enable for cdi or blueprint projects
-            boolean cdi = CamelCommandsHelper.isCdiProject(project);
-            boolean blueprint = CamelCommandsHelper.isBlueprintProject(project);
-            return !cdi && !blueprint;
+            boolean spring = CamelCommandsHelper.isSpringProject(project);
+            return spring;
         }
         return false;
     }
@@ -94,7 +94,7 @@ public class CamelNewSpringXmlCommand extends AbstractCamelProjectCommand {
     @Override
     public UICommandMetadata getMetadata(UIContext context) {
         return Metadata.forCommand(CamelNewRouteBuilderCommand.class).name(
-                "Camel: New XML spring").category(Categories.create(CATEGORY))
+                "Camel: New XML Spring").category(Categories.create(CATEGORY))
                 .description("Creates a new Spring XML file with CamelContext to your project");
     }
 

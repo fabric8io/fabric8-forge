@@ -56,6 +56,8 @@ import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.
 @Deprecated
 public class CamelNewComponentInstanceSpringCommand extends AbstractCamelProjectCommand implements UIWizard {
 
+    // TODO: combine with spring so its just one command
+
     @Inject
     @WithAttributes(label = "Filter", required = false, description = "To filter components")
     private UISelectOne<String> componentNameFilter;

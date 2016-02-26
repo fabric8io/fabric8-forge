@@ -162,6 +162,11 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
         return context.getUIContext().getProvider().getOutput().out();
     }
 
+    protected boolean isCamelProject(Project project) {
+        // is there any camel dependency?
+        return !findCamelArtifacts(project).isEmpty();
+    }
+
     protected Dependency findCamelCoreDependency(Project project) {
         return CamelProjectHelper.findCamelCoreDependency(project);
     }

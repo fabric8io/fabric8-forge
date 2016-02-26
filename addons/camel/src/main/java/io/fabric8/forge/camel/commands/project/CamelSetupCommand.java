@@ -61,7 +61,8 @@ public class CamelSetupCommand extends AbstractCamelProjectCommand {
             // must have a project
             return false;
         } else {
-            return true;
+            // and the project must not have camel already
+            return !isCamelProject(project);
         }
     }
 
