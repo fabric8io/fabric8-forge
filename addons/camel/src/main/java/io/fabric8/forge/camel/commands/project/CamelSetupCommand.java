@@ -138,6 +138,11 @@ public class CamelSetupCommand extends AbstractCamelProjectCommand {
                 .setCoordinate(createCamelCoordinate("camel-maven-plugin", camelVersion));
         pluginFacet.addPlugin(plugin);
 
+        // add fabric8-camel-maven-plugin
+        plugin = MavenPluginBuilder.create()
+                .setCoordinate(createCoordinate("io.fabric8.forge", "fabric8-camel-maven-plugin", VersionHelper.fabric8Version()));
+        pluginFacet.addPlugin(plugin);
+
         // add hawtio-maven-plugin using latest version
         plugin = MavenPluginBuilder.create()
                 .setCoordinate(createCoordinate("io.hawt", "hawtio-maven-plugin", VersionHelper.hawtioVersion()));
