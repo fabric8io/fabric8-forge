@@ -63,10 +63,6 @@ public class CamelAddEndpointCommand extends AbstractCamelProjectCommand impleme
     private static final PoorMansLogger LOG = new PoorMansLogger(false);
 
     @Inject
-    @WithAttributes(label = "Filter", required = false, description = "To filter components")
-    private UISelectOne<String> componentNameFilter;
-
-    @Inject
     @WithAttributes(label = "Name", required = true, description = "Name of component to use for the endpoint")
     private UISelectOne<ComponentDto> componentName;
 
@@ -114,10 +110,7 @@ public class CamelAddEndpointCommand extends AbstractCamelProjectCommand impleme
         attributeMap.put("producerOnly", Boolean.toString(producerOnly.get()));
 
         // filter the list of components based on consumer and producer only
-        componentNameFilter.setValueChoices(CamelCommandsHelper.createComponentLabelValues(project, getCamelCatalog()));
-        componentNameFilter.setDefaultValue("<all>");
-        componentName.setValueChoices(CamelCommandsHelper.createComponentDtoValues(project, getCamelCatalog(),
-                componentNameFilter, false, consumerOnly.get(), producerOnly.get()));
+        componentName.setValueChoices(CamelCommandsHelper.createComponentDtoValues(project, getCamelCatalog(), null, false, consumerOnly.get(), producerOnly.get()));
         // include converter from string->dto
         componentName.setValueConverter(new Converter<String, ComponentDto>() {
             @Override
@@ -139,7 +132,7 @@ public class CamelAddEndpointCommand extends AbstractCamelProjectCommand impleme
             }
         });
 
-        builder.add(componentNameFilter).add(componentName);
+        builder.add(componentName);
     }
 
     @Override
