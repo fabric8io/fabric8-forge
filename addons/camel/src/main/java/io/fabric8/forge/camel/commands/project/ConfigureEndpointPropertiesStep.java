@@ -253,6 +253,7 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
             }
         }
 
+        LOG.info("Creating uri with component: " + componentName + " and options:" + options);
         String uri = camelCatalog.asEndpointUriXml(camelComponentName, options, false);
         LOG.info("Uri created: " + uri);
         if (uri == null) {
@@ -497,7 +498,9 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
             }
         }
 
+        LOG.info("Creating uri with component: " + componentName + " and options:" + options);
         String uri = camelCatalog.asEndpointUri(camelComponentName, options, false);
+        LOG.info("Uri created: " + uri);
         if (uri == null) {
             return Results.fail("Cannot create endpoint uri");
         }
