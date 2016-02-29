@@ -425,6 +425,10 @@ public final class CamelCatalogHelper {
                 if (Strings.isNotBlank(labelText)) {
                     dto.setTags(labelText.split(","));
                 }
+            } else if (row.get("consumerOnly") != null) {
+                dto.setConsumerOnly("true".equals(row.get("consumerOnly")));
+            } else if (row.get("producerOnly") != null) {
+                dto.setProducerOnly("true".equals(row.get("producerOnly")));
             } else if (row.get("javaType") != null) {
                 dto.setJavaType(row.get("javaType"));
             } else if (row.get("groupId") != null) {
