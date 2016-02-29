@@ -27,6 +27,8 @@ import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
 import io.fabric8.forge.camel.commands.project.helper.PoorMansLogger;
 import io.fabric8.forge.camel.commands.project.model.InputOptionByGroup;
 import org.jboss.forge.addon.convert.Converter;
+import org.jboss.forge.addon.parser.java.facets.JavaSourceFacet;
+import org.jboss.forge.addon.parser.java.resources.JavaResource;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
 import org.jboss.forge.addon.projects.facets.ResourcesFacet;
@@ -58,7 +60,7 @@ public class CamelAddEndpointCommand extends AbstractCamelProjectCommand impleme
 
     private static final int MAX_OPTIONS = 20;
 
-    private static final PoorMansLogger LOG = new PoorMansLogger(true);
+    private static final PoorMansLogger LOG = new PoorMansLogger(false);
 
     @Inject
     @WithAttributes(label = "Filter", required = false, description = "To filter components")
@@ -211,21 +213,22 @@ public class CamelAddEndpointCommand extends AbstractCamelProjectCommand impleme
     private void determineConsumerAndProducerOnly(AtomicBoolean consumerOnly, AtomicBoolean producerOnly,
                                                   UIContext context, boolean xmlFile, String currentFile) {
 
+        Project project = getSelectedProject(context);
+        final int cursorLineNumber = getCurrentCursorLine(context);
+        if (cursorLineNumber == -1) {
+            // cannot find the cursor
+            return;
+        }
+
         // we can be both kind lets try to see if we can figure out if the current position is in a Camel route
         // where we use EIPs so we can know if its a from/pollEnrich = consumer, and if not = producer)
 
         if (xmlFile) {
-            Project project = getSelectedProject(context);
             ResourcesFacet facet = project.getFacet(ResourcesFacet.class);
             WebResourcesFacet webResourcesFacet = null;
             if (project.hasFacet(WebResourcesFacet.class)) {
                 webResourcesFacet = project.getFacet(WebResourcesFacet.class);
             }
-
-            final int cursorLineNumber = getCurrentCursorLine(context);
-
-            LOG.info("XML file at line " + cursorLineNumber);
-
             FileResource file = facet != null ? facet.getResource(currentFile) : null;
             if (file == null || !file.exists()) {
                 file = webResourcesFacet != null ? webResourcesFacet.getWebResource(currentFile) : null;
@@ -236,7 +239,8 @@ public class CamelAddEndpointCommand extends AbstractCamelProjectCommand impleme
                     List<String> lines = LineNumberHelper.readLines(file.getResourceInputStream());
                     // the list is 0-based, and line number is 1-based
                     String line = lines.get(cursorLineNumber - 1);
-                    LOG.info("Line: " + line);
+
+                    LOG.info("Line " + line);
 
                     if (line != null) {
                         if (line.contains("<from") || line.contains("<pollEnrich")) {
@@ -251,8 +255,32 @@ public class CamelAddEndpointCommand extends AbstractCamelProjectCommand impleme
             } catch (Exception e) {
                 // ignore
             }
+        } else {
+            // java code
+            JavaSourceFacet facet = project.getFacet(JavaSourceFacet.class);
+            JavaResource file = facet.getJavaResource(currentFile);
+            try {
+                if (file != null && file.exists() && cursorLineNumber > 0) {
+                    // read all the lines
+                    List<String> lines = LineNumberHelper.readLines(file.getResourceInputStream());
+                    // the list is 0-based, and line number is 1-based
+                    String line = lines.get(cursorLineNumber - 1);
 
-            LOG.info("producerOnly: " + producerOnly + " consumerOnly: " + consumerOnly);
+                    LOG.info("Line " + line);
+
+                    if (line != null) {
+                        if (line.contains("from(") || line.contains("pollEnrich(")) {
+                            // only from and poll enrich is consumer based
+                            consumerOnly.set(true);
+                        } else if (!line.contains("endpoint(")) {
+                            // assume producer unless its a generic endpoint
+                            producerOnly.set(true);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                // ignore
+            }
         }
 
     }
