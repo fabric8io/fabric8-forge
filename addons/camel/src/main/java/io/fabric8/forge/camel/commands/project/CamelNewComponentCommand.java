@@ -16,12 +16,14 @@
 package io.fabric8.forge.camel.commands.project;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import javax.inject.Inject;
 
 import io.fabric8.forge.addon.utils.completer.PackageNameCompleter;
 import io.fabric8.forge.addon.utils.validator.ClassNameValidator;
 import io.fabric8.forge.addon.utils.validator.PackageNameValidator;
+import io.fabric8.forge.camel.commands.project.completer.RouteBuilderCompleter;
 import io.fabric8.forge.camel.commands.project.dto.ComponentDto;
 import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
 import org.jboss.forge.addon.convert.Converter;
@@ -51,19 +53,13 @@ import org.jboss.forge.addon.ui.wizard.UIWizard;
 import org.jboss.forge.roaster.model.util.Strings;
 
 import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.createComponentDto;
+import static io.fabric8.forge.camel.commands.project.helper.CollectionHelper.first;
 
 @FacetConstraint({JavaSourceFacet.class, ResourcesFacet.class, ClassLoaderFacet.class})
-@Deprecated
-public class CamelNewComponentInstanceSpringCommand extends AbstractCamelProjectCommand implements UIWizard {
-
-    // TODO: combine with spring so its just one command
+public class CamelNewComponentCommand extends AbstractCamelProjectCommand implements UIWizard {
 
     @Inject
-    @WithAttributes(label = "Filter", required = false, description = "To filter components")
-    private UISelectOne<String> componentNameFilter;
-
-    @Inject
-    @WithAttributes(label = "Component Name", required = true, description = "Name of component type to add")
+    @WithAttributes(label = "Component Name", required = true, description = "The component to use")
     private UISelectOne<ComponentDto> componentName;
 
     @Inject
@@ -75,23 +71,14 @@ public class CamelNewComponentInstanceSpringCommand extends AbstractCamelProject
     private UIInput<String> targetPackage;
 
     @Inject
-    @WithAttributes(label = "Class Name", required = true, description = "Name of the Spring Component class to generate")
+    @WithAttributes(label = "Class Name", required = true, description = "The class name to create")
     private UIInput<String> className;
 
     @Override
     public UICommandMetadata getMetadata(UIContext context) {
-        return Metadata.forCommand(CamelNewComponentInstanceSpringCommand.class).name(
-                "Camel: New Component Spring").category(Categories.create(CATEGORY))
-                .description("Creates a new Camel component instance configuration using Spring");
-    }
-
-    @Override
-    public boolean isEnabled(UIContext context) {
-        boolean enabled = super.isEnabled(context);
-        if (enabled) {
-            return CamelCommandsHelper.isSpringProject(getSelectedProject(context));
-        }
-        return false;
+        return Metadata.forCommand(CamelNewComponentCommand.class).name(
+                "Camel: New Component").category(Categories.create(CATEGORY))
+                .description("Creates a new Camel component configured in Java code");
     }
 
     @Override
@@ -99,9 +86,7 @@ public class CamelNewComponentInstanceSpringCommand extends AbstractCamelProject
         Project project = getSelectedProject(builder.getUIContext());
         final JavaSourceFacet facet = project.getFacet(JavaSourceFacet.class);
 
-        componentNameFilter.setValueChoices(CamelCommandsHelper.createComponentLabelValues(project, getCamelCatalog()));
-        componentNameFilter.setDefaultValue("<all>");
-        componentName.setValueChoices(CamelCommandsHelper.createComponentDtoValues(project, getCamelCatalog(), componentNameFilter, false));
+        componentName.setValueChoices(CamelCommandsHelper.createComponentDtoValues(project, getCamelCatalog(), null, false));
         // include converter from string->dto
         componentName.setValueConverter(new Converter<String, ComponentDto>() {
             @Override
@@ -126,6 +111,11 @@ public class CamelNewComponentInstanceSpringCommand extends AbstractCamelProject
         targetPackage.setCompleter(new PackageNameCompleter(facet));
         targetPackage.addValidator(new PackageNameValidator());
         targetPackage.getFacet(HintsFacet.class).setInputType(InputType.JAVA_PACKAGE_PICKER);
+        // if there is only one package then use that as default
+        Set<String> packages = new RouteBuilderCompleter(facet).getPackages();
+        if (packages.size() == 1) {
+            targetPackage.setDefaultValue(first(packages));
+        }
 
         className.addValidator(new ClassNameValidator(false));
         className.setDefaultValue(new Callable<String>() {
@@ -136,7 +126,7 @@ public class CamelNewComponentInstanceSpringCommand extends AbstractCamelProject
         });
         className.getFacet(HintsFacet.class).setInputType(InputType.JAVA_CLASS_PICKER);
 
-        builder.add(componentNameFilter).add(componentName).add(instanceName).add(targetPackage).add(className);
+        builder.add(componentName).add(instanceName).add(targetPackage).add(className);
     }
 
     @Override
@@ -146,7 +136,17 @@ public class CamelNewComponentInstanceSpringCommand extends AbstractCamelProject
         attributeMap.put("instanceName", instanceName.getValue());
         attributeMap.put("targetPackage", targetPackage.getValue());
         attributeMap.put("className", className.getValue());
-        attributeMap.put("kind", "spring");
+
+        boolean cdi = CamelCommandsHelper.isCdiProject(getSelectedProject(context));
+        boolean spring = CamelCommandsHelper.isSpringProject(getSelectedProject(context));
+        if (cdi) {
+            attributeMap.put("kind", "cdi");
+        } else if (spring) {
+            attributeMap.put("kind", "spring");
+        } else {
+            attributeMap.put("kind", "java");
+        }
+
         return Results.navigateTo(ConfigureComponentPropertiesStep.class);
     }
 

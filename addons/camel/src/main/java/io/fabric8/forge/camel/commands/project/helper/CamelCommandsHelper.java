@@ -200,8 +200,7 @@ public final class CamelCommandsHelper {
                 .setPublic()
                 .setReturnType(componentClassName)
                 .setName(methodName)
-                .setBody(body)
-                .addThrows(Exception.class);
+                .setBody(body);
 
         method.addAnnotation("Named").setStringValue(camelComponentName);
         method.addAnnotation("Produces");
@@ -227,12 +226,26 @@ public final class CamelCommandsHelper {
                 .setPublic()
                 .setReturnType(componentClassName)
                 .setName(methodName)
-                .setBody(body)
-                .addThrows(Exception.class);
+                .setBody(body);
 
         method.addAnnotation("Qualifier").setStringValue(camelComponentName);
         method.addAnnotation("Bean");
         method.addAnnotation("Scope").setLiteralValue("BeanDefinition.SCOPE_SINGLETON");
+    }
+
+    public static void createJavaComponentFactoryClass(JavaClassSource javaClass, CamelComponentDetails details, String camelComponentName, String componentInstanceName, String configurationCode) {
+        javaClass.addImport(details.getComponentClassQName());
+
+        String componentClassName = details.getComponentClassName();
+        String methodName = "create" + Strings.capitalize(componentInstanceName) + "Component";
+
+        String body = componentClassName + " component = new " + componentClassName + "();" + configurationCode + "\nreturn component;";
+
+        javaClass.addMethod()
+                .setPublic()
+                .setReturnType(componentClassName)
+                .setName(methodName)
+                .setBody(body);
     }
 
     /**

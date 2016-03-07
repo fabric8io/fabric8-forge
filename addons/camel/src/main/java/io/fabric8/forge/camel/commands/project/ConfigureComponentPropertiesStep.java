@@ -207,14 +207,16 @@ public class ConfigureComponentPropertiesStep extends AbstractCamelProjectComman
             String configurationCode = buffer.toString();
             if (kind.equals("cdi")) {
                 CamelCommandsHelper.createCdiComponentProducerClass(javaClass, details, camelComponentName, componentInstanceName, configurationCode);
-            } else {
+            } else if (kind.equals("spring")) {
                 CamelCommandsHelper.createSpringComponentFactoryClass(javaClass, details, camelComponentName, componentInstanceName, configurationCode);
+            } else {
+                CamelCommandsHelper.createJavaComponentFactoryClass(javaClass, details, camelComponentName, componentInstanceName, configurationCode);
             }
 
             facet.saveJavaSource(javaClass);
 
             return Results.success("Created new class " + generateClassName);
-        } catch (IllegalArgumentException e) {
+        } catch (Exception e) {
             return Results.fail(e.getMessage());
         }
     }

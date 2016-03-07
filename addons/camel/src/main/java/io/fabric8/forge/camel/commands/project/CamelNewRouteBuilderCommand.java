@@ -72,7 +72,7 @@ public class CamelNewRouteBuilderCommand extends AbstractCamelProjectCommand {
         targetPackage.setCompleter(new PackageNameCompleter(facet));
         targetPackage.addValidator(new PackageNameValidator());
         targetPackage.getFacet(HintsFacet.class).setInputType(InputType.JAVA_PACKAGE_PICKER);
-
+        // if there is only one package then use that as default
         Set<String> packages = new RouteBuilderCompleter(facet).getPackages();
         if (packages.size() == 1) {
             targetPackage.setDefaultValue(first(packages));
