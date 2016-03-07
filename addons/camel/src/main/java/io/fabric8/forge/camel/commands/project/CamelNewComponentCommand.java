@@ -144,26 +144,15 @@ public class CamelNewComponentCommand extends AbstractCamelProjectCommand implem
         ComponentDto component = componentName.getValue();
         String camelComponentName = component.getScheme();
 
-        // must be same component name to allow reusing existing navigation result
-        String previous = (String) attributeMap.get("componentName");
-        if (previous != null && previous.equals(camelComponentName)) {
-            NavigationResult navigationResult = (NavigationResult) attributeMap.get("navigationResult");
-            if (navigationResult != null) {
-                return navigationResult;
-            }
-        }
-
         attributeMap.put("componentName", camelComponentName);
         attributeMap.put("componentName", componentName.getValue().getScheme());
         attributeMap.put("instanceName", instanceName.getValue());
         attributeMap.put("targetPackage", targetPackage.getValue());
-
         // calculate a default class name if none provided
         String name = className.getValue();
         if (Strings.isBlank(name)) {
             name = Strings.capitalize(instanceName.getValue()) + "ComponentFactory";
         }
-
         attributeMap.put("className", name);
 
         boolean cdi = CamelCommandsHelper.isCdiProject(getSelectedProject(context));
@@ -176,8 +165,16 @@ public class CamelNewComponentCommand extends AbstractCamelProjectCommand implem
             attributeMap.put("kind", "java");
         }
 
-        // we need to figure out how many options there is so we can as many steps we need
+        // must be same component name to allow reusing existing navigation result
+        String previous = (String) attributeMap.get("componentName");
+        if (previous != null && previous.equals(camelComponentName)) {
+            NavigationResult navigationResult = (NavigationResult) attributeMap.get("navigationResult");
+            if (navigationResult != null) {
+                return navigationResult;
+            }
+        }
 
+        // we need to figure out how many options there is so we can as many steps we need
         UIContext ui = context.getUIContext();
         List<InputOptionByGroup> groups = createUIInputsForCamelComponent(camelComponentName, MAX_OPTIONS,
                 getCamelCatalog(), componentFactory, converterFactory, ui);
