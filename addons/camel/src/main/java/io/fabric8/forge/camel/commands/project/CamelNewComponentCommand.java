@@ -15,9 +15,10 @@
  */
 package io.fabric8.forge.camel.commands.project;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import javax.inject.Inject;
 
 import io.fabric8.forge.addon.utils.completer.PackageNameCompleter;
@@ -26,10 +27,12 @@ import io.fabric8.forge.addon.utils.validator.PackageNameValidator;
 import io.fabric8.forge.camel.commands.project.completer.RouteBuilderCompleter;
 import io.fabric8.forge.camel.commands.project.dto.ComponentDto;
 import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
+import io.fabric8.forge.camel.commands.project.model.InputOptionByGroup;
 import org.jboss.forge.addon.convert.Converter;
 import org.jboss.forge.addon.facets.constraints.FacetConstraint;
 import org.jboss.forge.addon.parser.java.facets.JavaSourceFacet;
 import org.jboss.forge.addon.projects.Project;
+import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
 import org.jboss.forge.addon.projects.facets.ClassLoaderFacet;
 import org.jboss.forge.addon.projects.facets.ResourcesFacet;
 import org.jboss.forge.addon.ui.context.UIBuilder;
@@ -38,6 +41,8 @@ import org.jboss.forge.addon.ui.context.UIExecutionContext;
 import org.jboss.forge.addon.ui.context.UINavigationContext;
 import org.jboss.forge.addon.ui.facets.HintsFacet;
 import org.jboss.forge.addon.ui.hints.InputType;
+import org.jboss.forge.addon.ui.input.InputComponent;
+import org.jboss.forge.addon.ui.input.InputComponentFactory;
 import org.jboss.forge.addon.ui.input.UIInput;
 import org.jboss.forge.addon.ui.input.UISelectOne;
 import org.jboss.forge.addon.ui.input.ValueChangeListener;
@@ -47,12 +52,15 @@ import org.jboss.forge.addon.ui.metadata.WithAttributes;
 import org.jboss.forge.addon.ui.result.NavigationResult;
 import org.jboss.forge.addon.ui.result.Result;
 import org.jboss.forge.addon.ui.result.Results;
+import org.jboss.forge.addon.ui.result.navigation.NavigationResultBuilder;
 import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
 import org.jboss.forge.addon.ui.wizard.UIWizard;
 import org.jboss.forge.roaster.model.util.Strings;
 
 import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.createComponentDto;
+import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.createUIInputsForCamelComponent;
+import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.createUIInputsForCamelEndpoint;
 import static io.fabric8.forge.camel.commands.project.helper.CollectionHelper.first;
 
 @FacetConstraint({JavaSourceFacet.class, ResourcesFacet.class, ClassLoaderFacet.class})
@@ -71,8 +79,14 @@ public class CamelNewComponentCommand extends AbstractCamelProjectCommand implem
     private UIInput<String> targetPackage;
 
     @Inject
-    @WithAttributes(label = "Class Name", required = true, description = "The class name to create")
+    @WithAttributes(label = "Class Name", required = false, description = "The class name to create")
     private UIInput<String> className;
+
+    @Inject
+    private InputComponentFactory componentFactory;
+
+    @Inject
+    private DependencyInstaller dependencyInstaller;
 
     @Override
     public UICommandMetadata getMetadata(UIContext context) {
@@ -118,12 +132,6 @@ public class CamelNewComponentCommand extends AbstractCamelProjectCommand implem
         }
 
         className.addValidator(new ClassNameValidator(false));
-        className.setDefaultValue(new Callable<String>() {
-            @Override
-            public String call() throws Exception {
-                return getDefaultProducerClassName();
-            }
-        });
         className.getFacet(HintsFacet.class).setInputType(InputType.JAVA_CLASS_PICKER);
 
         builder.add(componentName).add(instanceName).add(targetPackage).add(className);
@@ -132,10 +140,20 @@ public class CamelNewComponentCommand extends AbstractCamelProjectCommand implem
     @Override
     public NavigationResult next(UINavigationContext context) throws Exception {
         Map<Object, Object> attributeMap = context.getUIContext().getAttributeMap();
+
+        ComponentDto component = componentName.getValue();
+        String camelComponentName = component.getScheme();
+
+        attributeMap.put("componentName", camelComponentName);
         attributeMap.put("componentName", componentName.getValue().getScheme());
         attributeMap.put("instanceName", instanceName.getValue());
         attributeMap.put("targetPackage", targetPackage.getValue());
-        attributeMap.put("className", className.getValue());
+        // calculate a default class name if none provided
+        String name = className.getValue();
+        if (Strings.isBlank(name)) {
+            name = Strings.capitalize(instanceName.getValue()) + "ComponentFactory";
+        }
+        attributeMap.put("className", name);
 
         boolean cdi = CamelCommandsHelper.isCdiProject(getSelectedProject(context));
         boolean spring = CamelCommandsHelper.isSpringProject(getSelectedProject(context));
@@ -147,20 +165,44 @@ public class CamelNewComponentCommand extends AbstractCamelProjectCommand implem
             attributeMap.put("kind", "java");
         }
 
-        return Results.navigateTo(ConfigureComponentPropertiesStep.class);
+        // must be same component name to allow reusing existing navigation result
+        String previous = (String) attributeMap.get("componentName");
+        if (previous != null && previous.equals(camelComponentName)) {
+            NavigationResult navigationResult = (NavigationResult) attributeMap.get("navigationResult");
+            if (navigationResult != null) {
+                return navigationResult;
+            }
+        }
+
+        // we need to figure out how many options there is so we can as many steps we need
+        UIContext ui = context.getUIContext();
+        List<InputOptionByGroup> groups = createUIInputsForCamelComponent(camelComponentName, MAX_OPTIONS,
+                getCamelCatalog(), componentFactory, converterFactory, ui);
+
+        // need all inputs in a list as well
+        List<InputComponent> allInputs = new ArrayList<>();
+        for (InputOptionByGroup group : groups) {
+            allInputs.addAll(group.getInputs());
+        }
+
+        NavigationResultBuilder builder = Results.navigationBuilder();
+        int pages = groups.size();
+        for (int i = 0; i < pages; i++) {
+            boolean last = i == pages - 1;
+            InputOptionByGroup current = groups.get(i);
+            ConfigureComponentPropertiesStep step = new ConfigureComponentPropertiesStep(projectFactory, dependencyInstaller, getCamelCatalog(),
+                    camelComponentName, current.getGroup(), allInputs, current.getInputs(), last, i, pages);
+            builder.add(step);
+        }
+
+        NavigationResult navigationResult = builder.build();
+        attributeMap.put("navigationResult", navigationResult);
+        return navigationResult;
     }
 
     @Override
     public Result execute(UIExecutionContext context) throws Exception {
         return Results.success();
-    }
-
-    protected String getDefaultProducerClassName() {
-        String name = instanceName.getValue();
-        if (!Strings.isBlank(name)) {
-            return Strings.capitalize(name) + "ComponentFactory";
-        }
-        return null;
     }
 
 }

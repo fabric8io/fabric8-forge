@@ -15,30 +15,27 @@
  */
 package io.fabric8.forge.camel.commands.project;
 
-import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.inject.Inject;
 
 import io.fabric8.forge.addon.utils.CamelProjectHelper;
 import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
 import io.fabric8.forge.camel.commands.project.model.CamelComponentDetails;
 import org.apache.camel.catalog.CamelCatalog;
-import org.apache.camel.catalog.JSonSchemaHelper;
 import org.jboss.forge.addon.dependencies.Dependency;
 import org.jboss.forge.addon.parser.java.facets.JavaSourceFacet;
 import org.jboss.forge.addon.parser.java.resources.JavaResource;
 import org.jboss.forge.addon.projects.Project;
+import org.jboss.forge.addon.projects.ProjectFactory;
 import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
-import org.jboss.forge.addon.shell.ui.ShellContext;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
 import org.jboss.forge.addon.ui.context.UINavigationContext;
 import org.jboss.forge.addon.ui.input.InputComponent;
-import org.jboss.forge.addon.ui.input.InputComponentFactory;
 import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
 import org.jboss.forge.addon.ui.result.NavigationResult;
 import org.jboss.forge.addon.ui.result.Result;
@@ -50,76 +47,70 @@ import org.jboss.forge.roaster.Roaster;
 import org.jboss.forge.roaster.model.source.JavaClassSource;
 import org.jboss.forge.roaster.model.util.Strings;
 
-import static io.fabric8.forge.addon.utils.UIHelper.createUIInput;
+import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.getEnumJavaTypeComponent;
+import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.isDefaultValueComponent;
+import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.isNonePlaceholderEnumValueComponent;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.ensureCamelArtifactIdAdded;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.loadCamelComponentDetails;
-import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.loadValidInputTypes;
 
 public class ConfigureComponentPropertiesStep extends AbstractCamelProjectCommand implements UIWizardStep {
 
-    @Inject
-    private InputComponentFactory componentFactory;
+    private final DependencyInstaller dependencyInstaller;
+    private final CamelCatalog camelCatalog;
 
-    @Inject
-    private DependencyInstaller dependencyInstaller;
+    private final String componentName;
+    private final String group;
+    private final List<InputComponent> allInputs;
+    private final List<InputComponent> inputs;
+    private final boolean last;
+    private final int index;
+    private final int total;
 
-    @Inject
-    private CamelCatalog camelCatalog;
+    public ConfigureComponentPropertiesStep(ProjectFactory projectFactory,
+                                            DependencyInstaller dependencyInstaller,
+                                            CamelCatalog camelCatalog,
+                                            String componentName, String group,
+                                            List<InputComponent> allInputs,
+                                            List<InputComponent> inputs,
+                                            boolean last, int index, int total) {
+        this.projectFactory = projectFactory;
+        this.dependencyInstaller = dependencyInstaller;
+        this.camelCatalog = camelCatalog;
+        this.componentName = componentName;
+        this.group = group;
+        this.allInputs = allInputs;
+        this.inputs = inputs;
+        this.last = last;
+        // we want to 1-based
+        this.index = index + 1;
+        this.total = total;
+    }
 
-    private List<InputComponent> inputs = new ArrayList<>();
+    public String getGroup() {
+        return group;
+    }
+
+    public int getIndex() {
+        return index;
+    }
+
+    public int getTotal() {
+        return total;
+    }
 
     @Override
     public UICommandMetadata getMetadata(UIContext context) {
         return Metadata.forCommand(ConfigureComponentPropertiesStep.class).name(
-                "Camel: New Component").category(Categories.create(CATEGORY))
-                .description("Configure the component options to use");
+                "Camel: Component options").category(Categories.create(CATEGORY))
+                .description(String.format("Configure %s options (%s of %s)", group, index, total));
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void initializeUI(UIBuilder builder) throws Exception {
-        // lets create a field for each property on the component
-
-        Map<Object, Object> attributeMap = builder.getUIContext().getAttributeMap();
-        String camelComponentName = mandatoryAttributeValue(attributeMap, "componentName");
-        String json = camelCatalog.componentJSonSchema(camelComponentName);
-        if (json == null) {
-            throw new IllegalArgumentException("Could not find catalog entry for component name: " + camelComponentName);
-        }
-        List<Map<String, String>> data = JSonSchemaHelper.parseJsonSchema("componentProperties", json, true);
-        if (data != null) {
-            Set<String> namesAdded = new HashSet<>();
-            for (Map<String, String> propertyMap : data) {
-                String name = propertyMap.get("name");
-                String kind = propertyMap.get("kind");
-                String type = propertyMap.get("type");
-                String javaType = propertyMap.get("javaType");
-                String deprecated = propertyMap.get("deprecated");
-                String required = propertyMap.get("required");
-                String currentValue = null;
-                String defaultValue = propertyMap.get("defaultValue");
-                String description = propertyMap.get("description");
-                String enums = propertyMap.get("enum");
-
-                if (!Strings.isNullOrEmpty(name)) {
-                    Class<Object> inputClazz = loadValidInputTypes(javaType, type);
-                    if (inputClazz != null) {
-                        if (namesAdded.add(name)) {
-
-                            boolean promptInInteractiveMode = false;
-                            if (builder.getUIContext() instanceof ShellContext) {
-                                // we want to prompt if the command was executed without any arguments
-                                boolean params = ((ShellContext) builder.getUIContext()).getCommandLine().hasParameters();
-                                promptInInteractiveMode = !params;
-                            }
-
-                            InputComponent input = createUIInput(builder.getUIContext().getProvider(), componentFactory, getConverterFactory(), name, inputClazz, required, currentValue, defaultValue, enums, description, promptInInteractiveMode, false, null);
-                            if (input != null) {
-                                builder.add(input);
-                                inputs.add(input);
-                            }
-                        }
-                    }
-                }
+        if (inputs != null) {
+            for (InputComponent input : inputs) {
+                builder.add(input);
             }
         }
     }
@@ -131,6 +122,15 @@ public class ConfigureComponentPropertiesStep extends AbstractCamelProjectComman
 
     @Override
     public Result execute(UIExecutionContext context) throws Exception {
+        // only execute if we are last
+        if (last) {
+            return doExecute(context);
+        } else {
+            return null;
+        }
+    }
+
+    private Result doExecute(UIExecutionContext context) throws Exception {
         Map<Object, Object> attributeMap = context.getUIContext().getAttributeMap();
         try {
             String camelComponentName = mandatoryAttributeValue(attributeMap, "componentName");
@@ -149,7 +149,6 @@ public class ConfigureComponentPropertiesStep extends AbstractCamelProjectComman
             }
 
             // lets find the camel component class
-
             CamelComponentDetails details = new CamelComponentDetails();
             Result result = loadCamelComponentDetails(camelCatalog, camelComponentName, details);
             if (result != null) {
@@ -175,47 +174,84 @@ public class ConfigureComponentPropertiesStep extends AbstractCamelProjectComman
                 javaClass.setPackage(generatePackageName);
             }
 
-            // generate the correct class payload based on the style...
-            StringBuilder buffer = new StringBuilder();
-            for (InputComponent input : inputs) {
-                // only use value if there was a value set
+            // collect all the options that was set
+            Map<String, Object> options = new LinkedHashMap<>();
+            for (InputComponent input : allInputs) {
+                String key = input.getName();
+                // only use the value if a value was set (and the value is not the same as the default value)
                 if (input.hasValue()) {
-                    String valueExpression = null;
-
                     Object value = input.getValue();
-                    if (value != null) {
-                        if (value instanceof String) {
-                            String text = value.toString();
-                            if (!Strings.isBlank(text)) {
-                                valueExpression = "\"" + text + "\"";
+                    String text = input.getValue().toString();
+                    if (text != null) {
+                        boolean matchDefault = isDefaultValueComponent(camelCatalog, camelComponentName, key, text);
+                        if ("none".equals(text)) {
+                            // special for enum that may have a none as dummy placeholder which we should not add
+                            boolean nonePlaceholder = isNonePlaceholderEnumValueComponent(camelCatalog, camelComponentName, key);
+                            if (!matchDefault && !nonePlaceholder) {
+                                options.put(key, value);
                             }
-                        }
-                        if (value instanceof Number) {
-                            valueExpression = value.toString();
+                        } else if (!matchDefault) {
+                            options.put(key, value);
                         }
                     }
-                    if (valueExpression != null) {
-                        buffer.append("\n");
-                        buffer.append("component.set");
-                        buffer.append(Strings.capitalize(input.getName()));
-                        buffer.append("(");
-                        buffer.append(valueExpression);
-                        buffer.append(");");
+                } else if (input.isRequired() && input.hasDefaultValue()) {
+                    // if its required then we need to grab the value
+                    Object value = input.getValue();
+                    if (value != null) {
+                        options.put(key, value);
                     }
                 }
             }
+
+            Set<String> extraJavaImports = new HashSet<>();
+
+            // generate the correct class payload based on the style...
+            StringBuilder buffer = new StringBuilder();
+            for (Map.Entry<String, Object> option : options.entrySet()) {
+                String key = option.getKey();
+                Object value = option.getValue();
+
+                String valueExpression = null;
+                // special for enum types
+                String enumJavaType = getEnumJavaTypeComponent(camelCatalog, camelComponentName, key);
+                if (enumJavaType != null) {
+                    extraJavaImports.add(enumJavaType);
+                    String simpleName = enumJavaType;
+                    int idx = simpleName.lastIndexOf(".");
+                    if (idx != -1) {
+                        simpleName = simpleName.substring(idx + 1);
+                    }
+                    valueExpression = simpleName + "." + value;;
+                } else if (value instanceof String) {
+                    String text = value.toString();
+                    if (!Strings.isBlank(text)) {
+                        valueExpression = "\"" + text + "\"";
+                    }
+                } else {
+                    valueExpression = value.toString();
+                }
+                if (valueExpression != null) {
+                    buffer.append("\n");
+                    buffer.append("component.set");
+                    buffer.append(Strings.capitalize(key));
+                    buffer.append("(");
+                    buffer.append(valueExpression);
+                    buffer.append(");");
+                }
+            }
+
             String configurationCode = buffer.toString();
             if (kind.equals("cdi")) {
-                CamelCommandsHelper.createCdiComponentProducerClass(javaClass, details, camelComponentName, componentInstanceName, configurationCode);
+                CamelCommandsHelper.createCdiComponentProducerClass(javaClass, details, camelComponentName, componentInstanceName, configurationCode, extraJavaImports);
             } else if (kind.equals("spring")) {
-                CamelCommandsHelper.createSpringComponentFactoryClass(javaClass, details, camelComponentName, componentInstanceName, configurationCode);
+                CamelCommandsHelper.createSpringComponentFactoryClass(javaClass, details, camelComponentName, componentInstanceName, configurationCode, extraJavaImports);
             } else {
-                CamelCommandsHelper.createJavaComponentFactoryClass(javaClass, details, camelComponentName, componentInstanceName, configurationCode);
+                CamelCommandsHelper.createJavaComponentFactoryClass(javaClass, details, camelComponentName, componentInstanceName, configurationCode, extraJavaImports);
             }
 
             facet.saveJavaSource(javaClass);
-
             return Results.success("Created new class " + generateClassName);
+
         } catch (Exception e) {
             return Results.fail(e.getMessage());
         }

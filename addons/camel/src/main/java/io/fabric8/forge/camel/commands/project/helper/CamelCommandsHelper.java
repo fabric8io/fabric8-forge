@@ -185,11 +185,17 @@ public final class CamelCommandsHelper {
         return CamelProjectHelper.findCamelBlueprintDependency(project) != null;
     }
 
-    public static void createCdiComponentProducerClass(JavaClassSource javaClass, CamelComponentDetails details, String camelComponentName, String componentInstanceName, String configurationCode) {
+    public static void createCdiComponentProducerClass(JavaClassSource javaClass, CamelComponentDetails details, String camelComponentName,
+                                                       String componentInstanceName, String configurationCode, Set<String> extraJavaImports) {
         javaClass.addImport("javax.enterprise.inject.Produces");
         javaClass.addImport("javax.inject.Singleton");
         javaClass.addImport("javax.inject.Named");
         javaClass.addImport(details.getComponentClassQName());
+        if (extraJavaImports != null) {
+            for (String extra : extraJavaImports) {
+                javaClass.addImport(extra);
+            }
+        }
 
         String componentClassName = details.getComponentClassName();
         String methodName = "create" + Strings.capitalize(componentInstanceName) + "Component";
@@ -207,7 +213,8 @@ public final class CamelCommandsHelper {
         method.addAnnotation("Singleton");
     }
 
-    public static void createSpringComponentFactoryClass(JavaClassSource javaClass, CamelComponentDetails details, String camelComponentName, String componentInstanceName, String configurationCode) {
+    public static void createSpringComponentFactoryClass(JavaClassSource javaClass, CamelComponentDetails details, String camelComponentName,
+                                                         String componentInstanceName, String configurationCode, Set<String> extraJavaImports) {
         javaClass.addAnnotation("Component");
 
         javaClass.addImport("org.springframework.beans.factory.config.BeanDefinition");
@@ -216,6 +223,11 @@ public final class CamelCommandsHelper {
         javaClass.addImport("org.springframework.context.annotation.Scope");
         javaClass.addImport("org.springframework.stereotype.Component");
         javaClass.addImport(details.getComponentClassQName());
+        if (extraJavaImports != null) {
+            for (String extra : extraJavaImports) {
+                javaClass.addImport(extra);
+            }
+        }
 
         String componentClassName = details.getComponentClassName();
         String methodName = "create" + Strings.capitalize(componentInstanceName) + "Component";
@@ -233,8 +245,14 @@ public final class CamelCommandsHelper {
         method.addAnnotation("Scope").setLiteralValue("BeanDefinition.SCOPE_SINGLETON");
     }
 
-    public static void createJavaComponentFactoryClass(JavaClassSource javaClass, CamelComponentDetails details, String camelComponentName, String componentInstanceName, String configurationCode) {
+    public static void createJavaComponentFactoryClass(JavaClassSource javaClass, CamelComponentDetails details, String camelComponentName,
+                                                       String componentInstanceName, String configurationCode, Set<String> extraJavaImports) {
         javaClass.addImport(details.getComponentClassQName());
+        if (extraJavaImports != null) {
+            for (String extra : extraJavaImports) {
+                javaClass.addImport(extra);
+            }
+        }
 
         String componentClassName = details.getComponentClassName();
         String methodName = "create" + Strings.capitalize(componentInstanceName) + "Component";
@@ -375,8 +393,19 @@ public final class CamelCommandsHelper {
         return null;
     }
 
-    public static List<InputOptionByGroup> createUIInputsForCamelComponent(String camelComponentName, String uri, int maxOptionsPerPage, boolean consumerOnly, boolean producerOnly,
-                                                                           CamelCatalog camelCatalog, InputComponentFactory componentFactory, ConverterFactory converterFactory, UIContext ui) throws Exception {
+    public static List<InputOptionByGroup> createUIInputsForCamelComponent(String camelComponentName, int maxOptionsPerPage,
+                                                                          CamelCatalog camelCatalog, InputComponentFactory componentFactory, ConverterFactory converterFactory, UIContext ui) throws Exception {
+        return doCreateUIInputsForCamel(camelComponentName, null, maxOptionsPerPage, false, false, camelCatalog, componentFactory, converterFactory, ui, false);
+    }
+
+    public static List<InputOptionByGroup> createUIInputsForCamelEndpoint(String camelComponentName, String uri, int maxOptionsPerPage, boolean consumerOnly, boolean producerOnly,
+                                                                          CamelCatalog camelCatalog, InputComponentFactory componentFactory, ConverterFactory converterFactory, UIContext ui) throws Exception {
+        return doCreateUIInputsForCamel(camelComponentName, uri, maxOptionsPerPage, consumerOnly, producerOnly, camelCatalog, componentFactory, converterFactory, ui, true);
+    }
+
+    private static List<InputOptionByGroup> doCreateUIInputsForCamel(String camelComponentName, String uri, int maxOptionsPerPage, boolean consumerOnly, boolean producerOnly,
+        CamelCatalog camelCatalog, InputComponentFactory componentFactory, ConverterFactory converterFactory, UIContext ui, boolean endpoint) throws Exception {
+
         List<InputOptionByGroup> answer = new ArrayList<>();
 
         if (camelComponentName == null && uri != null) {
@@ -397,7 +426,13 @@ public final class CamelCommandsHelper {
             producerOnly = false;
         }
 
-        List<Map<String, String>> data = JSonSchemaHelper.parseJsonSchema("properties", json, true);
+
+        List<Map<String, String>> data;
+        if (endpoint) {
+            data = JSonSchemaHelper.parseJsonSchema("properties", json, true);
+        } else {
+            data = JSonSchemaHelper.parseJsonSchema("componentProperties", json, true);
+        }
 
         Map<String, String> currentValues = uri != null ? camelCatalog.endpointProperties(uri) : Collections.EMPTY_MAP;
 

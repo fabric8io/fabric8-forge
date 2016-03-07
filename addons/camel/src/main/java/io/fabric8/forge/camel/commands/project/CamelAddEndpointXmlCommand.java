@@ -43,7 +43,7 @@ import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
 import org.jboss.forge.addon.ui.wizard.UIWizard;
 
-import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.createUIInputsForCamelComponent;
+import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.createUIInputsForCamelEndpoint;
 
 /**
  * Adds a from/to endpoint into chosen node in the route
@@ -135,7 +135,7 @@ public class CamelAddEndpointXmlCommand extends AbstractCamelProjectCommand impl
 
         // we need to figure out how many options there is so we can as many steps we need
         UIContext ui = context.getUIContext();
-        List<InputOptionByGroup> groups = createUIInputsForCamelComponent(camelComponentName, null, MAX_OPTIONS, consumerOnly, producerOnly,
+        List<InputOptionByGroup> groups = createUIInputsForCamelEndpoint(camelComponentName, null, MAX_OPTIONS, consumerOnly, producerOnly,
                 getCamelCatalog(), componentFactory, converterFactory, ui);
 
         // need all inputs in a list as well

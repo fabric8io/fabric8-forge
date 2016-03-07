@@ -42,7 +42,7 @@ import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
 import org.jboss.forge.addon.ui.wizard.UIWizard;
 
-import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.createUIInputsForCamelComponent;
+import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.createUIInputsForCamelEndpoint;
 
 public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implements UIWizard {
 
@@ -205,7 +205,7 @@ public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implem
         boolean producerOnly = detail.isProducerOnly();
 
         UIContext ui = context.getUIContext();
-        List<InputOptionByGroup> groups = createUIInputsForCamelComponent(camelComponentName, uri, MAX_OPTIONS, consumerOnly, producerOnly,
+        List<InputOptionByGroup> groups = createUIInputsForCamelEndpoint(camelComponentName, uri, MAX_OPTIONS, consumerOnly, producerOnly,
                 getCamelCatalog(), componentFactory, converterFactory, ui);
 
         // need all inputs in a list as well
