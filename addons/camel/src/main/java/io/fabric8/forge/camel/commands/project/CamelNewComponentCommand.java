@@ -71,7 +71,7 @@ public class CamelNewComponentCommand extends AbstractCamelProjectCommand implem
     private UIInput<String> targetPackage;
 
     @Inject
-    @WithAttributes(label = "Class Name", required = true, description = "The class name to create")
+    @WithAttributes(label = "Class Name", required = false, description = "The class name to create")
     private UIInput<String> className;
 
     @Override
@@ -118,12 +118,6 @@ public class CamelNewComponentCommand extends AbstractCamelProjectCommand implem
         }
 
         className.addValidator(new ClassNameValidator(false));
-        className.setDefaultValue(new Callable<String>() {
-            @Override
-            public String call() throws Exception {
-                return getDefaultProducerClassName();
-            }
-        });
         className.getFacet(HintsFacet.class).setInputType(InputType.JAVA_CLASS_PICKER);
 
         builder.add(componentName).add(instanceName).add(targetPackage).add(className);
@@ -135,7 +129,14 @@ public class CamelNewComponentCommand extends AbstractCamelProjectCommand implem
         attributeMap.put("componentName", componentName.getValue().getScheme());
         attributeMap.put("instanceName", instanceName.getValue());
         attributeMap.put("targetPackage", targetPackage.getValue());
-        attributeMap.put("className", className.getValue());
+
+        // calculate a default class name if none provided
+        String name = className.getValue();
+        if (Strings.isBlank(name)) {
+            name = Strings.capitalize(instanceName.getValue()) + "ComponentFactory";
+        }
+
+        attributeMap.put("className", name);
 
         boolean cdi = CamelCommandsHelper.isCdiProject(getSelectedProject(context));
         boolean spring = CamelCommandsHelper.isSpringProject(getSelectedProject(context));
@@ -153,14 +154,6 @@ public class CamelNewComponentCommand extends AbstractCamelProjectCommand implem
     @Override
     public Result execute(UIExecutionContext context) throws Exception {
         return Results.success();
-    }
-
-    protected String getDefaultProducerClassName() {
-        String name = instanceName.getValue();
-        if (!Strings.isBlank(name)) {
-            return Strings.capitalize(name) + "ComponentFactory";
-        }
-        return null;
     }
 
 }
