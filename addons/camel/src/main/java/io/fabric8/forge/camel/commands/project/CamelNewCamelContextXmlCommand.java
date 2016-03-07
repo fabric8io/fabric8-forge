@@ -57,18 +57,14 @@ import org.jboss.forge.addon.ui.util.Metadata;
 import static io.fabric8.forge.camel.commands.project.helper.CollectionHelper.first;
 
 @FacetConstraint({ResourcesFacet.class})
-@Deprecated
-public class CamelNewSpringXmlCommand extends AbstractCamelProjectCommand {
-
-    // TODO: combine with blueprint as you only have either one
+public class CamelNewCamelContextXmlCommand extends AbstractCamelProjectCommand {
 
     @Inject
-    @WithAttributes(label = "Directory", required = false, defaultValue = "META-INF/spring",
-            description = "The directory name where this type will be created")
+    @WithAttributes(label = "Directory", required = false, description = "The directory name where this type will be created")
     private UIInput<String> directory;
 
     @Inject
-    @WithAttributes(label = "XML File Name", required = true, description = "Name of XML file")
+    @WithAttributes(label = "File Name", required = true, description = "Name of XML file")
     private UIInput<String> name;
 
     @Inject
@@ -85,8 +81,11 @@ public class CamelNewSpringXmlCommand extends AbstractCamelProjectCommand {
         boolean enabled = super.isEnabled(context);
         if (enabled) {
             Project project = getSelectedProject(context);
+            // must be blueprint or spring project
+            boolean blueprint = CamelCommandsHelper.isBlueprintProject(project);
             boolean spring = CamelCommandsHelper.isSpringProject(project);
-            return spring;
+            return blueprint || spring;
+
         }
         return false;
     }
@@ -94,15 +93,22 @@ public class CamelNewSpringXmlCommand extends AbstractCamelProjectCommand {
     @Override
     public UICommandMetadata getMetadata(UIContext context) {
         return Metadata.forCommand(CamelNewRouteBuilderCommand.class).name(
-                "Camel: New XML Spring").category(Categories.create(CATEGORY))
-                .description("Creates a new Spring XML file with CamelContext to your project");
+                "Camel: New CamelContext XML").category(Categories.create(CATEGORY))
+                .description("Creates a new XML file with CamelContext");
     }
 
     @Override
     public void initializeUI(UIBuilder builder) throws Exception {
-        name.addValidator(new ResourceNameValidator("xml"));
-        name.getFacet(HintsFacet.class).setInputType(InputType.FILE_PICKER);
+        Project project = getSelectedProject(builder.getUIContext());
+        boolean blueprint = CamelCommandsHelper.isBlueprintProject(project);
+        boolean spring = CamelCommandsHelper.isSpringProject(project);
+
         directory.getFacet(HintsFacet.class).setInputType(InputType.DIRECTORY_PICKER);
+        if (blueprint) {
+            directory.setDefaultValue("OSGI-INF/blueprint");
+        } else if (spring) {
+            directory.setDefaultValue("META-INF/spring");
+        }
 
         XmlFileCompleter xmlFileCompleter = createXmlFileCompleter(builder.getUIContext(), null);
         Set<String> directories = xmlFileCompleter.getDirectories();
@@ -113,6 +119,8 @@ public class CamelNewSpringXmlCommand extends AbstractCamelProjectCommand {
             directory.setCompleter(new StringCompleter(directories));
         }
 
+        name.addValidator(new ResourceNameValidator("xml"));
+        name.getFacet(HintsFacet.class).setInputType(InputType.FILE_PICKER);
         builder.add(directory).add(name);
     }
 
@@ -120,7 +128,6 @@ public class CamelNewSpringXmlCommand extends AbstractCamelProjectCommand {
     public void validate(UIValidationContext validator) {
         XmlFileCompleter xmlFileCompleter = createXmlFileCompleter(validator.getUIContext(), null);
         xmlFileCompleter.validateFileDoesNotExist(directory, name, validator);
-
         super.validate(validator);
     }
 
@@ -137,7 +144,7 @@ public class CamelNewSpringXmlCommand extends AbstractCamelProjectCommand {
         FileResource<?> fileResource = facet.getResource(fileName);
 
         if (fileResource.exists()) {
-            return Results.fail("Spring XML file " + fullName + " already exists");
+            return Results.fail("XML file " + fullName + " already exists");
         }
 
         // does the project already have camel?
@@ -146,15 +153,33 @@ public class CamelNewSpringXmlCommand extends AbstractCamelProjectCommand {
             return Results.fail("The project does not include camel-core");
         }
 
-        DependencyBuilder spring = DependencyBuilder.create().setGroupId("org.apache.camel")
-                .setArtifactId("camel-spring").setVersion(core.getCoordinate().getVersion());
+        boolean blueprint = CamelCommandsHelper.isBlueprintProject(project);
+        boolean spring = CamelCommandsHelper.isSpringProject(project);
 
-        // install camel-spring if missing
-        if (!dependencyInstaller.isManaged(project, spring)) {
-            dependencyInstaller.install(project, spring);
+        if (blueprint) {
+            DependencyBuilder dep = DependencyBuilder.create().setGroupId("org.apache.camel")
+                    .setArtifactId("camel-blueprint").setVersion(core.getCoordinate().getVersion());
+
+            // install camel-blueprint if missing
+            if (!dependencyInstaller.isManaged(project, dep)) {
+                dependencyInstaller.install(project, dep);
+            }
+        } else if (spring) {
+            DependencyBuilder dep = DependencyBuilder.create().setGroupId("org.apache.camel")
+                    .setArtifactId("camel-spring").setVersion(core.getCoordinate().getVersion());
+
+            // install camel-spring if missing
+            if (!dependencyInstaller.isManaged(project, dep)) {
+                dependencyInstaller.install(project, dep);
+            }
         }
 
-        Resource<URL> xml = resourceFactory.create(getClass().getResource("/templates/camel-spring.ftl")).reify(URLResource.class);
+        Resource<URL> xml = null;
+        if (blueprint) {
+            xml = resourceFactory.create(getClass().getResource("/templates/camel-blueprint.ftl")).reify(URLResource.class);
+        } else if (spring) {
+            xml = resourceFactory.create(getClass().getResource("/templates/camel-spring.ftl")).reify(URLResource.class);
+        }
         Template template = factory.create(xml, FreemarkerTemplate.class);
 
         // any dynamic options goes into the params map
@@ -166,6 +191,7 @@ public class CamelNewSpringXmlCommand extends AbstractCamelProjectCommand {
         fileResource.createNewFile();
         fileResource.setContents(output);
 
-        return Results.success("Created new Spring XML file " + fullName);
+        return Results.success("Created new XML file " + fullName);
     }
+
 }
