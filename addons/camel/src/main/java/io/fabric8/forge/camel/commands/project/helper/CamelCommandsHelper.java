@@ -185,11 +185,17 @@ public final class CamelCommandsHelper {
         return CamelProjectHelper.findCamelBlueprintDependency(project) != null;
     }
 
-    public static void createCdiComponentProducerClass(JavaClassSource javaClass, CamelComponentDetails details, String camelComponentName, String componentInstanceName, String configurationCode) {
+    public static void createCdiComponentProducerClass(JavaClassSource javaClass, CamelComponentDetails details, String camelComponentName,
+                                                       String componentInstanceName, String configurationCode, Set<String> extraJavaImports) {
         javaClass.addImport("javax.enterprise.inject.Produces");
         javaClass.addImport("javax.inject.Singleton");
         javaClass.addImport("javax.inject.Named");
         javaClass.addImport(details.getComponentClassQName());
+        if (extraJavaImports != null) {
+            for (String extra : extraJavaImports) {
+                javaClass.addImport(extra);
+            }
+        }
 
         String componentClassName = details.getComponentClassName();
         String methodName = "create" + Strings.capitalize(componentInstanceName) + "Component";
@@ -207,7 +213,8 @@ public final class CamelCommandsHelper {
         method.addAnnotation("Singleton");
     }
 
-    public static void createSpringComponentFactoryClass(JavaClassSource javaClass, CamelComponentDetails details, String camelComponentName, String componentInstanceName, String configurationCode) {
+    public static void createSpringComponentFactoryClass(JavaClassSource javaClass, CamelComponentDetails details, String camelComponentName,
+                                                         String componentInstanceName, String configurationCode, Set<String> extraJavaImports) {
         javaClass.addAnnotation("Component");
 
         javaClass.addImport("org.springframework.beans.factory.config.BeanDefinition");
@@ -216,6 +223,11 @@ public final class CamelCommandsHelper {
         javaClass.addImport("org.springframework.context.annotation.Scope");
         javaClass.addImport("org.springframework.stereotype.Component");
         javaClass.addImport(details.getComponentClassQName());
+        if (extraJavaImports != null) {
+            for (String extra : extraJavaImports) {
+                javaClass.addImport(extra);
+            }
+        }
 
         String componentClassName = details.getComponentClassName();
         String methodName = "create" + Strings.capitalize(componentInstanceName) + "Component";
@@ -233,8 +245,14 @@ public final class CamelCommandsHelper {
         method.addAnnotation("Scope").setLiteralValue("BeanDefinition.SCOPE_SINGLETON");
     }
 
-    public static void createJavaComponentFactoryClass(JavaClassSource javaClass, CamelComponentDetails details, String camelComponentName, String componentInstanceName, String configurationCode) {
+    public static void createJavaComponentFactoryClass(JavaClassSource javaClass, CamelComponentDetails details, String camelComponentName,
+                                                       String componentInstanceName, String configurationCode, Set<String> extraJavaImports) {
         javaClass.addImport(details.getComponentClassQName());
+        if (extraJavaImports != null) {
+            for (String extra : extraJavaImports) {
+                javaClass.addImport(extra);
+            }
+        }
 
         String componentClassName = details.getComponentClassName();
         String methodName = "create" + Strings.capitalize(componentInstanceName) + "Component";

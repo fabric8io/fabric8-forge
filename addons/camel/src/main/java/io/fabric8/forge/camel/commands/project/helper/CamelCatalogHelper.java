@@ -314,6 +314,34 @@ public final class CamelCatalogHelper {
     }
 
     /**
+     * Get's the java type for the given option if its enum based, otherwise it returns null
+     *
+     * @param scheme the component name
+     * @param key    the option key
+     * @return <tt>true</tt> if matching the default value, <tt>false</tt> otherwise
+     */
+    public static String getEnumJavaTypeComponent(CamelCatalog camelCatalog, String scheme, String key) {
+        // use the camel catalog
+        String json = camelCatalog.componentJSonSchema(scheme);
+        if (json == null) {
+            throw new IllegalArgumentException("Could not find catalog entry for component name: " + scheme);
+        }
+
+        List<Map<String, String>> data = JSonSchemaHelper.parseJsonSchema("componentProperties", json, true);
+        if (data != null) {
+            for (Map<String, String> propertyMap : data) {
+                String javaType = propertyMap.get("javaType");
+                String name = propertyMap.get("name");
+                String enums = propertyMap.get("enum");
+                if (key.equals(name) && enums != null) {
+                    return javaType;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
      * Checks whether the given value is matching the default value from the given model.
      *
      * @param modelName the model name

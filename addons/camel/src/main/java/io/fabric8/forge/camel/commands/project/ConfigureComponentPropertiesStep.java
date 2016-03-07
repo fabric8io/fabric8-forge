@@ -15,9 +15,11 @@
  */
 package io.fabric8.forge.camel.commands.project;
 
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import io.fabric8.forge.addon.utils.CamelProjectHelper;
 import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
@@ -45,6 +47,7 @@ import org.jboss.forge.roaster.Roaster;
 import org.jboss.forge.roaster.model.source.JavaClassSource;
 import org.jboss.forge.roaster.model.util.Strings;
 
+import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.getEnumJavaTypeComponent;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.isDefaultValueComponent;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.isNonePlaceholderEnumValueComponent;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.ensureCamelArtifactIdAdded;
@@ -200,6 +203,8 @@ public class ConfigureComponentPropertiesStep extends AbstractCamelProjectComman
                 }
             }
 
+            Set<String> extraJavaImports = new HashSet<>();
+
             // generate the correct class payload based on the style...
             StringBuilder buffer = new StringBuilder();
             for (Map.Entry<String, Object> option : options.entrySet()) {
@@ -207,7 +212,17 @@ public class ConfigureComponentPropertiesStep extends AbstractCamelProjectComman
                 Object value = option.getValue();
 
                 String valueExpression = null;
-                if (value instanceof String) {
+                // special for enum types
+                String enumJavaType = getEnumJavaTypeComponent(camelCatalog, camelComponentName, key);
+                if (enumJavaType != null) {
+                    extraJavaImports.add(enumJavaType);
+                    String simpleName = enumJavaType;
+                    int idx = simpleName.lastIndexOf(".");
+                    if (idx != -1) {
+                        simpleName = simpleName.substring(idx + 1);
+                    }
+                    valueExpression = simpleName + "." + value;;
+                } else if (value instanceof String) {
                     String text = value.toString();
                     if (!Strings.isBlank(text)) {
                         valueExpression = "\"" + text + "\"";
@@ -227,11 +242,11 @@ public class ConfigureComponentPropertiesStep extends AbstractCamelProjectComman
 
             String configurationCode = buffer.toString();
             if (kind.equals("cdi")) {
-                CamelCommandsHelper.createCdiComponentProducerClass(javaClass, details, camelComponentName, componentInstanceName, configurationCode);
+                CamelCommandsHelper.createCdiComponentProducerClass(javaClass, details, camelComponentName, componentInstanceName, configurationCode, extraJavaImports);
             } else if (kind.equals("spring")) {
-                CamelCommandsHelper.createSpringComponentFactoryClass(javaClass, details, camelComponentName, componentInstanceName, configurationCode);
+                CamelCommandsHelper.createSpringComponentFactoryClass(javaClass, details, camelComponentName, componentInstanceName, configurationCode, extraJavaImports);
             } else {
-                CamelCommandsHelper.createJavaComponentFactoryClass(javaClass, details, camelComponentName, componentInstanceName, configurationCode);
+                CamelCommandsHelper.createJavaComponentFactoryClass(javaClass, details, camelComponentName, componentInstanceName, configurationCode, extraJavaImports);
             }
 
             facet.saveJavaSource(javaClass);
