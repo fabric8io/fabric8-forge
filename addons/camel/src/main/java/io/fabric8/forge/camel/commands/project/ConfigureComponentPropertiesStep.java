@@ -177,10 +177,11 @@ public class ConfigureComponentPropertiesStep extends AbstractCamelProjectComman
                 String key = input.getName();
                 // only use the value if a value was set (and the value is not the same as the default value)
                 if (input.hasValue()) {
-                    String value = input.getValue().toString();
-                    if (value != null) {
-                        boolean matchDefault = isDefaultValueComponent(camelCatalog, camelComponentName, key, value);
-                        if ("none".equals(value)) {
+                    Object value = input.getValue();
+                    String text = input.getValue().toString();
+                    if (text != null) {
+                        boolean matchDefault = isDefaultValueComponent(camelCatalog, camelComponentName, key, text);
+                        if ("none".equals(text)) {
                             // special for enum that may have a none as dummy placeholder which we should not add
                             boolean nonePlaceholder = isNonePlaceholderEnumValueComponent(camelCatalog, camelComponentName, key);
                             if (!matchDefault && !nonePlaceholder) {
@@ -192,7 +193,7 @@ public class ConfigureComponentPropertiesStep extends AbstractCamelProjectComman
                     }
                 } else if (input.isRequired() && input.hasDefaultValue()) {
                     // if its required then we need to grab the value
-                    String value = input.getValue().toString();
+                    Object value = input.getValue();
                     if (value != null) {
                         options.put(key, value);
                     }
