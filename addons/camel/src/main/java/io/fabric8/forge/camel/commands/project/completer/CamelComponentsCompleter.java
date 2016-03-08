@@ -125,8 +125,32 @@ public class CamelComponentsCompleter implements UICompleter<ComponentDto> {
         return answer;
     }
 
+    public Iterable<String> getValueNames(String label) {
+        // need to find camel-core so we known the camel version
+        Dependency core = CamelProjectHelper.findCamelCoreDependency(project);
+        if (core == null) {
+            return null;
+        }
+
+        List<String> names = getComponentNames();
+
+        if (label != null && !"<all>".equals(label)) {
+            names = filterByLabel(names, label);
+        }
+
+        if (consumerOnly) {
+            names = filterByConsumerOnly(names);
+        }
+        if (producerOnly) {
+            names = filterByProducerOnly(names);
+        }
+
+        return names;
+    }
+
     protected List<String> getComponentNames() {
         List<String> names;
+
         if (includeCatalogComponents) {
             // find all available component names
             names = camelCatalog.findComponentNames();
@@ -147,7 +171,9 @@ public class CamelComponentsCompleter implements UICompleter<ComponentDto> {
                 set.addAll(components);
             }
             names = new ArrayList<>(set);
-        } return names;
+        }
+
+        return names;
     }
 
     private List<String> filterByConsumerOnly(List<String> choices) {
