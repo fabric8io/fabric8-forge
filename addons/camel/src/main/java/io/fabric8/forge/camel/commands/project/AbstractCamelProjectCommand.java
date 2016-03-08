@@ -16,7 +16,9 @@
 package io.fabric8.forge.camel.commands.project;
 
 import java.io.PrintStream;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -80,7 +82,7 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
     protected ConverterFactory converterFactory;
 
     @Inject
-    private CamelCatalog camelCatalog;
+    protected CamelCatalog camelCatalog;
 
     protected void configureXmlNode(final UIContext context, final Project project, final String selected, final UISelectOne<String> xml, final UISelectOne<NodeDto> node) {
         node.setValueConverter(new NodeDtoConverter(camelCatalog, project, context, xml));
@@ -299,19 +301,21 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
         return answer;
     }
 
-    protected void configureComponentName(Project project, final UISelectOne<ComponentDto> componentName, boolean consumerOnly, boolean producerOnly) {
-        componentName.setValueChoices(CamelCommandsHelper.createComponentDtoValues(project, getCamelCatalog(), null, false, consumerOnly, producerOnly));
+    protected void configureComponentName(Project project, final UISelectOne<ComponentDto> componentName, boolean consumerOnly, boolean producerOnly) throws Exception {
+
+        // filter the list of components based on consumer and producer only
+        Iterable<ComponentDto> it = CamelCommandsHelper.createComponentDtoValues(project, getCamelCatalog(), null, false, consumerOnly, producerOnly).call();
+        final Map<String, ComponentDto> components = new LinkedHashMap<>();
+        for (ComponentDto dto : it) {
+            components.put(dto.getScheme(), dto);
+        }
+
+        componentName.setValueChoices(components.values());
         // include converter from string->dto
         componentName.setValueConverter(new Converter<String, ComponentDto>() {
             @Override
             public ComponentDto convert(String text) {
-                return createComponentDto(getCamelCatalog(), text);
-            }
-        });
-        componentName.setValueConverter(new Converter<String, ComponentDto>() {
-            @Override
-            public ComponentDto convert(String name) {
-                return createComponentDto(getCamelCatalog(), name);
+                return components.get(text);
             }
         });
         // show note about the chosen component

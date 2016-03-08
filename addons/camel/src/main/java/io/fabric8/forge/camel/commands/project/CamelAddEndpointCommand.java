@@ -23,10 +23,8 @@ import javax.inject.Inject;
 
 import io.fabric8.forge.addon.utils.LineNumberHelper;
 import io.fabric8.forge.camel.commands.project.dto.ComponentDto;
-import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
 import io.fabric8.forge.camel.commands.project.helper.PoorMansLogger;
 import io.fabric8.forge.camel.commands.project.model.InputOptionByGroup;
-import org.jboss.forge.addon.convert.Converter;
 import org.jboss.forge.addon.parser.java.facets.JavaSourceFacet;
 import org.jboss.forge.addon.parser.java.resources.JavaResource;
 import org.jboss.forge.addon.projects.Project;
@@ -41,8 +39,6 @@ import org.jboss.forge.addon.ui.context.UINavigationContext;
 import org.jboss.forge.addon.ui.input.InputComponent;
 import org.jboss.forge.addon.ui.input.InputComponentFactory;
 import org.jboss.forge.addon.ui.input.UISelectOne;
-import org.jboss.forge.addon.ui.input.ValueChangeListener;
-import org.jboss.forge.addon.ui.input.events.ValueChangeEvent;
 import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
 import org.jboss.forge.addon.ui.metadata.WithAttributes;
 import org.jboss.forge.addon.ui.result.NavigationResult;
@@ -53,7 +49,6 @@ import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
 import org.jboss.forge.addon.ui.wizard.UIWizard;
 
-import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.createComponentDto;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.createUIInputsForCamelEndpoint;
 
 public class CamelAddEndpointCommand extends AbstractCamelProjectCommand implements UIWizard {
@@ -110,27 +105,7 @@ public class CamelAddEndpointCommand extends AbstractCamelProjectCommand impleme
         attributeMap.put("producerOnly", Boolean.toString(producerOnly.get()));
 
         // filter the list of components based on consumer and producer only
-        componentName.setValueChoices(CamelCommandsHelper.createComponentDtoValues(project, getCamelCatalog(), null, false, consumerOnly.get(), producerOnly.get()));
-        // include converter from string->dto
-        componentName.setValueConverter(new Converter<String, ComponentDto>() {
-            @Override
-            public ComponentDto convert(String text) {
-                return createComponentDto(getCamelCatalog(), text);
-            }
-        });
-        // show note about the chosen component
-        componentName.addValueChangeListener(new ValueChangeListener() {
-            @Override
-            public void valueChanged(ValueChangeEvent event) {
-                ComponentDto component = (ComponentDto) event.getNewValue();
-                if (component != null) {
-                    String description = component.getDescription();
-                    componentName.setNote(description != null ? description : "");
-                } else {
-                    componentName.setNote("");
-                }
-            }
-        });
+        configureComponentName(project, componentName, consumerOnly.get(), producerOnly.get());
 
         builder.add(componentName);
     }
