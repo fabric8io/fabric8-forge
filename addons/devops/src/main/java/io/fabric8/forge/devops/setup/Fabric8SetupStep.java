@@ -42,6 +42,7 @@ import org.jboss.forge.addon.maven.plugins.MavenPlugin;
 import org.jboss.forge.addon.maven.plugins.MavenPluginBuilder;
 import org.jboss.forge.addon.maven.projects.MavenFacet;
 import org.jboss.forge.addon.maven.projects.MavenPluginFacet;
+import org.jboss.forge.addon.maven.resources.MavenModelResource;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
 import org.jboss.forge.addon.projects.facets.ResourcesFacet;
@@ -334,10 +335,10 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
         setupArguillianTest(project, pom);
 
         LOG.debug("setting up fabric8 properties");
-        setupFabricProperties(project, maven, pom);
+        setupFabricProperties(project, maven);
 
         LOG.debug("setting up fabric8 maven profiles");
-        boolean f8profiles = setupFabricMavenProfiles(project, maven, pom);
+        boolean f8profiles = setupFabricMavenProfiles(project, maven);
 
         String msg = "Added Fabric8 Maven support with base Docker image: " + from.getValue();
         if (f8profiles) {
@@ -384,9 +385,22 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
         }
     }
 
-    private void setupFabricProperties(Project project, MavenFacet maven, Model pom) {
+    private void setupFabricProperties(Project project, MavenFacet maven) {
+        // must install the dependency before re-loading maven model
+        boolean springBoot = false;
+        if (readinessProbe.getValue()) {
+            String servicePort = getDefaultServicePort(project);
+            if (servicePort != null && hasSpringBoot(project)) {
+                MavenHelpers.ensureMavenDependencyAdded(project, dependencyInstaller, "org.springframework.boot", "spring-boot-starter-actuator", null);
+                springBoot = true;
+            }
+        }
+
         // update properties section in pom.xml
         boolean updated = false;
+
+        // re-load maven after we have changed it in the previous steps (so the pom is up to date)
+        Model pom = maven.getModelResource().getCurrentModel();
 
         Properties properties = pom.getProperties();
         updated = MavenHelpers.updatePomProperty(properties, "fabric8.label.container", container.getValue(), updated);
@@ -420,24 +434,21 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
         }
 
         // kubernetes readiness probe
-        boolean springBoot = false;
         if (readinessProbe.getValue()) {
             String servicePort = getDefaultServicePort(project);
             if (servicePort != null) {
-                String path = "/";
 
-                if (hasSpringBoot(project)) {
+                String path;
+                if (springBoot) {
                     path = "/health";
-                    springBoot = true;
+                } else {
+                    path = "/";
                 }
 
-                // TODO: do not yet work with spring-boot due https://github.com/fabric8io/fabric8/issues/5811
-                if (!springBoot) {
-                    updated = MavenHelpers.updatePomProperty(properties, "fabric8.readinessProbe.httpGet.port", servicePort, updated);
-                    updated = MavenHelpers.updatePomProperty(properties, "fabric8.readinessProbe.httpGet.path", path, updated);
-                    updated = MavenHelpers.updatePomProperty(properties, "fabric8.readinessProbe.timeoutSeconds", "30", updated);
-                    updated = MavenHelpers.updatePomProperty(properties, "fabric8.readinessProbe.initialDelaySeconds", "5", updated);
-                }
+                updated = MavenHelpers.updatePomProperty(properties, "fabric8.readinessProbe.httpGet.port", servicePort, updated);
+                updated = MavenHelpers.updatePomProperty(properties, "fabric8.readinessProbe.httpGet.path", path, updated);
+                updated = MavenHelpers.updatePomProperty(properties, "fabric8.readinessProbe.timeoutSeconds", "30", updated);
+                updated = MavenHelpers.updatePomProperty(properties, "fabric8.readinessProbe.initialDelaySeconds", "5", updated);
             }
         }
 
@@ -446,17 +457,15 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
             maven.setModel(pom);
             LOG.debug("updated pom.xml");
         }
-
-        if (springBoot) {
-            // for spring boot we need the actuator to support readiness probe
-            MavenHelpers.ensureMavenDependencyAdded(project, dependencyInstaller, "org.springframework.boot", "spring-boot-starter-actuator", "compile");
-        }
     }
 
-    private boolean setupFabricMavenProfiles(Project project, MavenFacet maven, Model pom) {
+    private boolean setupFabricMavenProfiles(Project project, MavenFacet maven) {
         if (profiles.getValue() == null || !profiles.getValue()) {
             return false;
         }
+
+        // re-load maven after we have changed it in the previous steps (so the pom is up to date)
+        Model pom = maven.getModelResource().getCurrentModel();
 
         boolean updated = false;
         Profile profile = MavenHelpers.findProfile(pom, "f8-build");
