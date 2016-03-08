@@ -494,16 +494,15 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
      * Try to determine the default service port.
      *
      * If this is a WAR, EAR or spring-boot then lets assume 8080.
-     * For Karaf assume its 8181
+     *
+     * For Karaf we cannot assume its 8181 as web is not installed by default
+     * and there is no default index html on the port to use etc
      */
     protected String getDefaultServicePort(Project project) {
         String packaging = getProjectPackaging(project);
         if (Strings.isNotBlank(packaging)) {
             if (Objects.equal("war", packaging) || Objects.equal("ear", packaging)) {
                 return "8080";
-            }
-            if (Objects.equal("bundle", packaging)) {
-                return "8181";
             }
         }
         boolean springBoot = hasSpringBootMavenPlugin(project);
