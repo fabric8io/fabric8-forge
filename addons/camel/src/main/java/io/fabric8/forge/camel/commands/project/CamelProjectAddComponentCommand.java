@@ -1,17 +1,17 @@
 /**
- *  Copyright 2005-2015 Red Hat, Inc.
- *
- *  Red Hat licenses this file to you under the Apache License, version
- *  2.0 (the "License"); you may not use this file except in compliance
- *  with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
- *  implied.  See the License for the specific language governing
- *  permissions and limitations under the License.
+ * Copyright 2005-2015 Red Hat, Inc.
+ * <p/>
+ * Red Hat licenses this file to you under the Apache License, version
+ * 2.0 (the "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+ * implied.  See the License for the specific language governing
+ * permissions and limitations under the License.
  */
 package io.fabric8.forge.camel.commands.project;
 
@@ -19,35 +19,32 @@ import javax.inject.Inject;
 
 import io.fabric8.forge.camel.commands.project.dto.ComponentDto;
 import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
-import org.jboss.forge.addon.convert.Converter;
-import org.jboss.forge.addon.dependencies.Dependency;
-import org.jboss.forge.addon.dependencies.builder.DependencyBuilder;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
+import org.jboss.forge.addon.ui.context.UINavigationContext;
 import org.jboss.forge.addon.ui.input.UISelectOne;
-import org.jboss.forge.addon.ui.input.ValueChangeListener;
-import org.jboss.forge.addon.ui.input.events.ValueChangeEvent;
 import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
 import org.jboss.forge.addon.ui.metadata.WithAttributes;
+import org.jboss.forge.addon.ui.result.NavigationResult;
 import org.jboss.forge.addon.ui.result.Result;
 import org.jboss.forge.addon.ui.result.Results;
+import org.jboss.forge.addon.ui.result.navigation.NavigationResultBuilder;
 import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
+import org.jboss.forge.addon.ui.wizard.UIWizard;
 
-import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.createComponentDto;
-
-public class CamelProjectAddComponentCommand extends AbstractCamelProjectCommand {
+public class CamelProjectAddComponentCommand extends AbstractCamelProjectCommand implements UIWizard {
 
     @Inject
-    @WithAttributes(label = "Filter", required = false, description = "To filter components")
+    @WithAttributes(label = "Filter", required = true, description = "To filter components")
     private UISelectOne<String> filter;
 
     @Inject
     @WithAttributes(label = "Name", required = true, description = "Name of component type to add")
-    private UISelectOne<ComponentDto> name;
+    private UISelectOne<ComponentDto> componentName;
 
     @Inject
     private DependencyInstaller dependencyInstaller;
@@ -66,60 +63,19 @@ public class CamelProjectAddComponentCommand extends AbstractCamelProjectCommand
         filter.setValueChoices(CamelCommandsHelper.createComponentLabelValues(project, getCamelCatalog()));
         filter.setDefaultValue("<all>");
 
-        name.setValueChoices(CamelCommandsHelper.createAllComponentDtoValues(project, getCamelCatalog(), filter, true));
-        // include converter from string->dto
-        name.setValueConverter(new Converter<String, ComponentDto>() {
-            @Override
-            public ComponentDto convert(String text) {
-                return createComponentDto(getCamelCatalog(), text);
-            }
-        });
-        // show note about the chosen component
-        name.addValueChangeListener(new ValueChangeListener() {
-            @Override
-            public void valueChanged(ValueChangeEvent event) {
-                ComponentDto component = (ComponentDto) event.getNewValue();
-                if (component != null) {
-                    String description = component.getDescription();
-                    name.setNote(description != null ? description : "");
-                } else {
-                    name.setNote("");
-                }
-            }
-        });
-        builder.add(filter).add(name);
+        // we use the componentName in the next step so do not add it to this builder
+        builder.add(filter);
+    }
+
+    @Override
+    public NavigationResult next(UINavigationContext context) throws Exception {
+        NavigationResultBuilder builder = Results.navigationBuilder();
+        builder.add(new CamelProjectAddComponentStep(filter, componentName, projectFactory, dependencyInstaller, getCamelCatalog()));
+        return builder.build();
     }
 
     @Override
     public Result execute(UIExecutionContext context) throws Exception {
-        Project project = getSelectedProject(context);
-
-        // does the project already have camel?
-        Dependency core = findCamelCoreDependency(project);
-        if (core == null) {
-            return Results.fail("The project does not include camel-core");
-        }
-
-        ComponentDto dto = name.getValue();
-        if (dto != null) {
-
-            // we want to use same version as camel-core if its a camel component
-            // otherwise use the version from the dto
-            String version;
-            if ("org.apache.camel".equals(dto.getGroupId())) {
-                version = core.getCoordinate().getVersion();
-            } else {
-                version = dto.getVersion();
-            }
-            DependencyBuilder component = DependencyBuilder.create().setGroupId(dto.getGroupId())
-                    .setArtifactId(dto.getArtifactId()).setVersion(version);
-
-            // install the component
-            dependencyInstaller.install(project, component);
-
-            return Results.success("Added Camel component " + dto.getScheme() + " (" + dto.getArtifactId() + ") to the project");
-        } else {
-            return Results.fail("Unknown Camel component");
-        }
+        return null;
     }
 }

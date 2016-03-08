@@ -28,7 +28,6 @@ import io.fabric8.forge.camel.commands.project.completer.RouteBuilderCompleter;
 import io.fabric8.forge.camel.commands.project.dto.ComponentDto;
 import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
 import io.fabric8.forge.camel.commands.project.model.InputOptionByGroup;
-import org.jboss.forge.addon.convert.Converter;
 import org.jboss.forge.addon.facets.constraints.FacetConstraint;
 import org.jboss.forge.addon.parser.java.facets.JavaSourceFacet;
 import org.jboss.forge.addon.projects.Project;
@@ -45,8 +44,6 @@ import org.jboss.forge.addon.ui.input.InputComponent;
 import org.jboss.forge.addon.ui.input.InputComponentFactory;
 import org.jboss.forge.addon.ui.input.UIInput;
 import org.jboss.forge.addon.ui.input.UISelectOne;
-import org.jboss.forge.addon.ui.input.ValueChangeListener;
-import org.jboss.forge.addon.ui.input.events.ValueChangeEvent;
 import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
 import org.jboss.forge.addon.ui.metadata.WithAttributes;
 import org.jboss.forge.addon.ui.result.NavigationResult;
@@ -58,9 +55,7 @@ import org.jboss.forge.addon.ui.util.Metadata;
 import org.jboss.forge.addon.ui.wizard.UIWizard;
 import org.jboss.forge.roaster.model.util.Strings;
 
-import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.createComponentDto;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.createUIInputsForCamelComponent;
-import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.createUIInputsForCamelEndpoint;
 import static io.fabric8.forge.camel.commands.project.helper.CollectionHelper.first;
 
 @FacetConstraint({JavaSourceFacet.class, ResourcesFacet.class, ClassLoaderFacet.class})
@@ -100,27 +95,8 @@ public class CamelNewComponentCommand extends AbstractCamelProjectCommand implem
         Project project = getSelectedProject(builder.getUIContext());
         final JavaSourceFacet facet = project.getFacet(JavaSourceFacet.class);
 
-        componentName.setValueChoices(CamelCommandsHelper.createComponentDtoValues(project, getCamelCatalog(), null, false));
-        // include converter from string->dto
-        componentName.setValueConverter(new Converter<String, ComponentDto>() {
-            @Override
-            public ComponentDto convert(String text) {
-                return createComponentDto(getCamelCatalog(), text);
-            }
-        });
-        // show note about the chosen component
-        componentName.addValueChangeListener(new ValueChangeListener() {
-            @Override
-            public void valueChanged(ValueChangeEvent event) {
-                ComponentDto component = (ComponentDto) event.getNewValue();
-                if (component != null) {
-                    String description = component.getDescription();
-                    componentName.setNote(description != null ? description : "");
-                } else {
-                    componentName.setNote("");
-                }
-            }
-        });
+        // filter the list of components based on consumer and producer only
+        configureComponentName(project, componentName, false, false);
 
         targetPackage.setCompleter(new PackageNameCompleter(facet));
         targetPackage.addValidator(new PackageNameValidator());
@@ -141,11 +117,9 @@ public class CamelNewComponentCommand extends AbstractCamelProjectCommand implem
     public NavigationResult next(UINavigationContext context) throws Exception {
         Map<Object, Object> attributeMap = context.getUIContext().getAttributeMap();
 
-        ComponentDto component = componentName.getValue();
-        String camelComponentName = component.getScheme();
+        String camelComponentName = componentName.getValue().getScheme();
 
         attributeMap.put("componentName", camelComponentName);
-        attributeMap.put("componentName", componentName.getValue().getScheme());
         attributeMap.put("instanceName", instanceName.getValue());
         attributeMap.put("targetPackage", targetPackage.getValue());
         // calculate a default class name if none provided
