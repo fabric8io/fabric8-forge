@@ -390,6 +390,7 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
             updated = MavenHelpers.updatePomProperty(properties, "fabric8.service.containerPort", servicePort, updated);
             updated = MavenHelpers.updatePomProperty(properties, "fabric8.service.port", "80", updated);
             updated = MavenHelpers.updatePomProperty(properties, "fabric8.service.name", name, updated);
+            updated = MavenHelpers.updatePomProperty(properties, "fabric8.service.type", "LoadBalancer", updated);
         }
 
         // to save then set the model
@@ -455,9 +456,8 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
     /**
      * Try to determine the default service port.
      *
-     * If this is a WAR or EAR then lets assume 8080.
-     *
-     * For karaf we can't know its definitely got http inside; so lets punt for now.
+     * If this is a WAR, EAR or spring-boot then lets assume 8080.
+     * For Karaf assume its 8181
      */
     protected String getDefaultServicePort(Project project) {
         String packaging = getProjectPackaging(project);
@@ -465,7 +465,15 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
             if (Objects.equal("war", packaging) || Objects.equal("ear", packaging)) {
                 return "8080";
             }
+            if (Objects.equal("bundle", packaging)) {
+                return "8181";
+            }
         }
+        boolean springBoot = hasSpringBootMavenPlugin(project);
+        if (springBoot) {
+            return "8080";
+        }
+
         return null;
     }
 
