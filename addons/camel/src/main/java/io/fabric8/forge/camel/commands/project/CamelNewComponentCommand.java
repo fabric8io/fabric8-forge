@@ -24,8 +24,8 @@ import javax.inject.Inject;
 import io.fabric8.forge.addon.utils.completer.PackageNameCompleter;
 import io.fabric8.forge.addon.utils.validator.ClassNameValidator;
 import io.fabric8.forge.addon.utils.validator.PackageNameValidator;
-import io.fabric8.forge.camel.commands.project.completer.CamelComponentsCompleter;
 import io.fabric8.forge.camel.commands.project.completer.RouteBuilderCompleter;
+import io.fabric8.forge.camel.commands.project.dto.ComponentDto;
 import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
 import io.fabric8.forge.camel.commands.project.model.InputOptionByGroup;
 import org.jboss.forge.addon.facets.constraints.FacetConstraint;
@@ -63,7 +63,7 @@ public class CamelNewComponentCommand extends AbstractCamelProjectCommand implem
 
     @Inject
     @WithAttributes(label = "Component Name", required = true, description = "The component to use")
-    private UISelectOne<String> componentName;
+    private UISelectOne<ComponentDto> componentName;
 
     @Inject
     @WithAttributes(label = "Instance Name", required = true, description = "Name of component instance to add")
@@ -95,8 +95,8 @@ public class CamelNewComponentCommand extends AbstractCamelProjectCommand implem
         Project project = getSelectedProject(builder.getUIContext());
         final JavaSourceFacet facet = project.getFacet(JavaSourceFacet.class);
 
-        Iterable<String> names = new CamelComponentsCompleter(project, getCamelCatalog(), null, false, false, false, false).getValueNames(null);
-        componentName.setValueChoices(names);
+        // filter the list of components based on consumer and producer only
+        configureComponentName(project, componentName, false, false);
 
         targetPackage.setCompleter(new PackageNameCompleter(facet));
         targetPackage.addValidator(new PackageNameValidator());
@@ -117,7 +117,7 @@ public class CamelNewComponentCommand extends AbstractCamelProjectCommand implem
     public NavigationResult next(UINavigationContext context) throws Exception {
         Map<Object, Object> attributeMap = context.getUIContext().getAttributeMap();
 
-        String camelComponentName = componentName.getValue();
+        String camelComponentName = componentName.getValue().getScheme();
 
         attributeMap.put("componentName", camelComponentName);
         attributeMap.put("instanceName", instanceName.getValue());
