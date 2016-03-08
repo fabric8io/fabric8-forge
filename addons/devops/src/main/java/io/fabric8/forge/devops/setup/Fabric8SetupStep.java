@@ -109,10 +109,6 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
     private UIInput<String> main;
 
     @Inject
-    @WithAttributes(label = "Test classes", required = false, defaultValue = "true", description = "Include test dependencies")
-    private UIInput<Boolean> test;
-
-    @Inject
     @WithAttributes(label = "Kubernetes Service", required = false, defaultValue = "true", description = "Whether to create Kubernetes service if applicable")
     private UIInput<Boolean> service;
 
@@ -303,7 +299,7 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
             }
         });
 
-        builder.add(profiles).add(test).add(icon).add(group).add(container);
+        builder.add(profiles).add(icon).add(group).add(container);
     }
 
     @Override
@@ -324,15 +320,8 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
         MavenFacet maven = project.getFacet(MavenFacet.class);
         Model pom = maven.getModel();
 
-        // import fabric8 bom
-        LOG.debug("importing fabric8 bom");
-        importFabricBom(project, pom);
-
         // make sure we have resources as we need it later
         facetFactory.install(project, ResourcesFacet.class);
-
-        LOG.debug("setting up arquillian test");
-        setupArguillianTest(project, pom);
 
         LOG.debug("setting up fabric8 properties");
         setupFabricProperties(project, maven);
@@ -375,13 +364,6 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
         if (pluginBuilder != null) {
             MavenPluginFacet pluginFacet = project.getFacet(MavenPluginFacet.class);
             pluginFacet.addPlugin(pluginBuilder);
-        }
-    }
-
-    private void setupArguillianTest(Project project, Model pom) {
-        if (test.getValue() != null && test.getValue()) {
-            ensureMavenDependencyAdded(project, dependencyInstaller, "io.fabric8", "fabric8-arquillian", "test");
-            ensureMavenDependencyAdded(project, dependencyInstaller, "org.jboss.arquillian.junit", "arquillian-junit-container", "test");
         }
     }
 
