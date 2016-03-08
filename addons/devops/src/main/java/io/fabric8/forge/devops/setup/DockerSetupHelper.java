@@ -1,19 +1,23 @@
 /**
- *  Copyright 2005-2015 Red Hat, Inc.
- *
- *  Red Hat licenses this file to you under the Apache License, version
- *  2.0 (the "License"); you may not use this file except in compliance
- *  with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
- *  implied.  See the License for the specific language governing
- *  permissions and limitations under the License.
+ * Copyright 2005-2015 Red Hat, Inc.
+ * <p/>
+ * Red Hat licenses this file to you under the Apache License, version
+ * 2.0 (the "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+ * implied.  See the License for the specific language governing
+ * permissions and limitations under the License.
  */
 package io.fabric8.forge.devops.setup;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Properties;
 
 import io.fabric8.forge.addon.utils.CamelProjectHelper;
 import io.fabric8.forge.addon.utils.MavenHelpers;
@@ -33,10 +37,6 @@ import org.jboss.forge.addon.maven.projects.MavenPluginFacet;
 import org.jboss.forge.addon.projects.Project;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Properties;
 
 public class DockerSetupHelper {
     private static final transient Logger LOG = LoggerFactory.getLogger(DockerSetupHelper.class);
@@ -227,6 +227,14 @@ public class DockerSetupHelper {
             return pluginFacet.hasPlugin(coor);
         }
         return false;
+    }
+
+    public static boolean hasSpringBoot(Project project) {
+        return CamelProjectHelper.hasDependency(project, "org.springframework.boot");
+    }
+
+    public static boolean hasVertx(Project project) {
+        return CamelProjectHelper.hasDependency(project, "io.vertx");
     }
 
     public static String defaultDockerImage(Project project) {
