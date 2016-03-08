@@ -70,7 +70,8 @@ import org.slf4j.LoggerFactory;
 
 import static io.fabric8.forge.addon.utils.MavenHelpers.ensureMavenDependencyAdded;
 import static io.fabric8.forge.devops.setup.DockerSetupHelper.getDockerFromImage;
-import static io.fabric8.forge.devops.setup.DockerSetupHelper.hasSpringBootMavenPlugin;
+import static io.fabric8.forge.devops.setup.DockerSetupHelper.hasSpringBoot;
+import static io.fabric8.forge.devops.setup.DockerSetupHelper.hasSpringBootWeb;
 import static io.fabric8.forge.devops.setup.DockerSetupHelper.setupDocker;
 import static io.fabric8.forge.devops.setup.SetupProjectHelper.findCamelArtifacts;
 
@@ -109,6 +110,14 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
     @Inject
     @WithAttributes(label = "Test classes", required = false, defaultValue = "true", description = "Include test dependencies")
     private UIInput<Boolean> test;
+
+    @Inject
+    @WithAttributes(label = "Kubernetes Service", required = false, defaultValue = "true", description = "Whether to create Kubernetes service if applicable")
+    private UIInput<Boolean> service;
+
+    @Inject
+    @WithAttributes(label = "Kubernetes Readiness Probe", required = false, defaultValue = "true", description = "Whether to create Kubernetes readiness probe if applicable")
+    private UIInput<Boolean> readinessProbe;
 
     @Inject
     @WithAttributes(label = "Maven Fabric8 Profiles", required = false, defaultValue = "true", description = "Include Maven fabric8 profiles for easily building and deploying")
@@ -152,7 +161,7 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
         final Project project = getSelectedProject(builder.getUIContext());
 
         String packaging = getProjectPackaging(project);
-        boolean springBoot = hasSpringBootMavenPlugin(project);
+        boolean springBoot = hasSpringBoot(project);
 
         // limit the choices depending on the project packaging
         final List<String> choices = new ArrayList<String>();
@@ -244,8 +253,10 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
                 choices.add("jetty");
                 choices.add("karaf");
                 choices.add("mule");
+                choices.add("spring-boot");
                 choices.add("tomcat");
                 choices.add("tomee");
+                choices.add("vertx");
                 choices.add("weld");
                 choices.add("wildfly");
                 return choices.iterator();
@@ -259,6 +270,17 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
                     return "camel";
                 }
 
+                // popular containers
+                boolean springBoot = hasSpringBoot(project);
+                if (springBoot) {
+                    return "spring-boot";
+                }
+                boolean vertx = hasSpringBoot(project);
+                if (vertx) {
+                    return "vertx";
+                }
+
+                // match by docker container name
                 if (container.getValue() != null) {
                     for (String choice : icon.getValueChoices()) {
                         if (choice.equals(container.getValue())) {
@@ -373,29 +395,61 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
             updated = MavenHelpers.updatePomProperty(properties, "fabric8.iconRef", "icons/" + iconValue, updated);
         }
         updated = MavenHelpers.updatePomProperty(properties, "fabric8.label.group", group.getValue(), updated);
-        String servicePort = getDefaultServicePort(project);
-        if (servicePort != null) {
-            String name = pom.getArtifactId();
-            // there is a max 24 chars limit in OpenShift/Kubernetes
-            if (name.length() > 24) {
-                // print a warning
-                String msg = "The fabric8.service.name: " + name + " is being limited to max 24 chars as that is required by Kubernetes/Openshift."
-                        + " You can change the name of the service in the <properties> section of the Maven pom file.";
-                // log and print to system out as the latter is what is seen in the CLI
-                LOG.warn(msg);
-                System.out.println(msg);
-                // clip the name at max 24 chars
-                name = name.substring(0, 24);
+
+        // kubernetes service
+        if (service.getValue()) {
+            String servicePort = getDefaultServicePort(project);
+            if (servicePort != null) {
+                String name = pom.getArtifactId();
+                // there is a max 24 chars limit in OpenShift/Kubernetes
+                if (name.length() > 24) {
+                    // print a warning
+                    String msg = "The fabric8.service.name: " + name + " is being limited to max 24 chars as that is required by Kubernetes/Openshift."
+                            + " You can change the name of the service in the <properties> section of the Maven pom file.";
+                    // log and print to system out as the latter is what is seen in the CLI
+                    LOG.warn(msg);
+                    System.out.println(msg);
+                    // clip the name at max 24 chars
+                    name = name.substring(0, 24);
+                }
+                updated = MavenHelpers.updatePomProperty(properties, "fabric8.service.containerPort", servicePort, updated);
+                updated = MavenHelpers.updatePomProperty(properties, "fabric8.service.port", "80", updated);
+                updated = MavenHelpers.updatePomProperty(properties, "fabric8.service.name", name, updated);
+                updated = MavenHelpers.updatePomProperty(properties, "fabric8.service.type", "LoadBalancer", updated);
             }
-            updated = MavenHelpers.updatePomProperty(properties, "fabric8.service.containerPort", servicePort, updated);
-            updated = MavenHelpers.updatePomProperty(properties, "fabric8.service.port", "80", updated);
-            updated = MavenHelpers.updatePomProperty(properties, "fabric8.service.name", name, updated);
+        }
+
+        // kubernetes readiness probe
+        boolean springBoot = false;
+        if (readinessProbe.getValue()) {
+            String servicePort = getDefaultServicePort(project);
+            if (servicePort != null) {
+                String path = "/";
+
+                if (hasSpringBoot(project)) {
+                    path = "/health";
+                    springBoot = true;
+                }
+
+                // TODO: do not yet work with spring-boot due https://github.com/fabric8io/fabric8/issues/5811
+                if (!springBoot) {
+                    updated = MavenHelpers.updatePomProperty(properties, "fabric8.readinessProbe.httpGet.port", servicePort, updated);
+                    updated = MavenHelpers.updatePomProperty(properties, "fabric8.readinessProbe.httpGet.path", path, updated);
+                    updated = MavenHelpers.updatePomProperty(properties, "fabric8.readinessProbe.timeoutSeconds", "30", updated);
+                    updated = MavenHelpers.updatePomProperty(properties, "fabric8.readinessProbe.initialDelaySeconds", "5", updated);
+                }
+            }
         }
 
         // to save then set the model
         if (updated) {
             maven.setModel(pom);
             LOG.debug("updated pom.xml");
+        }
+
+        if (springBoot) {
+            // for spring boot we need the actuator to support readiness probe
+            MavenHelpers.ensureMavenDependencyAdded(project, dependencyInstaller, "org.springframework.boot", "spring-boot-starter-actuator", "compile");
         }
     }
 
@@ -455,9 +509,10 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
     /**
      * Try to determine the default service port.
      *
-     * If this is a WAR or EAR then lets assume 8080.
+     * If this is a WAR, EAR or spring-boot then lets assume 8080.
      *
-     * For karaf we can't know its definitely got http inside; so lets punt for now.
+     * For Karaf we cannot assume its 8181 as web is not installed by default
+     * and there is no default index html on the port to use etc
      */
     protected String getDefaultServicePort(Project project) {
         String packaging = getProjectPackaging(project);
@@ -466,6 +521,11 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
                 return "8080";
             }
         }
+        boolean springBoot = hasSpringBootWeb(project);
+        if (springBoot) {
+            return "8080";
+        }
+
         return null;
     }
 

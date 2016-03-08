@@ -127,8 +127,11 @@ public class MavenHelpers {
 
         DependencyBuilder component = DependencyBuilder.create().
                 setGroupId(groupId).
-                setArtifactId(artifactId).
-                setScopeType(scope);
+                setArtifactId(artifactId);
+
+        if (scope != null) {
+            component.setScopeType(scope);
+        }
 
         String version = MavenHelpers.getVersion(groupId, artifactId);
         if (Strings.isNotBlank(version)) {
