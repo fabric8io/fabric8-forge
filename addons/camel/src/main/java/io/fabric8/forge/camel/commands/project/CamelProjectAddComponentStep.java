@@ -67,7 +67,8 @@ public class CamelProjectAddComponentStep extends AbstractCamelProjectCommand im
         final Project project = getSelectedProject(builder);
 
         Iterable<ComponentDto> it = CamelCommandsHelper.createAllComponentDtoValues(project, getCamelCatalog(), filter, true).call();
-
+        // flattern the choices to a map so the UI is more responsive, as we can do a direct lookup
+        // in the map from the value converter
         final Map<String, ComponentDto> components = new LinkedHashMap<>();
         for (ComponentDto dto : it) {
             components.put(dto.getScheme(), dto);
