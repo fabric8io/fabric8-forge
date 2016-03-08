@@ -81,7 +81,9 @@ public class CamelProjectHelper {
             if (match && version != null) {
                 match = d.getCoordinate().getVersion().equals(version);
             }
-            return match;
+            if (match) {
+                return match;
+            }
         }
         return false;
     }

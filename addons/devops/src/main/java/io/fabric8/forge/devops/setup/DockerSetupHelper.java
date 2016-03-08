@@ -65,7 +65,7 @@ public class DockerSetupHelper {
         MavenFacet maven = project.getFacet(MavenFacet.class);
         Model pom = maven.getModel();
 
-        boolean springBoot = hasSpringBootMavenPlugin(project);
+        boolean springBoot = hasSpringBoot(project);
         String packaging = getProjectPackaging(project);
         boolean war = packaging != null && packaging.equals("war");
         boolean bundle = packaging != null && packaging.equals("bundle");
@@ -162,7 +162,7 @@ public class DockerSetupHelper {
     public static void setupDockerProperties(Project project, String organization, String fromImage) {
         String packaging = getProjectPackaging(project);
 
-        boolean springBoot = hasSpringBootMavenPlugin(project);
+        boolean springBoot = hasSpringBoot(project);
         boolean war = packaging != null && packaging.equals("war");
         boolean bundle = packaging != null && packaging.equals("bundle");
         boolean jar = packaging != null && packaging.equals("jar");
@@ -220,17 +220,12 @@ public class DockerSetupHelper {
         return null;
     }
 
-    public static boolean hasSpringBootMavenPlugin(Project project) {
-        if (project != null) {
-            MavenPluginFacet pluginFacet = project.getFacet(MavenPluginFacet.class);
-            Coordinate coor = CoordinateBuilder.create("org.springframework.boot:spring-boot-maven-plugin");
-            return pluginFacet.hasPlugin(coor);
-        }
-        return false;
-    }
-
     public static boolean hasSpringBoot(Project project) {
         return CamelProjectHelper.hasDependency(project, "org.springframework.boot");
+    }
+
+    public static boolean hasSpringBootWeb(Project project) {
+        return CamelProjectHelper.hasDependency(project, "org.springframework.boot", "spring-boot-starter-web");
     }
 
     public static boolean hasVertx(Project project) {

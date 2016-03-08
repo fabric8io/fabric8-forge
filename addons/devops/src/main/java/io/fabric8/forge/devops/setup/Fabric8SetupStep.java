@@ -71,7 +71,7 @@ import org.slf4j.LoggerFactory;
 import static io.fabric8.forge.addon.utils.MavenHelpers.ensureMavenDependencyAdded;
 import static io.fabric8.forge.devops.setup.DockerSetupHelper.getDockerFromImage;
 import static io.fabric8.forge.devops.setup.DockerSetupHelper.hasSpringBoot;
-import static io.fabric8.forge.devops.setup.DockerSetupHelper.hasSpringBootMavenPlugin;
+import static io.fabric8.forge.devops.setup.DockerSetupHelper.hasSpringBootWeb;
 import static io.fabric8.forge.devops.setup.DockerSetupHelper.setupDocker;
 import static io.fabric8.forge.devops.setup.SetupProjectHelper.findCamelArtifacts;
 
@@ -161,7 +161,7 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
         final Project project = getSelectedProject(builder.getUIContext());
 
         String packaging = getProjectPackaging(project);
-        boolean springBoot = hasSpringBootMavenPlugin(project);
+        boolean springBoot = hasSpringBoot(project);
 
         // limit the choices depending on the project packaging
         final List<String> choices = new ArrayList<String>();
@@ -420,13 +420,24 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
         }
 
         // kubernetes readiness probe
+        boolean springBoot = false;
         if (readinessProbe.getValue()) {
             String servicePort = getDefaultServicePort(project);
             if (servicePort != null) {
-                updated = MavenHelpers.updatePomProperty(properties, "fabric8.readinessProbe.httpGet.port", servicePort, updated);
-                updated = MavenHelpers.updatePomProperty(properties, "fabric8.readinessProbe.httpGet.path", "/", updated);
-                updated = MavenHelpers.updatePomProperty(properties, "fabric8.readinessProbe.timeoutSeconds", "30", updated);
-                updated = MavenHelpers.updatePomProperty(properties, "fabric8.readinessProbe.initialDelaySeconds", "5", updated);
+                String path = "/";
+
+                if (hasSpringBoot(project)) {
+                    path = "/health";
+                    springBoot = true;
+                }
+
+                // TODO: do not yet work with spring-boot due https://github.com/fabric8io/fabric8/issues/5811
+                if (!springBoot) {
+                    updated = MavenHelpers.updatePomProperty(properties, "fabric8.readinessProbe.httpGet.port", servicePort, updated);
+                    updated = MavenHelpers.updatePomProperty(properties, "fabric8.readinessProbe.httpGet.path", path, updated);
+                    updated = MavenHelpers.updatePomProperty(properties, "fabric8.readinessProbe.timeoutSeconds", "30", updated);
+                    updated = MavenHelpers.updatePomProperty(properties, "fabric8.readinessProbe.initialDelaySeconds", "5", updated);
+                }
             }
         }
 
@@ -434,6 +445,11 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
         if (updated) {
             maven.setModel(pom);
             LOG.debug("updated pom.xml");
+        }
+
+        if (springBoot) {
+            // for spring boot we need the actuator to support readiness probe
+            MavenHelpers.ensureMavenDependencyAdded(project, dependencyInstaller, "org.springframework.boot", "spring-boot-starter-actuator", "compile");
         }
     }
 
@@ -505,7 +521,7 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
                 return "8080";
             }
         }
-        boolean springBoot = hasSpringBootMavenPlugin(project);
+        boolean springBoot = hasSpringBootWeb(project);
         if (springBoot) {
             return "8080";
         }
