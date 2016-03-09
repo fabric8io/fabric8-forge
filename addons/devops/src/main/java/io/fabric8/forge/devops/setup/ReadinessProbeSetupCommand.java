@@ -21,6 +21,8 @@ import javax.inject.Inject;
 
 import io.fabric8.utils.Strings;
 import org.apache.maven.model.Model;
+import org.hibernate.validator.constraints.Range;
+import org.hibernate.validator.valuehandling.UnwrapValidatedValue;
 import org.jboss.forge.addon.facets.constraints.FacetConstraint;
 import org.jboss.forge.addon.maven.projects.MavenFacet;
 import org.jboss.forge.addon.projects.Project;
@@ -56,6 +58,8 @@ public class ReadinessProbeSetupCommand extends AbstractFabricProjectCommand {
 
     @Inject
     @WithAttributes(label = "HTTP Port", description = "Creates a HTTP GET action readiness probe on this port. The default value is 80.")
+    @Range(min = 0, max = 65535)
+    @UnwrapValidatedValue
     private UIInput<Integer> httpPort;
 
     @Inject
@@ -64,6 +68,8 @@ public class ReadinessProbeSetupCommand extends AbstractFabricProjectCommand {
 
     @Inject
     @WithAttributes(label = "Port", description = "Creates a TCP socket action readiness probe on specified port")
+    @Range(min = 0, max = 65535)
+    @UnwrapValidatedValue
     private UIInput<Integer> port;
 
     @Override

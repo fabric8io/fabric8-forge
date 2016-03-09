@@ -19,7 +19,11 @@ import java.util.Properties;
 import javax.inject.Inject;
 
 import io.fabric8.forge.addon.utils.validator.MaxLengthValidator;
+import io.fabric8.utils.Strings;
 import org.apache.maven.model.Model;
+import org.hibernate.validator.constraints.Length;
+import org.hibernate.validator.constraints.Range;
+import org.hibernate.validator.valuehandling.UnwrapValidatedValue;
 import org.jboss.forge.addon.facets.constraints.FacetConstraint;
 import org.jboss.forge.addon.maven.projects.MavenFacet;
 import org.jboss.forge.addon.projects.Project;
@@ -40,15 +44,21 @@ public class ServiceSetupCommand extends AbstractFabricProjectCommand {
 
     @Inject
     @WithAttributes(label = "Service Name", required = true, description = "The service name")
+    @Length(max = 24)
+    @UnwrapValidatedValue
     private UIInput<String> serviceName;
 
     @Inject
     @WithAttributes(label = "Service Port", required = true, description = "The service port (outside)")
-    private UIInput<String> servicePort;
+    @Range(min = 0, max = 65535)
+    @UnwrapValidatedValue
+    private UIInput<Integer> servicePort;
 
     @Inject
     @WithAttributes(label = "Container Port", required = true, description = "The service port used by the container (inside)")
-    private UIInput<String> containerPort;
+    @Range(min = 0, max = 65535)
+    @UnwrapValidatedValue
+    private UIInput<Integer> containerPort;
 
     @Override
     public UICommandMetadata getMetadata(UIContext context) {
@@ -79,11 +89,15 @@ public class ServiceSetupCommand extends AbstractFabricProjectCommand {
 
         if (properties != null) {
             serviceName.setDefaultValue(properties.getProperty("fabric8.service.name", ""));
-            servicePort.setDefaultValue(properties.getProperty("fabric8.service.port", ""));
-            containerPort.setDefaultValue(properties.getProperty("fabric8.service.containerPort", ""));
+            String val = properties.getProperty("fabric8.service.port", "");
+            if (Strings.isNotBlank(val)) {
+                servicePort.setDefaultValue(Integer.valueOf(val));
+            }
+            val = properties.getProperty("fabric8.service.containerPort", "");
+            if (Strings.isNotBlank(val)) {
+                containerPort.setDefaultValue(Integer.valueOf(val));
+            }
         }
-        // the service name must at most be 24 chars
-        serviceName.addValidator(new MaxLengthValidator(24));
 
         // we want to be able to edit existing values in CLI
         serviceName.getFacet(HintsFacet.class).setPromptInInteractiveMode(true);
@@ -107,11 +121,11 @@ public class ServiceSetupCommand extends AbstractFabricProjectCommand {
             updated = true;
         }
         if (servicePort.getValue() != null) {
-            properties.put("fabric8.service.port", servicePort.getValue());
+            properties.put("fabric8.service.port", "" + servicePort.getValue());
             updated = true;
         }
         if (containerPort.getValue() != null) {
-            properties.put("fabric8.service.containerPort", containerPort.getValue());
+            properties.put("fabric8.service.containerPort", "" + containerPort.getValue());
             updated = true;
         }
 
