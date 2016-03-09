@@ -26,6 +26,7 @@ import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
+import org.jboss.forge.addon.ui.facets.HintsFacet;
 import org.jboss.forge.addon.ui.input.UIInput;
 import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
 import org.jboss.forge.addon.ui.metadata.WithAttributes;
@@ -67,11 +68,35 @@ public class ServiceSetupCommand extends AbstractFabricProjectCommand {
             return true;
         }
     }
-    
+
+    @Override
+    public void initializeUI(final UIBuilder builder) throws Exception {
+        Project project = getSelectedProject(builder.getUIContext());
+
+        MavenFacet maven = project.getFacet(MavenFacet.class);
+        Model pom = maven.getModel();
+        final Properties properties = pom.getProperties();
+
+        if (properties != null) {
+            serviceName.setDefaultValue(properties.getProperty("fabric8.service.name", ""));
+            servicePort.setDefaultValue(properties.getProperty("fabric8.service.port", ""));
+            containerPort.setDefaultValue(properties.getProperty("fabric8.service.containerPort", ""));
+        }
+        // the service name must at most be 24 chars
+        serviceName.addValidator(new MaxLengthValidator(24));
+
+        // we want to be able to edit existing values in CLI
+        serviceName.getFacet(HintsFacet.class).setPromptInInteractiveMode(true);
+        servicePort.getFacet(HintsFacet.class).setPromptInInteractiveMode(true);
+        containerPort.getFacet(HintsFacet.class).setPromptInInteractiveMode(true);
+
+        builder.add(serviceName).add(servicePort).add(containerPort);
+    }
+
     @Override
     public Result execute(UIExecutionContext context) throws Exception {
         Project project = getSelectedProject(context);
-        
+
         // update properties section in pom.xml
         MavenFacet maven = project.getFacet(MavenFacet.class);
         Model pom = maven.getModel();
@@ -96,25 +121,6 @@ public class ServiceSetupCommand extends AbstractFabricProjectCommand {
         }
 
         return Results.success("Kubernetes service updated");
-    }
-
-    @Override
-    public void initializeUI(final UIBuilder builder) throws Exception {
-        Project project = getSelectedProject(builder.getUIContext());
-
-        MavenFacet maven = project.getFacet(MavenFacet.class);
-        Model pom = maven.getModel();
-        final Properties properties = pom.getProperties();
-
-        if (properties != null) {
-            serviceName.setDefaultValue(properties.getProperty("fabric8.service.name", ""));
-            servicePort.setDefaultValue(properties.getProperty("fabric8.service.port", ""));
-            containerPort.setDefaultValue(properties.getProperty("fabric8.service.containerPort", ""));
-        }
-        // the service name must at most be 24 chars
-        serviceName.addValidator(new MaxLengthValidator(24));
-
-        builder.add(serviceName).add(servicePort).add(containerPort);
     }
 
 }
