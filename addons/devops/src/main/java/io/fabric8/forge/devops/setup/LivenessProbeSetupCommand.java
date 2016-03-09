@@ -40,34 +40,34 @@ import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
 
 @FacetConstraint({MavenFacet.class})
-public class ReadinessProbeSetupCommand extends AbstractFabricProjectCommand {
+public class LivenessProbeSetupCommand extends AbstractFabricProjectCommand {
 
     private static final String[] TYPES = new String[]{"EXEC", "HTTP", "TCP"};
 
     @Inject
-    @WithAttributes(label = "Type", required = true, description = "Whether to use EXEC, HTTP, or TCP readiness probe")
+    @WithAttributes(label = "Type", required = true, description = "Whether to use EXEC, HTTP, or TCP liveness probe")
     private UISelectOne<String> type;
 
     @Inject
-    @WithAttributes(label = "Exec", description = "Creates a exec action readiness probe with this command")
+    @WithAttributes(label = "Exec", description = "Creates a exec action liveness probe with this command")
     private UIInput<String> exec;
 
     @Inject
-    @WithAttributes(label = "HTTP Host", description = "Creates a HTTP GET action readiness probe on this host. To use readiness probe with HTTP you must configure at least the port and path options.")
+    @WithAttributes(label = "HTTP Host", description = "Creates a HTTP GET action liveness probe on this host. To use liveness probe with HTTP you must configure at least the port and path options.")
     private UIInput<String> httpHost;
 
     @Inject
-    @WithAttributes(label = "HTTP Port", description = "Creates a HTTP GET action readiness probe on this port. The default value is 80.")
+    @WithAttributes(label = "HTTP Port", description = "Creates a HTTP GET action liveness probe on this port. The default value is 80.")
     @Range(min = 0, max = 65535)
     @UnwrapValidatedValue
     private UIInput<Integer> httpPort;
 
     @Inject
-    @WithAttributes(label = "HTTP Path", description = "Creates a HTTP GET action readiness probe on with this path.")
+    @WithAttributes(label = "HTTP Path", description = "Creates a HTTP GET action liveness probe on with this path.")
     private UIInput<String> httpPath;
 
     @Inject
-    @WithAttributes(label = "Port", description = "Creates a TCP socket action readiness probe on specified port")
+    @WithAttributes(label = "Port", description = "Creates a TCP socket action liveness probe on specified port")
     @Range(min = 0, max = 65535)
     @UnwrapValidatedValue
     private UIInput<Integer> port;
@@ -86,9 +86,9 @@ public class ReadinessProbeSetupCommand extends AbstractFabricProjectCommand {
 
     @Override
     public UICommandMetadata getMetadata(UIContext context) {
-        return Metadata.forCommand(ReadinessProbeSetupCommand.class).name(
-                "Fabric8: Readiness Probe").category(Categories.create(AbstractFabricProjectCommand.CATEGORY))
-                .description("Add/Update Kubernetes Readiness Probe");
+        return Metadata.forCommand(LivenessProbeSetupCommand.class).name(
+                "Fabric8: Liveness Probe").category(Categories.create(AbstractFabricProjectCommand.CATEGORY))
+                .description("Add/Update Kubernetes Liveness Probe");
     }
 
     @Override
@@ -117,14 +117,14 @@ public class ReadinessProbeSetupCommand extends AbstractFabricProjectCommand {
         type.setDefaultValue(TYPES[1]);
 
         if (properties != null) {
-            exec.setDefaultValue(properties.getProperty("fabric8.readinessProbe.exec", ""));
-            httpHost.setDefaultValue(properties.getProperty("fabric8.readinessProbe.httpGet.host", ""));
-            String val = properties.getProperty("fabric8.readinessProbe.httpGet.port", "80");
+            exec.setDefaultValue(properties.getProperty("fabric8.livenessProbe.exec", ""));
+            httpHost.setDefaultValue(properties.getProperty("fabric8.livenessProbe.httpGet.host", ""));
+            String val = properties.getProperty("fabric8.livenessProbe.httpGet.port", "80");
             if (Strings.isNotBlank(val)) {
                 httpPort.setDefaultValue(Integer.valueOf(val));
             }
-            httpPath.setDefaultValue(properties.getProperty("fabric8.readinessProbe.httpGet.path", ""));
-            val = properties.getProperty("fabric8.readinessProbe.port", "");
+            httpPath.setDefaultValue(properties.getProperty("fabric8.livenessProbe.httpGet.path", ""));
+            val = properties.getProperty("fabric8.livenessProbe.port", "");
             if (Strings.isNotBlank(val)) {
                 port.setDefaultValue(Integer.valueOf(val));
             }
@@ -215,55 +215,55 @@ public class ReadinessProbeSetupCommand extends AbstractFabricProjectCommand {
 
         if (TYPES[0].equals(type.getValue())) {
             if (Strings.isNotBlank(exec.getValue())) {
-                properties.put("fabric8.readinessProbe.exec", exec.getValue());
+                properties.put("fabric8.livenessProbe.exec", exec.getValue());
                 updated = true;
                 // remove the http/port as we use exec
-                properties.remove("fabric8.readinessProbe.httpGet.host");
-                properties.remove("fabric8.readinessProbe.httpGet.port");
-                properties.remove("fabric8.readinessProbe.httpGet.path");
-                properties.remove("fabric8.readinessProbe.port");
+                properties.remove("fabric8.livenessProbe.httpGet.host");
+                properties.remove("fabric8.livenessProbe.httpGet.port");
+                properties.remove("fabric8.livenessProbe.httpGet.path");
+                properties.remove("fabric8.livenessProbe.port");
             }
         } else if (TYPES[1].equals(type.getValue())) {
             if (Strings.isNotBlank(httpHost.getValue())) {
-                properties.put("fabric8.readinessProbe.httpGet.host", httpHost.getValue());
+                properties.put("fabric8.livenessProbe.httpGet.host", httpHost.getValue());
                 updated = true;
                 // remove the exec/port as we use http
-                properties.remove("fabric8.readinessProbe.exec");
-                properties.remove("fabric8.readinessProbe.port");
+                properties.remove("fabric8.livenessProbe.exec");
+                properties.remove("fabric8.livenessProbe.port");
             }
             if (httpPort.getValue() != null) {
-                properties.put("fabric8.readinessProbe.httpGet.port", "" + httpPort.getValue());
+                properties.put("fabric8.livenessProbe.httpGet.port", "" + httpPort.getValue());
                 updated = true;
                 // remove the exec/port as we use http
-                properties.remove("fabric8.readinessProbe.exec");
-                properties.remove("fabric8.readinessProbe.port");
+                properties.remove("fabric8.livenessProbe.exec");
+                properties.remove("fabric8.livenessProbe.port");
             }
             if (Strings.isNotBlank(httpPath.getValue())) {
-                properties.put("fabric8.readinessProbe.httpGet.path", httpPath.getValue());
+                properties.put("fabric8.livenessProbe.httpGet.path", httpPath.getValue());
                 updated = true;
                 // remove the exec/port as we use http
-                properties.remove("fabric8.readinessProbe.exec");
-                properties.remove("fabric8.readinessProbe.port");
+                properties.remove("fabric8.livenessProbe.exec");
+                properties.remove("fabric8.livenessProbe.port");
             }
         } else if (TYPES[2].equals(type.getValue())) {
             if (port.getValue() != null) {
-                properties.put("fabric8.readinessProbe.port", "" + port.getValue());
+                properties.put("fabric8.livenessProbe.port", "" + port.getValue());
                 updated = true;
                 // remove the exec/http as we use port
-                properties.remove("fabric8.readinessProbe.exec");
-                properties.remove("fabric8.readinessProbe.httpGet.host");
-                properties.remove("fabric8.readinessProbe.httpGet.port");
-                properties.remove("fabric8.readinessProbe.httpGet.path");
+                properties.remove("fabric8.livenessProbe.exec");
+                properties.remove("fabric8.livenessProbe.httpGet.host");
+                properties.remove("fabric8.livenessProbe.httpGet.port");
+                properties.remove("fabric8.livenessProbe.httpGet.path");
             }
         }
 
         if (initialDelaySeconds.getValue() != null) {
-            properties.put("fabric8.readinessProbe.initialDelaySeconds", "" + initialDelaySeconds.getValue());
+            properties.put("fabric8.livenessProbe.initialDelaySeconds", "" + initialDelaySeconds.getValue());
             updated = true;
         }
 
         if (timeoutSeconds.getValue() != null) {
-            properties.put("fabric8.readinessProbe.timeoutSeconds", "" + timeoutSeconds.getValue());
+            properties.put("fabric8.livenessProbe.timeoutSeconds", "" + timeoutSeconds.getValue());
             updated = true;
         }
 
@@ -272,7 +272,7 @@ public class ReadinessProbeSetupCommand extends AbstractFabricProjectCommand {
             maven.setModel(pom);
         }
 
-        return Results.success("Kubernetes readiness probe updated");
+        return Results.success("Kubernetes liveness probe updated");
     }
 
 }
