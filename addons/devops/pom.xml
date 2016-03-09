@@ -109,6 +109,11 @@
       </exclusions>
     </dependency>
     <dependency>
+      <groupId>org.jboss.forge.addon</groupId>
+      <artifactId>bean-validation</artifactId>
+      <classifier>forge-addon</classifier>
+    </dependency>
+    <dependency>
       <groupId>io.fabric8</groupId>
       <artifactId>kubernetes-api</artifactId>
       <exclusions>
