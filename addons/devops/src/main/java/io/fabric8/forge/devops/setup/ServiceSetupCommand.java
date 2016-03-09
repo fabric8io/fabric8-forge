@@ -26,6 +26,7 @@ import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
+import org.jboss.forge.addon.ui.facets.HintsFacet;
 import org.jboss.forge.addon.ui.input.UIInput;
 import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
 import org.jboss.forge.addon.ui.metadata.WithAttributes;
@@ -35,7 +36,7 @@ import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
 
 @FacetConstraint({MavenFacet.class})
-public class KubernetesServiceSetupCommand extends AbstractFabricProjectCommand {
+public class ServiceSetupCommand extends AbstractFabricProjectCommand {
 
     @Inject
     @WithAttributes(label = "Service Name", required = true, description = "The service name")
@@ -51,8 +52,8 @@ public class KubernetesServiceSetupCommand extends AbstractFabricProjectCommand 
 
     @Override
     public UICommandMetadata getMetadata(UIContext context) {
-        return Metadata.forCommand(KubernetesServiceSetupCommand.class).name(
-                "Fabric8: Kubernetes Service").category(Categories.create(AbstractFabricProjectCommand.CATEGORY))
+        return Metadata.forCommand(ServiceSetupCommand.class).name(
+                "Fabric8: Service").category(Categories.create(AbstractFabricProjectCommand.CATEGORY))
                 .description("Add/Update Kubernetes Service");
     }
 
@@ -67,11 +68,35 @@ public class KubernetesServiceSetupCommand extends AbstractFabricProjectCommand 
             return true;
         }
     }
-    
+
+    @Override
+    public void initializeUI(final UIBuilder builder) throws Exception {
+        Project project = getSelectedProject(builder.getUIContext());
+
+        MavenFacet maven = project.getFacet(MavenFacet.class);
+        Model pom = maven.getModel();
+        final Properties properties = pom.getProperties();
+
+        if (properties != null) {
+            serviceName.setDefaultValue(properties.getProperty("fabric8.service.name", ""));
+            servicePort.setDefaultValue(properties.getProperty("fabric8.service.port", ""));
+            containerPort.setDefaultValue(properties.getProperty("fabric8.service.containerPort", ""));
+        }
+        // the service name must at most be 24 chars
+        serviceName.addValidator(new MaxLengthValidator(24));
+
+        // we want to be able to edit existing values in CLI
+        serviceName.getFacet(HintsFacet.class).setPromptInInteractiveMode(true);
+        servicePort.getFacet(HintsFacet.class).setPromptInInteractiveMode(true);
+        containerPort.getFacet(HintsFacet.class).setPromptInInteractiveMode(true);
+
+        builder.add(serviceName).add(servicePort).add(containerPort);
+    }
+
     @Override
     public Result execute(UIExecutionContext context) throws Exception {
         Project project = getSelectedProject(context);
-        
+
         // update properties section in pom.xml
         MavenFacet maven = project.getFacet(MavenFacet.class);
         Model pom = maven.getModel();
@@ -96,25 +121,6 @@ public class KubernetesServiceSetupCommand extends AbstractFabricProjectCommand 
         }
 
         return Results.success("Kubernetes service updated");
-    }
-
-    @Override
-    public void initializeUI(final UIBuilder builder) throws Exception {
-        Project project = getSelectedProject(builder.getUIContext());
-
-        MavenFacet maven = project.getFacet(MavenFacet.class);
-        Model pom = maven.getModel();
-        final Properties properties = pom.getProperties();
-
-        if (properties != null) {
-            serviceName.setDefaultValue(properties.getProperty("fabric8.service.name", ""));
-            servicePort.setDefaultValue(properties.getProperty("fabric8.service.port", ""));
-            containerPort.setDefaultValue(properties.getProperty("fabric8.service.containerPort", ""));
-        }
-        // the service name must at most be 24 chars
-        serviceName.addValidator(new MaxLengthValidator(24));
-
-        builder.add(serviceName).add(servicePort).add(containerPort);
     }
 
 }
