@@ -35,7 +35,7 @@ import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
 
 @FacetConstraint({MavenFacet.class})
-public class KubernetesServiceSetupCommand extends AbstractFabricProjectCommand {
+public class ServiceSetupCommand extends AbstractFabricProjectCommand {
 
     @Inject
     @WithAttributes(label = "Service Name", required = true, description = "The service name")
@@ -51,8 +51,8 @@ public class KubernetesServiceSetupCommand extends AbstractFabricProjectCommand 
 
     @Override
     public UICommandMetadata getMetadata(UIContext context) {
-        return Metadata.forCommand(KubernetesServiceSetupCommand.class).name(
-                "Fabric8: Kubernetes Service").category(Categories.create(AbstractFabricProjectCommand.CATEGORY))
+        return Metadata.forCommand(ServiceSetupCommand.class).name(
+                "Fabric8: Service").category(Categories.create(AbstractFabricProjectCommand.CATEGORY))
                 .description("Add/Update Kubernetes Service");
     }
 

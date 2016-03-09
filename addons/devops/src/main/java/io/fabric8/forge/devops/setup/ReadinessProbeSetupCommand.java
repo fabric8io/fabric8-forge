@@ -38,7 +38,7 @@ import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
 
 @FacetConstraint({MavenFacet.class})
-public class KubernetesReadinessProbeSetupCommand extends AbstractFabricProjectCommand {
+public class ReadinessProbeSetupCommand extends AbstractFabricProjectCommand {
 
     private static final String[] TYPES = new String[]{"EXEC", "HTTP", "TCP"};
 
@@ -68,8 +68,8 @@ public class KubernetesReadinessProbeSetupCommand extends AbstractFabricProjectC
 
     @Override
     public UICommandMetadata getMetadata(UIContext context) {
-        return Metadata.forCommand(KubernetesReadinessProbeSetupCommand.class).name(
-                "Fabric8: Kubernetes Readiness Probe").category(Categories.create(AbstractFabricProjectCommand.CATEGORY))
+        return Metadata.forCommand(ReadinessProbeSetupCommand.class).name(
+                "Fabric8: Readiness Probe").category(Categories.create(AbstractFabricProjectCommand.CATEGORY))
                 .description("Add/Update Kubernetes Readiness Probe");
     }
 
