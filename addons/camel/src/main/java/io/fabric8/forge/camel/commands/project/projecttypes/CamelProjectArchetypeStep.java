@@ -21,6 +21,6 @@ import io.fabric8.forge.camel.commands.project.archetype.Fabric8ArchetypeCatalog
  */
 public class CamelProjectArchetypeStep extends Fabric8ArchetypeCatalogStep {
     public CamelProjectArchetypeStep() {
-        setArchetypeArtifactId("spring-camel-archetype");
+        setArchetypeArtifactId("java-camel-spring-archetype");
     }
 }
