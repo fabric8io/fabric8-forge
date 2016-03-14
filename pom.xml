@@ -73,7 +73,7 @@
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
 
-    <fabric8.version>2.2.96</fabric8.version>
+    <fabric8.version>2.2.97</fabric8.version>
     <fabric8.archetypes.release.version>2.2.100</fabric8.archetypes.release.version>
     <fabric8.devops.version>2.2.125</fabric8.devops.version>
 
@@ -83,14 +83,14 @@
 
     <!-- NOTE these properties are used to generate the addons/utils/src/main/resources/io/fabric8/forge/addon/utils/versions.properties file -->
     <arquillian.version>1.1.11.Final</arquillian.version>
-    <hawtio.version>1.4.60</hawtio.version>
+    <hawtio.version>1.4.63</hawtio.version>
     <junit.version>4.12</junit.version>
     <shrinkwrap-resolver.version>2.2.1</shrinkwrap-resolver.version>
 
     <!-- maven plugins -->
     <buildnumber.plugin.version>1.3</buildnumber.plugin.version>
     <docker.maven.plugin.version>0.14.2</docker.maven.plugin.version>
-    <exec-maven-plugin.version>1.2.1</exec-maven-plugin.version>
+    <exec-maven-plugin.version>1.4.0</exec-maven-plugin.version>
     <maven.enforcer.plugin.version>1.4</maven.enforcer.plugin.version>
     <maven.jar.plugin.version>2.6</maven.jar.plugin.version>
     <maven.javadoc.plugin.version>2.10.3</maven.javadoc.plugin.version>
