@@ -78,8 +78,8 @@
     <fabric8.devops.version>2.2.127</fabric8.devops.version>
 
     <furnace.version>2.23.3.Final</furnace.version>
-    <jboss.forge.version>3.0.0.CR1</jboss.forge.version>
-    <jboss.roaster.version>2.18.2.Final</jboss.roaster.version>
+    <jboss.forge.version>3.0.0.Final</jboss.forge.version>
+    <jboss.roaster.version>2.18.3.Final</jboss.roaster.version>
 
     <!-- NOTE these properties are used to generate the addons/utils/src/main/resources/io/fabric8/forge/addon/utils/versions.properties file -->
     <arquillian.version>1.1.11.Final</arquillian.version>
