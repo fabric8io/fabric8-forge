@@ -20,7 +20,7 @@
     <docker.image>fabric8/${project.artifactId}:${project.version}</docker.image>
     <docker.port.container.jolokia>8778</docker.port.container.jolokia>
     <fabric8.env.FABRIC8_ARCHETYPES_VERSION>${fabric8.archetypes.release.version}</fabric8.env.FABRIC8_ARCHETYPES_VERSION>
-    <fabric8.iconRef>icons/java</fabric8.iconRef>
+    <fabric8.iconRef>icons/forge</fabric8.iconRef>
     <fabric8.label.project>fabric8-forge</fabric8.label.project>
     <fabric8.label.provider>fabric8</fabric8.label.provider>
     <fabric8.label.version>${project.version}</fabric8.label.version>
