@@ -31,9 +31,9 @@
     <fabric8.service.port>80</fabric8.service.port>
     <fabric8.service.type>LoadBalancer</fabric8.service.type>
     <fabric8.serviceAccount>fabric8</fabric8.serviceAccount>
-    <furnace.version>2.23.3.Final</furnace.version>
+    <furnace.version>2.23.4.Final</furnace.version>
     <guava.version>15.0</guava.version>
-    <jboss.forge.version>3.0.0.Final</jboss.forge.version>
+    <jboss.forge.version>3.0.1.Final</jboss.forge.version>
   </properties>
   <dependencyManagement>
     <dependencies>
