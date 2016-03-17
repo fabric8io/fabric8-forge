@@ -33,7 +33,7 @@
     <fabric8.serviceAccount>fabric8</fabric8.serviceAccount>
     <furnace.version>2.23.3.Final</furnace.version>
     <guava.version>15.0</guava.version>
-    <jboss.forge.version>3.0.0.Final</jboss.forge.version>
+    <jboss.forge.version>3.0.1.Final</jboss.forge.version>
   </properties>
   <dependencyManagement>
     <dependencies>
