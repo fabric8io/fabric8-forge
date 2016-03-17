@@ -1,11 +1,10 @@
-<?xml version="1.0"?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>io.fabric8.forge</groupId>
     <artifactId>forge-parent</artifactId>
-    <version>2.2.137-SNAPSHOT</version>
+    <version>2.2.138-SNAPSHOT</version>
   </parent>
   <groupId>io.fabric8.forge.apps</groupId>
   <artifactId>fabric8-forge</artifactId>
@@ -20,7 +19,7 @@
     <docker.image>fabric8/${project.artifactId}:${project.version}</docker.image>
     <docker.port.container.jolokia>8778</docker.port.container.jolokia>
     <fabric8.env.FABRIC8_ARCHETYPES_VERSION>${fabric8.archetypes.release.version}</fabric8.env.FABRIC8_ARCHETYPES_VERSION>
-    <fabric8.iconRef>icons/forge</fabric8.iconRef>
+    <fabric8.iconRef>icons/java</fabric8.iconRef>
     <fabric8.label.project>fabric8-forge</fabric8.label.project>
     <fabric8.label.provider>fabric8</fabric8.label.provider>
     <fabric8.label.version>${project.version}</fabric8.label.version>
