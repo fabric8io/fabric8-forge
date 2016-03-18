@@ -20,8 +20,10 @@ import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
 
+import io.fabric8.forge.camel.commands.project.completer.CurrentLineCompleter;
 import io.fabric8.forge.camel.commands.project.completer.RouteBuilderEndpointsCompleter;
 import io.fabric8.forge.camel.commands.project.completer.XmlEndpointsCompleter;
+import io.fabric8.forge.camel.commands.project.helper.PoorMansLogger;
 import io.fabric8.forge.camel.commands.project.model.CamelEndpointDetails;
 import io.fabric8.forge.camel.commands.project.model.InputOptionByGroup;
 import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
@@ -46,6 +48,8 @@ import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper
 
 public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implements UIWizard {
 
+    private static final PoorMansLogger LOG = new PoorMansLogger(false);
+
     private static final int MAX_OPTIONS = 20;
 
     @Inject
@@ -60,6 +64,7 @@ public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implem
 
     private RouteBuilderEndpointsCompleter javaCompleter;
     private XmlEndpointsCompleter xmlCompleter;
+    private CurrentLineCompleter currentLineCompleter;
 
     @Override
     public UICommandMetadata getMetadata(UIContext context) {
@@ -87,10 +92,10 @@ public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implem
         final String currentFile = getSelectedFile(builder.getUIContext());
         final int cursorLineNumber = getCurrentCursorLine(builder.getUIContext());
 
-        // whether its an xml file or not
+        boolean javaFile = currentFile.endsWith(".java");
         boolean xmlFile = currentFile.endsWith(".xml");
 
-        if (!xmlFile) {
+        if (javaFile) {
             // find all endpoints
             javaCompleter = createRouteBuilderEndpointsCompleter(builder.getUIContext(), currentFile::equals);
 
@@ -117,7 +122,7 @@ public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implem
                 // show the UI where you can chose the endpoint to select
                 builder.add(endpoints);
             }
-        } else {
+        } else if (xmlFile) {
             // find all endpoints
             xmlCompleter = createXmlEndpointsCompleter(builder.getUIContext(), currentFile::equals);
 
@@ -143,6 +148,13 @@ public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implem
 
                 // show the UI where you can chose the endpoint to select
                 builder.add(endpoints);
+            }
+        } else {
+            currentLineCompleter = createCurrentLineCompleter(cursorLineNumber, currentFile, builder.getUIContext());
+            CamelEndpointDetails detail = currentLineCompleter.getEndpoint();
+            if (detail != null && detail.getEndpointUri() != null) {
+                endpoints.setValue(detail.getEndpointUri());
+                endpoints.setRequired(false);
             }
         }
     }
@@ -172,6 +184,8 @@ public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implem
             detail = javaCompleter.getEndpointDetail(selectedUri);
         } else if (xmlCompleter != null) {
             detail = xmlCompleter.getEndpointDetail(selectedUri);
+        } else if (currentLineCompleter != null) {
+            detail = currentLineCompleter.getEndpoint();
         }
         if (detail == null) {
             return null;
@@ -187,9 +201,12 @@ public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implem
         if (javaCompleter != null) {
             attributeMap.put("routeBuilder", detail.getFileName());
             attributeMap.put("kind", "java");
-        } else {
+        } else if (xmlCompleter != null) {
             attributeMap.put("xml", detail.getFileName());
             attributeMap.put("kind", "xml");
+        } else if (currentLineCompleter != null) {
+            attributeMap.put("currentFile", detail.getFileName());
+            attributeMap.put("kind", "other");
         }
 
         // we need to figure out how many options there is so we can as many steps we need

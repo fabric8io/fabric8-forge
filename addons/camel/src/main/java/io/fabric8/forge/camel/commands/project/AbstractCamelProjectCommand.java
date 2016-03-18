@@ -26,7 +26,9 @@ import java.util.function.Function;
 import javax.inject.Inject;
 
 import io.fabric8.forge.addon.utils.CamelProjectHelper;
+import io.fabric8.forge.addon.utils.LineNumberHelper;
 import io.fabric8.forge.addon.utils.XmlLineNumberParser;
+import io.fabric8.forge.camel.commands.project.completer.CurrentLineCompleter;
 import io.fabric8.forge.camel.commands.project.completer.RouteBuilderCompleter;
 import io.fabric8.forge.camel.commands.project.completer.RouteBuilderEndpointsCompleter;
 import io.fabric8.forge.camel.commands.project.completer.XmlEndpointsCompleter;
@@ -47,6 +49,7 @@ import org.jboss.forge.addon.dependencies.Coordinate;
 import org.jboss.forge.addon.dependencies.Dependency;
 import org.jboss.forge.addon.dependencies.builder.CoordinateBuilder;
 import org.jboss.forge.addon.parser.java.facets.JavaSourceFacet;
+import org.jboss.forge.addon.parser.java.resources.JavaResource;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.ProjectFactory;
 import org.jboss.forge.addon.projects.Projects;
@@ -67,7 +70,6 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
-import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.createComponentDto;
 import static io.fabric8.forge.camel.commands.project.helper.CollectionHelper.first;
 
 public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand {
@@ -235,6 +237,17 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
         return createXmlFileCompleter(project, filter);
     }
 
+    protected CurrentLineCompleter createCurrentLineCompleter(int lineNumber, String file, UIContext context) throws Exception {
+        Project project = getSelectedProject(context);
+        final ResourcesFacet resourcesFacet = project.getFacet(ResourcesFacet.class);
+        WebResourcesFacet webResourcesFacet = null;
+        if (project.hasFacet(WebResourcesFacet.class)) {
+            webResourcesFacet = project.getFacet(WebResourcesFacet.class);
+        }
+        String relativeFile = asRelativeFile(context, file);
+        return new CurrentLineCompleter(lineNumber, relativeFile, resourcesFacet, webResourcesFacet);
+    }
+
     protected FileResource getXmlResourceFile(Project project, String xmlResourceName) {
         ResourcesFacet facet = project.getFacet(ResourcesFacet.class);
         WebResourcesFacet webResourcesFacet = null;
@@ -376,18 +389,18 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
     }
 
     protected String asRelativeFile(UIContext context, String currentFile) {
-        boolean xmlFile = currentFile != null && currentFile.endsWith(".xml");
+        boolean javaFile = currentFile != null && currentFile.endsWith(".java");
 
-        // if its xml file, then we need to have the relative path name
+        // if its not a java file, then we need to have the relative path name
         String target = null;
-        if (xmlFile) {
+        if (!javaFile) {
             Project project = getSelectedProject(context);
             ResourcesFacet facet = project.getFacet(ResourcesFacet.class);
             if (facet != null) {
                 // we only want the relative dir name from the resource directory, eg WEB-INF/foo.xml
                 String baseDir = facet.getResourceDirectory().getFullyQualifiedName();
                 String fqn = currentFile;
-                if (fqn.startsWith(baseDir)) {
+                if (fqn != null && fqn.startsWith(baseDir)) {
                     target = fqn.substring(baseDir.length() + 1);
                 }
             }
@@ -398,7 +411,7 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
                     // we only want the relative dir name from the resource directory, eg WEB-INF/foo.xml
                     String baseDir = facet2.getWebRootDirectory().getFullyQualifiedName();
                     String fqn = currentFile;
-                    if (fqn.startsWith(baseDir)) {
+                    if (fqn != null && fqn.startsWith(baseDir)) {
                         target = fqn.substring(baseDir.length() + 1);
                     }
                 }
@@ -407,4 +420,5 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
 
         return target != null ? target : currentFile;
     }
+
 }
