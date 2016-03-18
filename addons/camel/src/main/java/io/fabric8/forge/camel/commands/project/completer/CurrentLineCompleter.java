@@ -97,7 +97,7 @@ public class CurrentLineCompleter implements UICompleter<String> {
 
     protected String getCamelEndpointUri(String line) {
         String uri = line;
-        boolean properties = relativeFile.endsWith(".properties");
+        boolean properties = relativeFile.endsWith(".properties") || relativeFile.endsWith(".cfg");
         if (properties) {
             if (line.contains("=")) {
                 uri = line.substring(line.indexOf("=") + 1);
