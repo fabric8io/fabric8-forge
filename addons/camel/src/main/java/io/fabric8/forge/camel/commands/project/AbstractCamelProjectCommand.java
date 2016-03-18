@@ -26,7 +26,9 @@ import java.util.function.Function;
 import javax.inject.Inject;
 
 import io.fabric8.forge.addon.utils.CamelProjectHelper;
+import io.fabric8.forge.addon.utils.LineNumberHelper;
 import io.fabric8.forge.addon.utils.XmlLineNumberParser;
+import io.fabric8.forge.camel.commands.project.completer.CurrentLineCompleter;
 import io.fabric8.forge.camel.commands.project.completer.RouteBuilderCompleter;
 import io.fabric8.forge.camel.commands.project.completer.RouteBuilderEndpointsCompleter;
 import io.fabric8.forge.camel.commands.project.completer.XmlEndpointsCompleter;
@@ -47,6 +49,7 @@ import org.jboss.forge.addon.dependencies.Coordinate;
 import org.jboss.forge.addon.dependencies.Dependency;
 import org.jboss.forge.addon.dependencies.builder.CoordinateBuilder;
 import org.jboss.forge.addon.parser.java.facets.JavaSourceFacet;
+import org.jboss.forge.addon.parser.java.resources.JavaResource;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.ProjectFactory;
 import org.jboss.forge.addon.projects.Projects;
@@ -67,7 +70,6 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
-import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.createComponentDto;
 import static io.fabric8.forge.camel.commands.project.helper.CollectionHelper.first;
 
 public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand {
@@ -233,6 +235,17 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
     protected XmlFileCompleter createXmlFileCompleter(UIContext context, Function<String, Boolean> filter) {
         Project project = getSelectedProject(context);
         return createXmlFileCompleter(project, filter);
+    }
+
+    protected CurrentLineCompleter createCurrentLineCompleter(int lineNumber, String file, UIContext context) throws Exception {
+        Project project = getSelectedProject(context);
+        final ResourcesFacet resourcesFacet = project.getFacet(ResourcesFacet.class);
+        WebResourcesFacet webResourcesFacet = null;
+        if (project.hasFacet(WebResourcesFacet.class)) {
+            webResourcesFacet = project.getFacet(WebResourcesFacet.class);
+        }
+        String relativeFile = asRelativeFile(context, file);
+        return new CurrentLineCompleter(lineNumber, relativeFile, resourcesFacet, webResourcesFacet);
     }
 
     protected FileResource getXmlResourceFile(Project project, String xmlResourceName) {
@@ -407,4 +420,5 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
 
         return target != null ? target : currentFile;
     }
+
 }

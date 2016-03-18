@@ -70,7 +70,7 @@ import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper
 
 public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand implements UIWizardStep {
 
-    private static final PoorMansLogger LOG = new PoorMansLogger(true);
+    private static final PoorMansLogger LOG = new PoorMansLogger(false);
 
     private final DependencyInstaller dependencyInstaller;
     private final CamelCatalog camelCatalog;
@@ -793,7 +793,33 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
         }
 
         String cursorPosition = optionalAttributeValue(attributeMap, "cursorPosition");
-        return addEndpointOther(project, facet, file, uri, currentFile, cursorPosition);
+        if ("edit".equals(mode)) {
+            return editEndpointOther(project, facet, file, uri, endpointUrl, currentFile, lineNumber);
+        } else {
+            return addEndpointOther(project, facet, file, uri, currentFile, cursorPosition);
+        }
+    }
+
+    protected Result editEndpointOther(Project project, ResourcesFacet facet, FileResource file, String uri, String endpointUrl,
+                                      String currentFile, String lineNumber) throws Exception {
+
+        List<String> lines = LineNumberHelper.readLines(file.getResourceInputStream());
+
+        // the list is 0-based, and line number is 1-based
+        int idx = Integer.valueOf(lineNumber) - 1;
+        String line = lines.get(idx);
+
+        // replace uri with new value
+        line = StringHelper.replaceAll(line, endpointUrl, uri);
+        lines.set(idx, line);
+
+        LOG.info("Updating " + endpointUrl + " to " + uri + " at line " + lineNumber + " in file " + currentFile);
+
+        // and save the file back
+        String content = LineNumberHelper.linesToString(lines);
+        file.setContents(content);
+
+        return Results.success("Update endpoint uri: " + uri + " in file " + currentFile);
     }
 
     protected Result addEndpointOther(Project project, ResourcesFacet facet, FileResource file, String uri,
@@ -807,17 +833,6 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
         pos = Math.min(sb.length(), pos);
 
         LOG.info("Adding endpoint at pos: " + pos + " in file: " + currentFile);
-
-        // check if prev and next is a quote and if not then add it automatic
-        int prev = pos - 1;
-        int next = pos + 1;
-        char ch = sb.charAt(prev);
-        char ch2 = next < sb.length() ? sb.charAt(next) : ' ';
-        if (ch != '"' && ch2 != '"') {
-            uri = "\"" + uri + "\"";
-        }
-
-        LOG.info("Inserting endpoint uri at position: " + pos + " in " + currentFile);
 
         // insert uri at position
         sb.insert(pos, uri);
