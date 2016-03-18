@@ -130,14 +130,18 @@ public class CamelAddEndpointCommand extends AbstractCamelProjectCommand impleme
 
         String currentFile = (String) attributeMap.get("currentFile");
         boolean xmlFile = currentFile != null && currentFile.endsWith(".xml");
+        boolean javaFile = currentFile != null && currentFile.endsWith(".java");
 
         attributeMap.put("mode", "add");
         if (xmlFile) {
             attributeMap.put("xml", currentFile);
             attributeMap.put("kind", "xml");
-        } else {
+        } else if (javaFile) {
             attributeMap.put("routeBuilder", currentFile);
             attributeMap.put("kind", "java");
+        } else {
+            attributeMap.put("currentFile", currentFile);
+            attributeMap.put("kind", "other");
         }
         int pos = getCurrentCursorPosition(context.getUIContext());
         attributeMap.put("cursorPosition", pos);

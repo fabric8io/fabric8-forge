@@ -38,6 +38,7 @@ import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
 import org.jboss.forge.addon.projects.facets.ResourcesFacet;
 import org.jboss.forge.addon.projects.facets.WebResourcesFacet;
 import org.jboss.forge.addon.resource.FileResource;
+import org.jboss.forge.addon.resource.ResourceFacet;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
@@ -69,7 +70,7 @@ import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper
 
 public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand implements UIWizardStep {
 
-    private static final PoorMansLogger LOG = new PoorMansLogger(false);
+    private static final PoorMansLogger LOG = new PoorMansLogger(true);
 
     private final DependencyInstaller dependencyInstaller;
     private final CamelCatalog camelCatalog;
@@ -145,8 +146,10 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
             String kind = mandatoryAttributeValue(attributeMap, "kind");
             if ("xml".equals(kind)) {
                 return executeXml(context, attributeMap);
-            } else {
+            } else if ("java".equals(kind)) {
                 return executeJava(context, attributeMap);
+            } else {
+                return executeOther(context, attributeMap);
             }
         } else {
             return null;
@@ -260,6 +263,7 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
             return Results.fail("Cannot create endpoint uri");
         }
 
+        LOG.info("Loading XML file " + xml);
         FileResource file = facet != null ? facet.getResource(xml) : null;
         if (file == null || !file.exists()) {
             file = webResourcesFacet != null ? webResourcesFacet.getWebResource(xml) : null;
@@ -393,11 +397,16 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
 
         int pos = Integer.valueOf(cursorPosition);
 
+        // move to end if pos is after the content
+        pos = Math.min(sb.length(), pos);
+
+        LOG.info("Adding endpoint at pos: " + pos + " in file: " + xml);
+
         // check if prev and next is a quote and if not then add it automatic
         int prev = pos - 1;
         int next = pos + 1;
         char ch = sb.charAt(prev);
-        char ch2 = sb.charAt(next);
+        char ch2 = next < sb.length() ? sb.charAt(next) : ' ';
         if (ch != '"' && ch2 != '"') {
             uri = "\"" + uri + "\"";
         }
@@ -505,6 +514,7 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
             return Results.fail("Cannot create endpoint uri");
         }
 
+        LOG.info("Loading Java file " + routeBuilder);
         JavaResource file = facet.getJavaResource(routeBuilder);
         if (file == null || !file.exists()) {
             return Results.fail("RouteBuilder " + routeBuilder + " does not exist");
@@ -653,11 +663,16 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
 
         int pos = Integer.valueOf(cursorPosition);
 
+        // move to end if pos is after the content
+        pos = Math.min(sb.length(), pos);
+
+        LOG.info("Adding endpoint at pos: " + pos + " in file: " + routeBuilder);
+
         // check if prev and next is a quote and if not then add it automatic
         int prev = pos - 1;
         int next = pos + 1;
         char ch = sb.charAt(prev);
-        char ch2 = sb.charAt(next);
+        char ch2 = next < sb.length() ? sb.charAt(next) : ' ';
         if (ch != '"' && ch2 != '"') {
             uri = "\"" + uri + "\"";
         }
@@ -669,6 +684,148 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
         file.setContents(sb.toString());
 
         return Results.success("Added endpoint " + uri + " in " + routeBuilder);
+    }
+
+    protected Result executeOther(UIExecutionContext context, Map<Object, Object> attributeMap) throws Exception {
+        String camelComponentName = mandatoryAttributeValue(attributeMap, "componentName");
+        String mode = mandatoryAttributeValue(attributeMap, "mode");
+        String currentFile = mandatoryAttributeValue(attributeMap, "currentFile");
+
+        // TODO: add support for edit
+
+        // edit mode includes the existing uri and line number
+        String lineNumber = null;
+        String lineNumberEnd = null;
+        String endpointUrl = null;
+        if ("edit".equals(mode)) {
+            lineNumber = mandatoryAttributeValue(attributeMap, "lineNumber");
+            lineNumberEnd = optionalAttributeValue(attributeMap, "lineNumberEnd");
+            endpointUrl = mandatoryAttributeValue(attributeMap, "endpointUri");
+        }
+
+        Project project = getSelectedProject(context);
+        ResourcesFacet facet = project.getFacet(ResourcesFacet.class);
+        WebResourcesFacet webResourcesFacet = null;
+        if (project.hasFacet(WebResourcesFacet.class)) {
+            webResourcesFacet = project.getFacet(WebResourcesFacet.class);
+        }
+
+        // lets find the camel component class
+        CamelComponentDetails details = new CamelComponentDetails();
+        Result result = loadCamelComponentDetails(camelCatalog, camelComponentName, details);
+        if (result != null) {
+            return result;
+        }
+        // and make sure its dependency is added
+        result = ensureCamelArtifactIdAdded(project, details, dependencyInstaller);
+        if (result != null) {
+            return result;
+        }
+
+        // collect all the options that was set
+        Map<String, String> options = new HashMap<String, String>();
+        for (InputComponent input : allInputs) {
+            String key = input.getName();
+            // only use the value if a value was set (and the value is not the same as the default value)
+            if (input.hasValue()) {
+                String value = input.getValue().toString();
+                if (value != null) {
+                    // special for multivalued options
+                    boolean isMultiValue = isMultiValue(camelCatalog, camelComponentName, key);
+                    if (isMultiValue) {
+                        String prefix = getPrefix(camelCatalog, camelComponentName, key);
+
+                        // ensure the value has prefix for all its options
+                        // and make sure to adjust & (we replace to xml style)
+                        value = StringHelper.replaceAll(value, "&amp;", "&");
+                        value = StringHelper.replaceAll(value, "&", "&amp;");
+
+                        // rebuild value (accordingly to above comment)
+                        StringBuilder sb = new StringBuilder();
+                        String[] parts = value.split("&amp;");
+                        for (int i = 0; i < parts.length; i++) {
+                            String part = parts[i];
+                            if (!part.startsWith(prefix)) {
+                                part = prefix + part;
+                            }
+                            sb.append(part);
+                            if (i < parts.length - 1) {
+                                // since this is java then use & as separator
+                                sb.append("&");
+                            }
+                        }
+                        value = sb.toString();
+                    }
+                    boolean matchDefault = isDefaultValue(camelCatalog, camelComponentName, key, value);
+                    if ("none".equals(value)) {
+                        // special for enum that may have a none as dummy placeholder which we should not add
+                        boolean nonePlaceholder = isNonePlaceholderEnumValue(camelCatalog, camelComponentName, key);
+                        if (!matchDefault && !nonePlaceholder) {
+                            options.put(key, value);
+                        }
+                    } else if (!matchDefault) {
+                        options.put(key, value);
+                    }
+                }
+            } else if (input.isRequired() && input.hasDefaultValue()) {
+                // if its required then we need to grab the value
+                String value = input.getValue().toString();
+                if (value != null) {
+                    options.put(key, value);
+                }
+            }
+        }
+
+        LOG.info("Creating uri with component: " + componentName + " and options:" + options);
+        String uri = camelCatalog.asEndpointUri(camelComponentName, options, false);
+        LOG.info("Uri created: " + uri);
+        if (uri == null) {
+            return Results.fail("Cannot create endpoint uri");
+        }
+
+        LOG.info("Loading resource file " + currentFile);
+        FileResource file = facet != null ? facet.getResource(currentFile) : null;
+        if (file == null || !file.exists()) {
+            file = webResourcesFacet != null ? webResourcesFacet.getWebResource(currentFile) : null;
+        }
+        if (file == null || !file.exists()) {
+            return Results.fail("Cannot find resource file " + currentFile);
+        }
+
+        String cursorPosition = optionalAttributeValue(attributeMap, "cursorPosition");
+        return addEndpointOther(project, facet, file, uri, currentFile, cursorPosition);
+    }
+
+    protected Result addEndpointOther(Project project, ResourcesFacet facet, FileResource file, String uri,
+                                      String currentFile, String cursorPosition) throws Exception {
+
+        StringBuilder sb = new StringBuilder(file.getContents());
+
+        int pos = Integer.valueOf(cursorPosition);
+
+        // move to end if pos is after the content
+        pos = Math.min(sb.length(), pos);
+
+        LOG.info("Adding endpoint at pos: " + pos + " in file: " + currentFile);
+
+        // check if prev and next is a quote and if not then add it automatic
+        int prev = pos - 1;
+        int next = pos + 1;
+        char ch = sb.charAt(prev);
+        char ch2 = next < sb.length() ? sb.charAt(next) : ' ';
+        if (ch != '"' && ch2 != '"') {
+            uri = "\"" + uri + "\"";
+        }
+
+        LOG.info("Inserting endpoint uri at position: " + pos + " in " + currentFile);
+
+        // insert uri at position
+        sb.insert(pos, uri);
+
+        // use this code currently to save content unformatted
+        file.setContents(sb.toString());
+
+        return Results.success("Added endpoint " + uri + " in " + currentFile);
     }
 
     /**
