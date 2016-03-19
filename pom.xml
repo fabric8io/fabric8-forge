@@ -73,9 +73,15 @@
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
 
+<<<<<<< HEAD
     <fabric8.version>2.2.98</fabric8.version>
     <fabric8.archetypes.release.version>2.2.104</fabric8.archetypes.release.version>
     <fabric8.devops.version>2.2.135</fabric8.devops.version>
+=======
+    <fabric8.version>2.2.99</fabric8.version>
+    <fabric8.archetypes.release.version>2.2.103</fabric8.archetypes.release.version>
+    <fabric8.devops.version>2.2.132</fabric8.devops.version>
+>>>>>>> upgrade to latest fabric8 release for https://github.com/fabric8io/fabric8/issues/5857
 
     <furnace.version>2.23.4.Final</furnace.version>
     <jboss.forge.version>3.0.1.Final</jboss.forge.version>
