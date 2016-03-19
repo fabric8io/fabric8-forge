@@ -347,7 +347,7 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
             }
         }
         LOG.info("Configured project " + buildName + " environments: " + config.getEnvironments());
-        ProjectConfigs.defaultEnvironments(config);
+        ProjectConfigs.defaultEnvironments(config, namespace);
 
         String projectName = config.getBuildName();
         if (Strings.isNullOrBlank(projectName)) {
