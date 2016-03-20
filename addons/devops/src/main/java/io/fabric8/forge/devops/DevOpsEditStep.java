@@ -339,7 +339,7 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
                     environmentMap.put("Current", namespace);
                 } else {
                     for (String environment : environments) {
-                        String envNamespace = buildName + "-" + environment.toLowerCase();
+                        String envNamespace = namespace + "-" + environment.toLowerCase();
                         environmentMap.put(environment, envNamespace);
                     }
                 }
