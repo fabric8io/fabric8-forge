@@ -29,7 +29,7 @@
   <name>Fabric8 :: Forge Addons</name>
 
   <properties>
-    <camel.version>2.16.2</camel.version>
+    <camel.version>2.17.0</camel.version>
   </properties>
 
   <modules>
