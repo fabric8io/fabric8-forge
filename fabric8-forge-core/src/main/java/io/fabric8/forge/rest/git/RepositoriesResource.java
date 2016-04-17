@@ -19,6 +19,7 @@ import io.fabric8.forge.rest.main.GitUserHelper;
 import io.fabric8.forge.rest.main.ProjectFileSystem;
 import io.fabric8.forge.rest.main.RepositoryCache;
 import io.fabric8.forge.rest.main.UserDetails;
+import io.fabric8.kubernetes.api.Controller;
 import io.fabric8.kubernetes.api.model.LocalObjectReference;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -151,25 +152,31 @@ public class RepositoriesResource {
         }
         String objectId = request.getParameter("ref");
 
-        // lets get the BuildConfig
-        OpenShiftClient osClient = kubernetes.adapt(OpenShiftClient.class).inNamespace(namespace);
-        BuildConfig buildConfig = osClient.buildConfigs().withName(projectId).get();
-        if (buildConfig == null) {
-            throw new NotFoundException("No BuildConfig for " + remoteRepository);
+        String uri = request.getParameter("gitUrl");
+        BuildSource source = null;
+        if (Strings.isNullOrBlank(uri)) {
+            // lets get the BuildConfig
+            OpenShiftClient osClient = new Controller(kubernetes).getOpenShiftClientOrJenkinshift();
+            if (osClient != null) {
+                BuildConfig buildConfig = osClient.buildConfigs().withName(projectId).get();
+                if (buildConfig == null) {
+                    throw new NotFoundException("No BuildConfig for " + remoteRepository);
+                }
+                BuildConfigSpec spec = buildConfig.getSpec();
+                if (spec == null) {
+                    throw new NotFoundException("No BuildConfig spec for " + remoteRepository);
+                }
+                source = spec.getSource();
+                if (source == null) {
+                    throw new NotFoundException("No BuildConfig source for " + remoteRepository);
+                }
+                GitBuildSource gitSource = source.getGit();
+                if (gitSource == null) {
+                    throw new NotFoundException("No BuildConfig git source for " + remoteRepository);
+                }
+                uri = gitSource.getUri();
+            }
         }
-        BuildConfigSpec spec = buildConfig.getSpec();
-        if (spec == null) {
-            throw new NotFoundException("No BuildConfig spec for " + remoteRepository);
-        }
-        BuildSource source = spec.getSource();
-        if (source == null) {
-            throw new NotFoundException("No BuildConfig source for " + remoteRepository);
-        }
-        GitBuildSource gitSource = source.getGit();
-        if (gitSource == null) {
-            throw new NotFoundException("No BuildConfig git source for " + remoteRepository);
-        }
-        String uri = gitSource.getUri();
         if (Strings.isNullOrBlank(uri)) {
             throw new NotFoundException("No BuildConfig git URI for " + remoteRepository);
         }
@@ -179,7 +186,7 @@ public class RepositoriesResource {
         if (Strings.isNullOrBlank(secretNamespace)) {
             secretNamespace = namespace;
         }
-        if (Strings.isNullOrBlank(sourceSecretName)) {
+        if (Strings.isNullOrBlank(sourceSecretName) && source != null) {
             LocalObjectReference sourceSecret = source.getSourceSecret();
             if (sourceSecret != null) {
                 sourceSecretName = sourceSecret.getName();
@@ -187,14 +194,13 @@ public class RepositoriesResource {
         }
         File projectFolder = projectFileSystem.getNamespaceProjectFolder(namespace, projectId, secretNamespace, sourceSecretName);
 
-
         String cloneUrl = uri;
         File gitFolder = new File(projectFolder, ".git");
         LOG.debug("Cloning " + cloneUrl);
         RepositoryResource resource = new RepositoryResource(projectFolder, gitFolder, userDetails, origin, branch, remoteRepository, lockManager, projectFileSystem, cloneUrl, objectId);
         if (sourceSecretName != null) {
             try {
-                Secret secret = osClient.secrets().inNamespace(secretNamespace).withName(sourceSecretName).get();
+                Secret secret = kubernetes.secrets().inNamespace(secretNamespace).withName(sourceSecretName).get();
                 if (secret != null) {
                     Map<String, String> data = secret.getData();
                     File privateKeyFile = createSshKeyFile(namespace, sourceSecretName, SSH_PRIVATE_KEY_DATA_KEY, data.get(SSH_PRIVATE_KEY_DATA_KEY));
@@ -254,7 +260,7 @@ public class RepositoriesResource {
         this.request = request;
     }
 
-    protected File createSshKeyFile(@PathParam("namespace") String namespace, String sourceSecretName, String privateKeyName, String privateKey) throws IOException {
+    protected File createSshKeyFile(String namespace, String sourceSecretName, String privateKeyName, String privateKey) throws IOException {
         File keyFile = null;
         if (privateKey != null) {
             String text = Base64Encoder.decode(privateKey);
