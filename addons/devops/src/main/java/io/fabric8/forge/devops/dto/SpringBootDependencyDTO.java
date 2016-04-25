@@ -56,8 +56,8 @@ public class SpringBootDependencyDTO {
         return name;
     }
 
-    public String getNameAndDescription() {
-        return name + " (" + description + ")";
+    public String getGroupAndName() {
+        return group + ": " +  name;
     }
 
     public void setName(String name) {

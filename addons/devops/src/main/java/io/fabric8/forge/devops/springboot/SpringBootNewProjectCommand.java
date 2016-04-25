@@ -76,7 +76,7 @@ public class SpringBootNewProjectCommand extends AbstractDevOpsCommand implement
 
         dependencies.setValueChoices(choices);
         dependencies.setItemLabelConverter(SpringBootDependencyDTO::getName);
-        dependencies.setItemLabelConverter(SpringBootDependencyDTO::getNameAndDescription);
+        dependencies.setItemLabelConverter(SpringBootDependencyDTO::getGroupAndName);
 
         builder.add(dependencies);
     }
@@ -125,17 +125,20 @@ public class SpringBootNewProjectCommand extends AbstractDevOpsCommand implement
         Project project = (Project) uiContext.getAttributeMap().get(Project.class);
         MetadataFacet metadataFacet = project.getFacet(MetadataFacet.class);
 
-        int[] selected = dependencies.getSelectedIndexes();
+        String projectName = metadataFacet.getProjectName();
+        String groupId = metadataFacet.getProjectGroupName();
+        String version = metadataFacet.getProjectVersion();
+        File folder = project.getRoot().reify(DirectoryResource.class).getUnderlyingResourceObject();
 
+        int[] selected = dependencies.getSelectedIndexes();
         CollectionStringBuffer csb = new CollectionStringBuffer(",");
-        for (int i = 0; i < selected.length; i++) {
-            int val = selected[i];
+        for (int val : selected) {
             SpringBootDependencyDTO dto = choices.get(val);
             csb.append(dto.getId());
         }
         String deps = csb.toString();
 
-        String url = STARTER_URL + "?dependencies=" + deps;
+        String url = String.format("%s?groupId=%s&artifactId=%s&version=%s&packageName=%s&dependencies=%s", STARTER_URL, groupId, projectName, version, groupId, deps);
 
         // use http client to call start.spring.io that creates the project
         OkHttpClient client = createOkHttpClient();
@@ -146,8 +149,6 @@ public class SpringBootNewProjectCommand extends AbstractDevOpsCommand implement
         Response response = client.newCall(request).execute();
         InputStream is = response.body().byteStream();
 
-        String projectName = metadataFacet.getProjectName();
-        File folder = project.getRoot().reify(DirectoryResource.class).getUnderlyingResourceObject();
 
         // some archetypes might not use maven or use the maven source layout so lets remove
         // the pom.xml and src folder if its already been pre-created
@@ -166,17 +167,14 @@ public class SpringBootNewProjectCommand extends AbstractDevOpsCommand implement
             name.delete();
         }
 
-        File currentDir = new File(".");
-        System.out.println(currentDir.getName());
-        System.out.println(currentDir.getAbsolutePath());
-
         FileOutputStream fos = new FileOutputStream(name, false);
         copyAndCloseInput(is, fos);
         close(fos);
 
+        // unzip the download from spring starter
         unzip(name, folder.getName());
 
-        // delete the zip file
+        // and delete the zip file
         name.delete();
 
         return Results.success("Created new Spring Boot project with dependencies: " + deps + " in directory: " + folder.getName());
