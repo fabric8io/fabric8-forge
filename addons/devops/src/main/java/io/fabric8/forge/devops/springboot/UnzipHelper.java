@@ -34,12 +34,12 @@ public class UnzipHelper {
      * Extracts a zip file specified by the zipFilePath to a directory specified by
      * destDirectory (will be created if does not exists)
      */
-    public static void unzip(String fileName, String destinationDirectory) throws IOException {
+    public static void unzip(File file, String destinationDirectory) throws IOException {
         File destDir = new File(destinationDirectory);
         if (!destDir.exists()) {
             destDir.mkdir();
         }
-        ZipInputStream zipIn = new ZipInputStream(new FileInputStream(fileName));
+        ZipInputStream zipIn = new ZipInputStream(new FileInputStream(file));
         ZipEntry entry = zipIn.getNextEntry();
         // iterates over entries in the zip file
         while (entry != null) {

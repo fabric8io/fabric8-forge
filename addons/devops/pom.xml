@@ -64,6 +64,12 @@
       <artifactId>okhttp</artifactId>
       <version>3.0.0</version>
     </dependency>
+    <!-- yaml parser to load spring-boot dependency choices -->
+    <dependency>
+      <groupId>org.yaml</groupId>
+      <artifactId>snakeyaml</artifactId>
+      <version>1.17</version>
+    </dependency>
 
     <!-- we use dtos with jackson annotations -->
     <dependency>

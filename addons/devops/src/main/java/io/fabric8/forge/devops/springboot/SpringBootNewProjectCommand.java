@@ -20,6 +20,7 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import javax.inject.Inject;
 
 import io.fabric8.forge.devops.AbstractDevOpsCommand;
@@ -27,21 +28,28 @@ import io.fabric8.forge.devops.dto.SpringBootDependencyDTO;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import org.jboss.forge.addon.projects.Project;
+import org.jboss.forge.addon.projects.facets.MetadataFacet;
+import org.jboss.forge.addon.resource.DirectoryResource;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
+import org.jboss.forge.addon.ui.context.UINavigationContext;
 import org.jboss.forge.addon.ui.input.UISelectMany;
 import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
 import org.jboss.forge.addon.ui.metadata.WithAttributes;
+import org.jboss.forge.addon.ui.result.NavigationResult;
 import org.jboss.forge.addon.ui.result.Result;
 import org.jboss.forge.addon.ui.result.Results;
 import org.jboss.forge.addon.ui.util.Metadata;
 import org.jboss.forge.addon.ui.wizard.UIWizard;
+import org.yaml.snakeyaml.Yaml;
 
 import static io.fabric8.forge.devops.springboot.IOHelper.close;
 import static io.fabric8.forge.devops.springboot.IOHelper.copyAndCloseInput;
 import static io.fabric8.forge.devops.springboot.OkHttpClientHelper.createOkHttpClient;
 import static io.fabric8.forge.devops.springboot.UnzipHelper.unzip;
+import static io.fabric8.utils.Files.recursiveDelete;
 
 public class SpringBootNewProjectCommand extends AbstractDevOpsCommand implements UIWizard {
 
@@ -54,8 +62,17 @@ public class SpringBootNewProjectCommand extends AbstractDevOpsCommand implement
     private UISelectMany<SpringBootDependencyDTO> dependencies;
 
     @Override
+    public NavigationResult next(UINavigationContext context) throws Exception {
+        return null;
+    }
+
+    @Override
     public void initializeUI(UIBuilder builder) throws Exception {
-        choices = initDependencies();
+        try {
+            choices = initDependencies();
+        } catch (Exception e) {
+            throw new IllegalStateException("Error loading dependencies from spring-boot-application.yaml due: " + e.getMessage(), e);
+        }
 
         dependencies.setValueChoices(choices);
         dependencies.setItemLabelConverter(SpringBootDependencyDTO::getName);
@@ -66,8 +83,28 @@ public class SpringBootNewProjectCommand extends AbstractDevOpsCommand implement
 
     private List<SpringBootDependencyDTO> initDependencies() {
         List<SpringBootDependencyDTO> list = new ArrayList<>();
-        list.add(new SpringBootDependencyDTO("web", "Web", "Full-stack web development with Tomcat and Spring MVC"));
-        list.add(new SpringBootDependencyDTO("camel", "Apache Camel", "Integration using Apache Camel"));
+
+        Yaml yaml = new Yaml();
+        // load the application.yaml file from the spring-boot initializr project and parse it
+        // and grab all the dependencies it has so we have those as choices
+        InputStream input = SpringBootNewProjectCommand.class.getResourceAsStream("/spring-boot-application.yaml");
+        Map data = (Map) yaml.load(input);
+
+        Map initializer = (Map) data.get("initializr");
+        List deps = (List) initializer.get("dependencies");
+        for (Object dep : deps) {
+            Map group = (Map) dep;
+            String groupName = (String) group.get("name");
+            List content = (List) group.get("content");
+            for (Object row : content) {
+                Map item = (Map) row;
+                String id = (String) item.get("id");
+                String name = (String) item.get("name");
+                String description = (String) item.get("description");
+                list.add(new SpringBootDependencyDTO(groupName, id, name, description));
+            }
+        }
+
         return list;
     }
 
@@ -84,6 +121,10 @@ public class SpringBootNewProjectCommand extends AbstractDevOpsCommand implement
 
     @Override
     public Result execute(UIExecutionContext context) throws Exception {
+        UIContext uiContext = context.getUIContext();
+        Project project = (Project) uiContext.getAttributeMap().get(Project.class);
+        MetadataFacet metadataFacet = project.getFacet(MetadataFacet.class);
+
         int[] selected = dependencies.getSelectedIndexes();
 
         CollectionStringBuffer csb = new CollectionStringBuffer(",");
@@ -105,26 +146,39 @@ public class SpringBootNewProjectCommand extends AbstractDevOpsCommand implement
         Response response = client.newCall(request).execute();
         InputStream is = response.body().byteStream();
 
-        // TODO: what was the project dir
-        // TODO: whats the project name etc
+        String projectName = metadataFacet.getProjectName();
+        File folder = project.getRoot().reify(DirectoryResource.class).getUnderlyingResourceObject();
 
-        File name = new File("mydownload.zip");
+        // some archetypes might not use maven or use the maven source layout so lets remove
+        // the pom.xml and src folder if its already been pre-created
+        // as these will be created if necessary via the archetype jar's contents
+        File pom = new File(folder, "pom.xml");
+        if (pom.isFile() && pom.exists()) {
+            pom.delete();
+        }
+        File src = new File(folder, "src");
+        if (src.isDirectory() && src.exists()) {
+            recursiveDelete(src);
+        }
+
+        File name = new File(folder, projectName + ".zip");
         if (name.exists()) {
             name.delete();
         }
+
+        File currentDir = new File(".");
+        System.out.println(currentDir.getName());
+        System.out.println(currentDir.getAbsolutePath());
 
         FileOutputStream fos = new FileOutputStream(name, false);
         copyAndCloseInput(is, fos);
         close(fos);
 
-        // unzip the file in the project dir
-        String destination = "unzip";
-
-        unzip(name.getName(), destination);
+        unzip(name, folder.getName());
 
         // delete the zip file
         name.delete();
 
-        return Results.success("Created new Spring Boot project with dependencies: " + deps + " in directory: " + destination);
+        return Results.success("Created new Spring Boot project with dependencies: " + deps + " in directory: " + folder.getName());
     }
 }
