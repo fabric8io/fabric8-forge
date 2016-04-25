@@ -15,10 +15,6 @@
  */
 package io.fabric8.forge.devops.setup;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Properties;
-
 import io.fabric8.forge.addon.utils.CamelProjectHelper;
 import io.fabric8.forge.addon.utils.MavenHelpers;
 import io.fabric8.forge.addon.utils.VersionHelper;
@@ -37,6 +33,10 @@ import org.jboss.forge.addon.maven.projects.MavenPluginFacet;
 import org.jboss.forge.addon.projects.Project;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Properties;
 
 public class DockerSetupHelper {
     private static final transient Logger LOG = LoggerFactory.getLogger(DockerSetupHelper.class);
@@ -66,6 +66,7 @@ public class DockerSetupHelper {
         Model pom = maven.getModel();
 
         boolean springBoot = hasSpringBoot(project);
+        boolean wildflySwarm = hasWildlySwarm(project);
         String packaging = getProjectPackaging(project);
         boolean war = packaging != null && packaging.equals("war");
         boolean bundle = packaging != null && packaging.equals("bundle");
@@ -73,8 +74,10 @@ public class DockerSetupHelper {
 
         Map<String, String> envs = new LinkedHashMap<>();
         if (springBoot) {
-            envs.put("JAR", "${project.artifactId}-${project.version}.war");
+            envs.put("JAVA_APP_JAR", "${project.artifactId}-${project.version}.jar");
             envs.put("JAVA_OPTIONS", "-Djava.security.egd=/dev/./urandom");
+        } else if (wildflySwarm) {
+            envs.put("JAVA_APP_JAR", "${project.build.finalName}-swarm.jar");
         } else if (war) {
             envs.put("CATALINA_OPTS", "-javaagent:/opt/tomcat/jolokia-agent.jar=host=0.0.0.0,port=8778");
         } else if (jar && main != null) {
@@ -104,7 +107,7 @@ public class DockerSetupHelper {
             if (bundle) {
                 commandShell = "/usr/bin/deploy-and-start";
             }
-            setupDockerConfiguration(configurationBuilder, envs, commandShell, springBoot, war, bundle, jar);
+            setupDockerConfiguration(configurationBuilder, envs, commandShell, springBoot, wildflySwarm, war, bundle, jar);
 
             MavenPluginFacet pluginFacet = project.getFacet(MavenPluginFacet.class);
             pluginFacet.addPlugin(pluginBuilder);
@@ -114,7 +117,7 @@ public class DockerSetupHelper {
     }
 
     protected static void setupDockerConfiguration(ConfigurationBuilder config, Map<String, String> envs, String commandShell,
-                                                   boolean springBoot, boolean war, boolean bundle, boolean jar) {
+                                                   boolean springBoot, boolean wildflySwarm, boolean war, boolean bundle, boolean jar) {
         ConfigurationElement images = MavenHelpers.getOrCreateElement(config, "images");
         // images/image
         ConfigurationElement image = MavenHelpers.getOrCreateElement(images, "image");
@@ -132,16 +135,32 @@ public class DockerSetupHelper {
         }
         // images/image/build/assembly
         ConfigurationElementBuilder assembly = MavenHelpers.getOrCreateElementBuilder(build, "assembly");
-        if (springBoot || jar) {
+        if (springBoot || wildflySwarm || jar) {
             if (!assembly.hasChildByName("basedir")) {
                 ConfigurationElementBuilder baseDir = MavenHelpers.getOrCreateElementBuilder(assembly, "basedir");
                 baseDir.setText("/app");
             }
+            if (wildflySwarm) {
+                ConfigurationElementBuilder inline = MavenHelpers.getOrCreateElementBuilder(assembly, "inline");
+                ConfigurationElementBuilder fileSets = MavenHelpers.getOrCreateElementBuilder(inline, "fileSets");
+                ConfigurationElementBuilder fileSet = MavenHelpers.getOrCreateElementBuilder(fileSets, "fileSet");
+                ConfigurationElementBuilder includes = MavenHelpers.getOrCreateElementBuilder(fileSet, "includes");
+                ConfigurationElementBuilder include = MavenHelpers.getOrCreateElementBuilder(includes, "include");
+                include.setText("${project.build.finalName}-swarm.jar");
+
+                ConfigurationElementBuilder directory = MavenHelpers.getOrCreateElementBuilder(fileSet, "directory");
+                directory.setText("${project.build.directory}");
+
+                ConfigurationElementBuilder outputDirectory = MavenHelpers.getOrCreateElementBuilder(fileSet, "outputDirectory");
+                outputDirectory.setText("/");
+            }
         }
-        if (!assembly.hasChildByName("descriptor")) {
-            ConfigurationElementBuilder descriptorRef = MavenHelpers.getOrCreateElementBuilder(assembly, "descriptorRef");
-            if (Strings.isNullOrBlank(descriptorRef.getText())) {
-                descriptorRef.setText("${docker.assemblyDescriptorRef}");
+        if (!wildflySwarm) {
+            if (!assembly.hasChildByName("descriptor")) {
+                ConfigurationElementBuilder descriptorRef = MavenHelpers.getOrCreateElementBuilder(assembly, "descriptorRef");
+                if (Strings.isNullOrBlank(descriptorRef.getText())) {
+                    descriptorRef.setText("${docker.assemblyDescriptorRef}");
+                }
             }
         }
         // images/image/build/env
@@ -163,6 +182,7 @@ public class DockerSetupHelper {
         String packaging = getProjectPackaging(project);
 
         boolean springBoot = hasSpringBoot(project);
+        boolean wildflySwarm = hasWildlySwarm(project);
         boolean war = packaging != null && packaging.equals("war");
         boolean bundle = packaging != null && packaging.equals("bundle");
         boolean jar = packaging != null && packaging.equals("jar");
@@ -179,13 +199,19 @@ public class DockerSetupHelper {
             }
             updated = MavenHelpers.updatePomProperty(properties, "docker.from", fullDockerFromName, updated);
         }
-        updated = MavenHelpers.updatePomProperty(properties, "docker.image", organization + "/${project.artifactId}:${project.version}", updated);
+        String imageName = "${project.artifactId}:${project.version}";
+        if (Strings.isNotBlank(organization)) {
+            imageName = organization + "/${project.artifactId}:${project.version}";
+        }
+        updated = MavenHelpers.updatePomProperty(properties, "docker.image", imageName, updated);
         // jolokia is exposed on our docker images on port 8778
         updated = MavenHelpers.updatePomProperty(properties, "docker.port.container.jolokia", "8778", updated);
 
         if (springBoot) {
             // spring-boot is packaged as war but runs as fat WARs
             updated = MavenHelpers.updatePomProperty(properties, "docker.assemblyDescriptorRef", "artifact", updated);
+            updated = MavenHelpers.updatePomProperty(properties, "docker.port.container.http", "8080", updated);
+        } else if (wildflySwarm) {
             updated = MavenHelpers.updatePomProperty(properties, "docker.port.container.http", "8080", updated);
         } else if (war) {
             // tomcat/jetty on port 8080
@@ -227,6 +253,11 @@ public class DockerSetupHelper {
     public static boolean hasSpringBootWeb(Project project) {
         return CamelProjectHelper.hasDependency(project, "org.springframework.boot", "spring-boot-starter-web");
     }
+
+    public static boolean hasWildlySwarm(Project project) {
+        return CamelProjectHelper.hasDependency(project, "org.wildfly.swarm");
+    }
+
 
     public static boolean hasVertx(Project project) {
         return CamelProjectHelper.hasDependency(project, "io.vertx");
