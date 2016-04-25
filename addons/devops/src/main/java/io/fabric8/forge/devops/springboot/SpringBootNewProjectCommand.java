@@ -15,12 +15,17 @@
  */
 package io.fabric8.forge.devops.springboot;
 
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Inject;
 
 import io.fabric8.forge.devops.AbstractDevOpsCommand;
 import io.fabric8.forge.devops.dto.SpringBootDependencyDTO;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
@@ -32,7 +37,13 @@ import org.jboss.forge.addon.ui.result.Results;
 import org.jboss.forge.addon.ui.util.Metadata;
 import org.jboss.forge.addon.ui.wizard.UIWizard;
 
+import static io.fabric8.forge.devops.springboot.IOHelper.close;
+import static io.fabric8.forge.devops.springboot.IOHelper.copyAndCloseInput;
+import static io.fabric8.forge.devops.springboot.OkHttpClientHelper.createOkHttpClient;
+
 public class SpringBootNewProjectCommand extends AbstractDevOpsCommand implements UIWizard {
+
+    private static final String STARTER_URL = "https://start.spring.io/starter.zip";
 
     private List<SpringBootDependencyDTO> choices;
 
@@ -79,8 +90,29 @@ public class SpringBootNewProjectCommand extends AbstractDevOpsCommand implement
             SpringBootDependencyDTO dto = choices.get(val);
             csb.append(dto.getId());
         }
-
         String deps = csb.toString();
-        return Results.success("Created new Spring Boot project with dependencies: " + deps);
+
+        String url = STARTER_URL + "?dependencies=" + deps + "o=demo.zip";
+
+        // use http client to call start.spring.io that creates the project
+        OkHttpClient client = createOkHttpClient();
+
+        Request request = new Request.Builder()
+                .url(url).build();
+
+        Response response = client.newCall(request).execute();
+        InputStream is = response.body().byteStream();
+
+        // TODO: what was the project dir
+
+        FileOutputStream fos = new FileOutputStream("mydownload.zip");
+        copyAndCloseInput(is, fos);
+        close(fos);
+
+        // unzip the file in the project dir
+        // delete the zip file
+
+
+        return Results.success("Created new Spring Boot project with dependencies: " + deps + " in mydownload.zip");
     }
 }
