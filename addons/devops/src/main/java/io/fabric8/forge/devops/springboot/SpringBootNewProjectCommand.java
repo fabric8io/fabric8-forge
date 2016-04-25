@@ -27,12 +27,17 @@ import io.fabric8.forge.devops.dto.SpringBootDependencyDTO;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import org.jboss.forge.addon.projects.Project;
+import org.jboss.forge.addon.projects.facets.MetadataFacet;
+import org.jboss.forge.addon.resource.DirectoryResource;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
+import org.jboss.forge.addon.ui.context.UINavigationContext;
 import org.jboss.forge.addon.ui.input.UISelectMany;
 import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
 import org.jboss.forge.addon.ui.metadata.WithAttributes;
+import org.jboss.forge.addon.ui.result.NavigationResult;
 import org.jboss.forge.addon.ui.result.Result;
 import org.jboss.forge.addon.ui.result.Results;
 import org.jboss.forge.addon.ui.util.Metadata;
@@ -42,6 +47,7 @@ import static io.fabric8.forge.devops.springboot.IOHelper.close;
 import static io.fabric8.forge.devops.springboot.IOHelper.copyAndCloseInput;
 import static io.fabric8.forge.devops.springboot.OkHttpClientHelper.createOkHttpClient;
 import static io.fabric8.forge.devops.springboot.UnzipHelper.unzip;
+import static io.fabric8.utils.Files.recursiveDelete;
 
 public class SpringBootNewProjectCommand extends AbstractDevOpsCommand implements UIWizard {
 
@@ -52,6 +58,11 @@ public class SpringBootNewProjectCommand extends AbstractDevOpsCommand implement
     @Inject
     @WithAttributes(label = "Dependencies", required = true, description = "Add Spring Boot Starters and dependencies to your application")
     private UISelectMany<SpringBootDependencyDTO> dependencies;
+
+    @Override
+    public NavigationResult next(UINavigationContext context) throws Exception {
+        return null;
+    }
 
     @Override
     public void initializeUI(UIBuilder builder) throws Exception {
@@ -84,6 +95,10 @@ public class SpringBootNewProjectCommand extends AbstractDevOpsCommand implement
 
     @Override
     public Result execute(UIExecutionContext context) throws Exception {
+        UIContext uiContext = context.getUIContext();
+        Project project = (Project) uiContext.getAttributeMap().get(Project.class);
+        MetadataFacet metadataFacet = project.getFacet(MetadataFacet.class);
+
         int[] selected = dependencies.getSelectedIndexes();
 
         CollectionStringBuffer csb = new CollectionStringBuffer(",");
@@ -105,26 +120,39 @@ public class SpringBootNewProjectCommand extends AbstractDevOpsCommand implement
         Response response = client.newCall(request).execute();
         InputStream is = response.body().byteStream();
 
-        // TODO: what was the project dir
-        // TODO: whats the project name etc
+        String projectName = metadataFacet.getProjectName();
+        File folder = project.getRoot().reify(DirectoryResource.class).getUnderlyingResourceObject();
 
-        File name = new File("mydownload.zip");
+        // some archetypes might not use maven or use the maven source layout so lets remove
+        // the pom.xml and src folder if its already been pre-created
+        // as these will be created if necessary via the archetype jar's contents
+        File pom = new File(folder, "pom.xml");
+        if (pom.isFile() && pom.exists()) {
+            pom.delete();
+        }
+        File src = new File(folder, "src");
+        if (src.isDirectory() && src.exists()) {
+            recursiveDelete(src);
+        }
+
+        File name = new File(folder, projectName + ".zip");
         if (name.exists()) {
             name.delete();
         }
+
+        File currentDir = new File(".");
+        System.out.println(currentDir.getName());
+        System.out.println(currentDir.getAbsolutePath());
 
         FileOutputStream fos = new FileOutputStream(name, false);
         copyAndCloseInput(is, fos);
         close(fos);
 
-        // unzip the file in the project dir
-        String destination = "unzip";
-
-        unzip(name.getName(), destination);
+        unzip(name, folder.getName());
 
         // delete the zip file
         name.delete();
 
-        return Results.success("Created new Spring Boot project with dependencies: " + deps + " in directory: " + destination);
+        return Results.success("Created new Spring Boot project with dependencies: " + deps + " in directory: " + folder.getName());
     }
 }
