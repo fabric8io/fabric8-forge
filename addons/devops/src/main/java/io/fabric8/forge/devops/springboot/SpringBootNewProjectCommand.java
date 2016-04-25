@@ -75,7 +75,6 @@ public class SpringBootNewProjectCommand extends AbstractDevOpsCommand implement
         }
 
         dependencies.setValueChoices(choices);
-        dependencies.setItemLabelConverter(SpringBootDependencyDTO::getName);
         dependencies.setItemLabelConverter(SpringBootDependencyDTO::getGroupAndName);
 
         builder.add(dependencies);
