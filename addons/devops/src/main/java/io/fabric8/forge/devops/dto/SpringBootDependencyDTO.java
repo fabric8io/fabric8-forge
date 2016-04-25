@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class SpringBootDependencyDTO {
 
+    private String group;
     private String id;
     private String name;
     private String description;
@@ -28,10 +29,19 @@ public class SpringBootDependencyDTO {
     public SpringBootDependencyDTO() {
     }
 
-    public SpringBootDependencyDTO(String id, String name, String description) {
+    public SpringBootDependencyDTO(String group, String id, String name, String description) {
+        this.group = group;
         this.id = id;
         this.name = name;
         this.description = description;
+    }
+
+    public String getGroup() {
+        return group;
+    }
+
+    public void setGroup(String group) {
+        this.group = group;
     }
 
     public String getId() {

@@ -20,6 +20,7 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import javax.inject.Inject;
 
 import io.fabric8.forge.devops.AbstractDevOpsCommand;
@@ -42,6 +43,7 @@ import org.jboss.forge.addon.ui.result.Result;
 import org.jboss.forge.addon.ui.result.Results;
 import org.jboss.forge.addon.ui.util.Metadata;
 import org.jboss.forge.addon.ui.wizard.UIWizard;
+import org.yaml.snakeyaml.Yaml;
 
 import static io.fabric8.forge.devops.springboot.IOHelper.close;
 import static io.fabric8.forge.devops.springboot.IOHelper.copyAndCloseInput;
@@ -66,7 +68,11 @@ public class SpringBootNewProjectCommand extends AbstractDevOpsCommand implement
 
     @Override
     public void initializeUI(UIBuilder builder) throws Exception {
-        choices = initDependencies();
+        try {
+            choices = initDependencies();
+        } catch (Exception e) {
+            throw new IllegalStateException("Error loading dependencies from spring-boot-application.yaml due: " + e.getMessage(), e);
+        }
 
         dependencies.setValueChoices(choices);
         dependencies.setItemLabelConverter(SpringBootDependencyDTO::getName);
@@ -77,8 +83,28 @@ public class SpringBootNewProjectCommand extends AbstractDevOpsCommand implement
 
     private List<SpringBootDependencyDTO> initDependencies() {
         List<SpringBootDependencyDTO> list = new ArrayList<>();
-        list.add(new SpringBootDependencyDTO("web", "Web", "Full-stack web development with Tomcat and Spring MVC"));
-        list.add(new SpringBootDependencyDTO("camel", "Apache Camel", "Integration using Apache Camel"));
+
+        Yaml yaml = new Yaml();
+        // load the application.yaml file from the spring-boot initializr project and parse it
+        // and grab all the dependencies it has so we have those as choices
+        InputStream input = SpringBootNewProjectCommand.class.getResourceAsStream("/spring-boot-application.yaml");
+        Map data = (Map) yaml.load(input);
+
+        Map initializer = (Map) data.get("initializr");
+        List deps = (List) initializer.get("dependencies");
+        for (Object dep : deps) {
+            Map group = (Map) dep;
+            String groupName = (String) group.get("name");
+            List content = (List) group.get("content");
+            for (Object row : content) {
+                Map item = (Map) row;
+                String id = (String) item.get("id");
+                String name = (String) item.get("name");
+                String description = (String) item.get("description");
+                list.add(new SpringBootDependencyDTO(groupName, id, name, description));
+            }
+        }
+
         return list;
     }
 
