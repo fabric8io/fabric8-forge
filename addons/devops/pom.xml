@@ -58,6 +58,13 @@
       <version>${project.version}</version>
     </dependency>
 
+    <!-- http client for spring-boot command -->
+    <dependency>
+      <groupId>com.squareup.okhttp3</groupId>
+      <artifactId>okhttp</artifactId>
+      <version>3.0.0</version>
+    </dependency>
+
     <!-- we use dtos with jackson annotations -->
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
