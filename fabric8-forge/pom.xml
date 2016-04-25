@@ -33,6 +33,7 @@
     <furnace.version>2.23.4.Final</furnace.version>
     <guava.version>15.0</guava.version>
     <jboss.forge.version>3.0.1.Final</jboss.forge.version>
+    <wildfly.swarm.version>1.0.0.Beta3</wildfly.swarm.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -69,6 +70,13 @@
       <groupId>io.fabric8.forge</groupId>
       <artifactId>devops</artifactId>
       <version>${project.version}</version>
+      <classifier>forge-addon</classifier>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.forge.addon</groupId>
+      <artifactId>wildfly-swarm</artifactId>
+      <version>${wildfly.swarm.version}</version>
       <classifier>forge-addon</classifier>
       <scope>provided</scope>
     </dependency>
@@ -193,6 +201,7 @@
                 <addonId>io.fabric8.forge:camel,${project.version}</addonId>
                 <addonId>io.fabric8.forge:devops,${project.version}</addonId>
                 <addonId>org.jboss.forge.addon:git,${jboss.forge.version}</addonId>
+                <addonId>org.jboss.forge.addon:wildfly-swarm,${wildfly.swarm.version}</addonId>
               </addonIds>
             </configuration>
           </execution>

@@ -15,16 +15,6 @@
  */
 package io.fabric8.forge.devops.setup;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Properties;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import javax.inject.Inject;
-
 import io.fabric8.forge.addon.utils.MavenHelpers;
 import io.fabric8.forge.addon.utils.VersionHelper;
 import io.fabric8.forge.addon.utils.validator.ClassNameOrMavenPropertyValidator;
@@ -37,12 +27,13 @@ import org.jboss.forge.addon.dependencies.Dependency;
 import org.jboss.forge.addon.dependencies.builder.DependencyBuilder;
 import org.jboss.forge.addon.facets.FacetFactory;
 import org.jboss.forge.addon.facets.constraints.FacetConstraint;
+import org.jboss.forge.addon.maven.plugins.Configuration;
+import org.jboss.forge.addon.maven.plugins.ConfigurationElement;
 import org.jboss.forge.addon.maven.plugins.ExecutionBuilder;
 import org.jboss.forge.addon.maven.plugins.MavenPlugin;
 import org.jboss.forge.addon.maven.plugins.MavenPluginBuilder;
 import org.jboss.forge.addon.maven.projects.MavenFacet;
 import org.jboss.forge.addon.maven.projects.MavenPluginFacet;
-import org.jboss.forge.addon.maven.resources.MavenModelResource;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
 import org.jboss.forge.addon.projects.facets.ResourcesFacet;
@@ -69,10 +60,20 @@ import org.jboss.forge.addon.ui.wizard.UIWizardStep;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static io.fabric8.forge.addon.utils.MavenHelpers.ensureMavenDependencyAdded;
+import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Properties;
+import java.util.Set;
+import java.util.concurrent.Callable;
+
 import static io.fabric8.forge.devops.setup.DockerSetupHelper.getDockerFromImage;
 import static io.fabric8.forge.devops.setup.DockerSetupHelper.hasSpringBoot;
 import static io.fabric8.forge.devops.setup.DockerSetupHelper.hasSpringBootWeb;
+import static io.fabric8.forge.devops.setup.DockerSetupHelper.hasWildlySwarm;
 import static io.fabric8.forge.devops.setup.DockerSetupHelper.setupDocker;
 import static io.fabric8.forge.devops.setup.SetupProjectHelper.findCamelArtifacts;
 
@@ -345,7 +346,7 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
         }
     }
 
-    private void setupFabricMavenPlugin(Project project) {
+    public static void setupFabricMavenPlugin(Project project) {
         MavenPluginBuilder pluginBuilder;
         MavenPlugin plugin = MavenHelpers.findPlugin(project, "io.fabric8", "fabric8-maven-plugin");
         if (plugin != null) {
@@ -369,15 +370,23 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
 
     private void setupFabricProperties(Project project, MavenFacet maven) {
         // must install the dependency before re-loading maven model
-        boolean springBoot = false;
-        if (readinessProbe.getValue()) {
+        Boolean isService = service.getValue();
+        Boolean isReadinessProbe = readinessProbe.getValue();
+        String group = this.group.getValue();
+        String containerName = container.getValue();
+        String icon = this.icon.getValue();
+
+        if (isReadinessProbe) {
             String servicePort = getDefaultServicePort(project);
             if (servicePort != null && hasSpringBoot(project)) {
                 MavenHelpers.ensureMavenDependencyAdded(project, dependencyInstaller, "org.springframework.boot", "spring-boot-starter-actuator", null);
-                springBoot = true;
             }
         }
 
+        setupFabric8Properties(project, maven, isService, isReadinessProbe, group, containerName, icon);
+    }
+
+    public static void setupFabric8Properties(Project project, MavenFacet maven, Boolean isService, Boolean isReadinessProbe, String group, String containerName, String icon) {
         // update properties section in pom.xml
         boolean updated = false;
 
@@ -385,15 +394,15 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
         Model pom = maven.getModelResource().getCurrentModel();
 
         Properties properties = pom.getProperties();
-        updated = MavenHelpers.updatePomProperty(properties, "fabric8.label.container", container.getValue(), updated);
-        String iconValue = icon.getValue();
+        updated = MavenHelpers.updatePomProperty(properties, "fabric8.label.container", containerName, updated);
+        String iconValue = icon;
         if (Strings.isNotBlank(iconValue)) {
             updated = MavenHelpers.updatePomProperty(properties, "fabric8.iconRef", "icons/" + iconValue, updated);
         }
-        updated = MavenHelpers.updatePomProperty(properties, "fabric8.label.group", group.getValue(), updated);
+        updated = MavenHelpers.updatePomProperty(properties, "fabric8.label.group", group, updated);
 
         // kubernetes service
-        if (service.getValue()) {
+        if (isService) {
             String servicePort = getDefaultServicePort(project);
             if (servicePort != null) {
                 String name = pom.getArtifactId();
@@ -416,12 +425,12 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
         }
 
         // kubernetes readiness probe
-        if (readinessProbe.getValue()) {
+        if (isReadinessProbe) {
             String servicePort = getDefaultServicePort(project);
             if (servicePort != null) {
 
                 String path;
-                if (springBoot) {
+                if (hasSpringBoot(project)) {
                     path = "/health";
                 } else {
                     path = "/";
@@ -505,7 +514,26 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
      * For Karaf we cannot assume its 8181 as web is not installed by default
      * and there is no default index html on the port to use etc
      */
-    protected String getDefaultServicePort(Project project) {
+    protected static String getDefaultServicePort(Project project) {
+        if (hasWildlySwarm(project)) {
+            // lets find the swarm plugin
+            MavenPlugin plugin = MavenHelpers.findPlugin(project, "org.wildfly.swarm", "wildfly-swarm-plugin");
+            if (plugin != null) {
+                Configuration config = plugin.getConfig();
+                if (config != null) {
+                    ConfigurationElement properties = config.getConfigurationElement("properties");
+                    if (properties != null) {
+                        ConfigurationElement portElement = properties.getChildByName("swarm.http.port");
+                        if (portElement != null) {
+                            String text = portElement.getText();
+                            if (Strings.isNotBlank(text)) {
+                                return text;
+                            }
+                        }
+                    }
+                }
+            }
+        }
         String packaging = getProjectPackaging(project);
         if (Strings.isNotBlank(packaging)) {
             if (Objects.equal("war", packaging) || Objects.equal("ear", packaging)) {
@@ -516,7 +544,6 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
         if (springBoot) {
             return "8080";
         }
-
         return null;
     }
 
