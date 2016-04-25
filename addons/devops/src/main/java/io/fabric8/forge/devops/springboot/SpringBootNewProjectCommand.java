@@ -15,6 +15,7 @@
  */
 package io.fabric8.forge.devops.springboot;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -40,6 +41,7 @@ import org.jboss.forge.addon.ui.wizard.UIWizard;
 import static io.fabric8.forge.devops.springboot.IOHelper.close;
 import static io.fabric8.forge.devops.springboot.IOHelper.copyAndCloseInput;
 import static io.fabric8.forge.devops.springboot.OkHttpClientHelper.createOkHttpClient;
+import static io.fabric8.forge.devops.springboot.UnzipHelper.unzip;
 
 public class SpringBootNewProjectCommand extends AbstractDevOpsCommand implements UIWizard {
 
@@ -92,7 +94,7 @@ public class SpringBootNewProjectCommand extends AbstractDevOpsCommand implement
         }
         String deps = csb.toString();
 
-        String url = STARTER_URL + "?dependencies=" + deps + "o=demo.zip";
+        String url = STARTER_URL + "?dependencies=" + deps;
 
         // use http client to call start.spring.io that creates the project
         OkHttpClient client = createOkHttpClient();
@@ -104,15 +106,25 @@ public class SpringBootNewProjectCommand extends AbstractDevOpsCommand implement
         InputStream is = response.body().byteStream();
 
         // TODO: what was the project dir
+        // TODO: whats the project name etc
 
-        FileOutputStream fos = new FileOutputStream("mydownload.zip");
+        File name = new File("mydownload.zip");
+        if (name.exists()) {
+            name.delete();
+        }
+
+        FileOutputStream fos = new FileOutputStream(name, false);
         copyAndCloseInput(is, fos);
         close(fos);
 
         // unzip the file in the project dir
+        String destination = "unzip";
+
+        unzip(name.getName(), destination);
+
         // delete the zip file
+        name.delete();
 
-
-        return Results.success("Created new Spring Boot project with dependencies: " + deps + " in mydownload.zip");
+        return Results.success("Created new Spring Boot project with dependencies: " + deps + " in directory: " + destination);
     }
 }
