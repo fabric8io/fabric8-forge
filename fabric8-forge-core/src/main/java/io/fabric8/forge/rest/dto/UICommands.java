@@ -41,6 +41,7 @@ import org.jboss.forge.furnace.proxy.Proxies;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -94,7 +95,16 @@ public class UICommands {
         String requiredMessage = input.getRequiredMessage();
         char shortNameChar = input.getShortName();
         String shortName = Character.toString(shortNameChar);
-        Object value = convertValueToSafeJson(input.getValueConverter(), InputComponents.getValueFor(input));
+        Object inputValue = InputComponents.getValueFor(input);
+
+/*
+        if (input instanceof ManyValued) {
+            ManyValued manyValued = (ManyValued) input;
+            inputValue = manyValued.getValue();
+        }
+*/
+        Object value = convertValueToSafeJson(input.getValueConverter(), inputValue);
+
         Class<?> valueType = input.getValueType();
         String javaType = null;
         if (valueType != null) {
@@ -105,7 +115,6 @@ public class UICommands {
         boolean required = input.isRequired();
         List<Object> enumValues = new ArrayList<>();
         List<Object> typeaheadData = new ArrayList<>();
-        boolean isSelect = false;
         if (input instanceof SelectComponent) {
             SelectComponent selectComponent = (SelectComponent) input;
             Iterable valueChoices = selectComponent.getValueChoices();
@@ -126,8 +135,7 @@ public class UICommands {
             HasCompleter hasCompleter = (HasCompleter) input;
             UICompleter completer = hasCompleter.getCompleter();
             if (completer != null) {
-                Object currentValue = InputComponents.getValueFor(input);
-                String textValue = currentValue != null ? currentValue.toString() : "";
+                String textValue = inputValue != null ? inputValue.toString() : "";
                 Iterable valueChoices = completer.getCompletionProposals(context, input, textValue);
                 // TODO is there a way to find a converter?
                 Converter converter = null;
@@ -159,6 +167,9 @@ public class UICommands {
      */
     public static Object convertValueToSafeJson(Converter converter, Object value) {
         value = Proxies.unwrap(value);
+        if (isJsonObject(value)) {
+            return value;
+        }
         if (converter != null) {
             // TODO converters ususally go from String -> CustomType?
             try {
@@ -187,6 +198,17 @@ public class UICommands {
             if (value instanceof Boolean || value instanceof String || value instanceof Number) {
                 return value;
             }
+            if (value instanceof Iterable) {
+                Iterable iterable = (Iterable) value;
+                List answer = new ArrayList<>();
+                for (Object item : iterable) {
+                    Object itemJson = toSafeJsonValue(item);
+                    if (itemJson != null) {
+                        answer.add(itemJson);
+                    }
+                }
+                return answer;
+            }
             if (value instanceof ProjectProvider) {
                 ProjectProvider projectProvider = (ProjectProvider) value;
                 return projectProvider.getType();
@@ -205,6 +227,15 @@ public class UICommands {
                 }
             }
             value = Proxies.unwrap(value);
+            if (isJsonObject(value)) {
+                return value;
+            }
+            return value.toString();
+        }
+    }
+
+    protected static boolean isJsonObject(Object value) {
+        if (value != null) {
             Class<?> aClass = value.getClass();
             while (aClass != null && !aClass.equals(Object.class)) {
                 Annotation[] annotations = aClass.getAnnotations();
@@ -213,22 +244,21 @@ public class UICommands {
                         String annotationClassName = annotation.getClass().getName();
                         if (annotationClassName != null && annotationClassName.startsWith("com.fasterxml.jackson.")) {
                             // lets assume its a JSON DTO!
-                            return value;
+                            return true;
                         } else {
                             String text = annotation.toString();
                             // because of the Forge proxying we can't just use the actual class here...
                             if (text.indexOf("com.fasterxml.jackson.") >= 0) {
-                                return value;
+                                return true;
                             }
                         }
                     }
                 }
                 aClass = aClass.getSuperclass();
             }
-            return value.toString();
         }
+        return false;
     }
-
 
     private static final Pattern WHITESPACES = Pattern.compile("\\W+");
     private static final Pattern COLONS = Pattern.compile("\\:");
@@ -268,7 +298,7 @@ public class UICommands {
         return name;
     }
 
-    public static void populateController(Map<String, String> requestedInputs, CommandController controller, ConverterFactory converterFactory) {
+    public static void populateController(Map<String, Object> requestedInputs, CommandController controller, ConverterFactory converterFactory) {
         Map<String, InputComponent<?, ?>> inputs = controller.getInputs();
         Set<String> inputKeys = new HashSet<>(inputs.keySet());
         if (requestedInputs != null) {
@@ -277,8 +307,15 @@ public class UICommands {
             for (Map.Entry<String, InputComponent<?, ?>> entry : entries) {
                 String key = entry.getKey();
                 InputComponent<?, ?> component = entry.getValue();
+                Object value = requestedInputs.get(key);
+                String textValue = null;
+                if (value instanceof String || value instanceof Number || value instanceof Date) {
+                    textValue = value.toString();
+                }
+/*
                 String textValue = requestedInputs.get(key);
                 Object value = textValue;
+*/
                 if (component != null && textValue != null) {
                     Converter<String, ?> valueConverter = component.getValueConverter();
                     if (valueConverter != null) {
