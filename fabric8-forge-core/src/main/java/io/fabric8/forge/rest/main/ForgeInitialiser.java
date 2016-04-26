@@ -93,7 +93,7 @@ public class ForgeInitialiser {
         boolean precreateProjects = false;
         if (precreateProjects) {
             ExecutionRequest executionRequest = new ExecutionRequest();
-            Map<String, String> step1Inputs = new HashMap<>();
+            Map<String, Object> step1Inputs = new HashMap<>();
             step1Inputs.put("buildSystem", "Maven");
             String projectName = "dummy";
             step1Inputs.put("named", projectName);
@@ -103,11 +103,11 @@ public class ForgeInitialiser {
             step1Inputs.put("version", "1.0.0-SNAPSHOT");
 
 
-            Map<String, String> step2Inputs = new HashMap<>();
+            Map<String, Object> step2Inputs = new HashMap<>();
             step2Inputs.put("catalog", "fabric8");
             step2Inputs.put("archetype", "io.fabric8.archetypes:java-camel-cdi-archetype:" + getArchetypesVersion());
 
-            List<Map<String, String>> inputList = new ArrayList<>();
+            List<Map<String, Object>> inputList = new ArrayList<>();
             inputList.add(step1Inputs);
             inputList.add(step2Inputs);
             executionRequest.setInputList(inputList);
