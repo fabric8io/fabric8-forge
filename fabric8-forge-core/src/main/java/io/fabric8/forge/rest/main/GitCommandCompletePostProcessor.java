@@ -85,9 +85,9 @@ public class GitCommandCompletePostProcessor implements CommandCompletePostProce
         }
 
         if (Objects.equals(name, Constants.PROJECT_NEW_COMMAND)) {
-            List<Map<String, String>> inputList = executionRequest.getInputList();
+            List<Map<String, Object>> inputList = executionRequest.getInputList();
             if (inputList != null) {
-                Map<String, String> page1 = inputList.get(0);
+                Map<String, Object> page1 = inputList.get(0);
                 if (page1 != null) {
                     if (page1.containsKey(Constants.TARGET_LOCATION_PROPERTY)) {
                         page1.put(Constants.TARGET_LOCATION_PROPERTY, projectFileSystem.getUserProjectFolderLocation(userDetails));
@@ -117,11 +117,14 @@ public class GitCommandCompletePostProcessor implements CommandCompletePostProce
 
                 String targetLocation = projectFileSystem.getUserProjectFolderLocation(userDetails);
                 String named = null;
-                List<Map<String, String>> inputList = executionRequest.getInputList();
+                List<Map<String, Object>> inputList = executionRequest.getInputList();
 
-                for (Map<String, String> map : inputList) {
+                for (Map<String, Object> map : inputList) {
                     if (Strings.isNullOrEmpty(named)) {
-                        named = map.get("named");
+                        Object value = map.get("named");
+                        if (value != null) {
+                            named = value.toString();
+                        }
                     }
                 }
                 if (Strings.isNullOrEmpty(targetLocation)) {

@@ -39,7 +39,7 @@ public class ExecutionRequest {
     private String namespace;
 
     @XmlElementWrapper
-    private List<Map<String, String>> inputList;
+    private List<Map<String, Object>> inputList;
 
     @XmlElementWrapper
     private List<String> promptQueue;
@@ -51,17 +51,21 @@ public class ExecutionRequest {
      */
     public static String createCommitMessage(String name, ExecutionRequest executionRequest) {
         StringBuilder builder = new StringBuilder(name);
-        List<Map<String, String>> inputList = executionRequest.getInputList();
-        for (Map<String, String> map : inputList) {
-            Set<Map.Entry<String, String>> entries = map.entrySet();
-            for (Map.Entry<String, String> entry : entries) {
+        List<Map<String, Object>> inputList = executionRequest.getInputList();
+        for (Map<String, Object> map : inputList) {
+            Set<Map.Entry<String, Object>> entries = map.entrySet();
+            for (Map.Entry<String, Object> entry : entries) {
                 String key = entry.getKey();
-                String value = entry.getValue();
-                if (!Strings.isNullOrEmpty(value) && !value.equals("0") && !value.toLowerCase().equals("false")) {
+                String textValue = null;
+                Object value = entry.getValue();
+                if (value != null) {
+                    textValue = value.toString();
+                }
+                if (!Strings.isNullOrEmpty(textValue) && !textValue.equals("0") && !textValue.toLowerCase().equals("false")) {
                     builder.append(" --");
                     builder.append(key);
                     builder.append("=");
-                    builder.append(value);
+                    builder.append(textValue);
                 }
             }
         }
@@ -77,11 +81,11 @@ public class ExecutionRequest {
                 '}';
     }
 
-    public List<Map<String, String>> getInputList() {
+    public List<Map<String, Object>> getInputList() {
         return inputList;
     }
 
-    public void setInputList(List<Map<String, String>> inputList) {
+    public void setInputList(List<Map<String, Object>> inputList) {
         this.inputList = inputList;
     }
 

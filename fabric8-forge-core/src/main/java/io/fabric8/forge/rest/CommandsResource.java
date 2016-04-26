@@ -286,18 +286,18 @@ public class CommandsResource {
     /**
      * This method is only used to warm up JBoss Forge so we can create a sample project on startup in a temporary directory
      */
-    public Response doExecute(@PathParam("name") String name, ExecutionRequest executionRequest, CommandCompletePostProcessor postProcessor, UserDetails userDetails, RestUIContext uiContext) throws Exception {
+    public Response doExecute(String name, ExecutionRequest executionRequest, CommandCompletePostProcessor postProcessor, UserDetails userDetails, RestUIContext uiContext) throws Exception {
         try (RestUIContext context = uiContext) {
             UICommand command = getCommandByName(context, name);
             if (command == null) {
                 return Response.status(Status.NOT_FOUND).build();
             }
-            List<Map<String, String>> inputList = executionRequest.getInputList();
+            List<Map<String, Object>> inputList = executionRequest.getInputList();
 
             // lets ensure a valid targetLocation for new projects
             if (Objects.equal(PROJECT_NEW_COMMAND, name)) {
                 if (inputList.size() > 0) {
-                    Map<String, String> map = inputList.get(0);
+                    Map<String, Object> map = inputList.get(0);
                     map.put(TARGET_LOCATION_PROPERTY, projectFileSystem.getUserProjectFolderLocation(userDetails));
                 }
             }
@@ -316,7 +316,7 @@ public class CommandsResource {
                 int page = executionRequest.wizardStep();
                 int nextPage = page + 1;
                 boolean canMoveToNextStep = false;
-                for (Map<String, String> inputs : inputList) {
+                for (Map<String, Object> inputs : inputList) {
                     UICommands.populateController(inputs, lastController, getConverterFactory());
                     List<UIMessage> messages = lastController.validate();
                     ValidationResult stepValidation = UICommands.createValidationResult(context, lastController, messages);
@@ -359,7 +359,7 @@ public class CommandsResource {
                     } else {
                         int i = 0;
                         for (WizardCommandController stepController : controllers) {
-                            Map<String, String> stepControllerInputs = inputList.get(i++);
+                            Map<String, Object> stepControllerInputs = inputList.get(i++);
                             UICommands.populateController(stepControllerInputs, stepController, getConverterFactory());
                             lastResult = stepController.execute();
                             LOG.debug("Invoked command " + name + " with " + executionRequest + " result: " + lastResult);
@@ -373,7 +373,7 @@ public class CommandsResource {
                 WizardResultsDTO wizardResultsDTO = new WizardResultsDTO(stepPropertiesList, stepValidationList, stepResultList);
                 answer.setWizardResults(wizardResultsDTO);
             } else {
-                Map<String, String> inputs = inputList.get(0);
+                Map<String, Object> inputs = inputList.get(0);
                 UICommands.populateController(inputs, controller, getConverterFactory());
                 Result result = controller.execute();
                 LOG.debug("Invoked command " + name + " with " + executionRequest + " result: " + result);
@@ -438,13 +438,13 @@ public class CommandsResource {
     /**
      * Helper method used purely to pre-load and warm up JBoss Forge
      */
-    public Response doValidate(@PathParam("name") String name, ExecutionRequest executionRequest, UserDetails userDetails, RestUIContext uiContext) throws Exception {
+    public Response doValidate(String name, ExecutionRequest executionRequest, UserDetails userDetails, RestUIContext uiContext) throws Exception {
         try (RestUIContext context = uiContext) {
             UICommand command = getCommandByName(context, name);
             if (command == null) {
                 return Response.status(Status.NOT_FOUND).build();
             }
-            List<Map<String, String>> inputList = executionRequest.getInputList();
+            List<Map<String, Object>> inputList = executionRequest.getInputList();
             CommandController controller = createController(context, command);
             configureAttributeMaps(userDetails, controller, executionRequest);
             ValidationResult answer = null;
@@ -460,7 +460,7 @@ public class CommandsResource {
                 int page = executionRequest.wizardStep();
                 int nextPage = page + 1;
                 boolean canMoveToNextStep = false;
-                for (Map<String, String> inputs : inputList) {
+                for (Map<String, Object> inputs : inputList) {
                     UICommands.populateController(inputs, lastController, getConverterFactory());
                     CommandInputDTO stepDto = UICommands.createCommandInputDTO(context, command, lastController);
                     stepPropertiesList.add(stepDto);
@@ -489,7 +489,7 @@ public class CommandsResource {
                     } else {
                         int i = 0;
                         for (WizardCommandController stepController : controllers) {
-                            Map<String, String> stepControllerInputs = inputList.get(i++);
+                            Map<String, Object> stepControllerInputs = inputList.get(i++);
                             UICommands.populateController(stepControllerInputs, stepController, getConverterFactory());
                             lastResult = stepController.validate();
                             LOG.debug("Invoked command " + name + " with " + executionRequest + " result: " + lastResult);
@@ -505,7 +505,7 @@ public class CommandsResource {
                 WizardResultsDTO wizardResultsDTO = new WizardResultsDTO(stepPropertiesList, stepResultList, new ArrayList<ExecutionResult>());
                 answer.setWizardResults(wizardResultsDTO);
             } else {
-                Map<String, String> inputs = inputList.get(0);
+                Map<String, Object> inputs = inputList.get(0);
                 UICommands.populateController(inputs, controller, getConverterFactory());
                 List<UIMessage> result = controller.validate();
                 LOG.debug("Invoked command " + name + " with " + executionRequest + " result: " + result);
