@@ -50,6 +50,7 @@ import static io.fabric8.forge.devops.springboot.IOHelper.copyAndCloseInput;
 import static io.fabric8.forge.devops.springboot.OkHttpClientHelper.createOkHttpClient;
 import static io.fabric8.forge.devops.springboot.UnzipHelper.unzip;
 import static io.fabric8.utils.Files.recursiveDelete;
+import static java.rmi.server.RemoteServer.getLog;
 
 public class SpringBootNewProjectCommand extends AbstractDevOpsCommand implements UIWizard {
 
@@ -139,6 +140,8 @@ public class SpringBootNewProjectCommand extends AbstractDevOpsCommand implement
 
         String url = String.format("%s?groupId=%s&artifactId=%s&version=%s&packageName=%s&dependencies=%s", STARTER_URL, groupId, projectName, version, groupId, deps);
 
+        System.out.println("About to query url: " + url);
+
         // use http client to call start.spring.io that creates the project
         OkHttpClient client = createOkHttpClient();
 
@@ -171,7 +174,10 @@ public class SpringBootNewProjectCommand extends AbstractDevOpsCommand implement
         close(fos);
 
         // unzip the download from spring starter
-        unzip(name, folder.getName());
+        unzip(name, folder);
+
+        System.out.println("Unzipped file to folder : " + folder.getAbsolutePath());
+
 
         // and delete the zip file
         name.delete();
