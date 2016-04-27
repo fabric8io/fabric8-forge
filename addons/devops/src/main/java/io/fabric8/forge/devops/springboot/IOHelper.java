@@ -16,13 +16,44 @@
  */
 package io.fabric8.forge.devops.springboot;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 
 public class IOHelper {
+
+    /**
+     * Loads the entire stream into memory as a String and returns it.
+     * <p/>
+     * <b>Notice:</b> This implementation appends a <tt>\n</tt> as line
+     * terminator at the of the text.
+     * <p/>
+     * Warning, don't use for crazy big streams :)
+     */
+    public static String loadText(InputStream in) throws IOException {
+        StringBuilder builder = new StringBuilder();
+        InputStreamReader isr = new InputStreamReader(in);
+        try {
+            BufferedReader reader = new BufferedReader(isr);
+            while (true) {
+                String line = reader.readLine();
+                if (line != null) {
+                    builder.append(line);
+                    builder.append("\n");
+                } else {
+                    break;
+                }
+            }
+            return builder.toString();
+        } finally {
+            close(isr);
+            close(in);
+        }
+    }
 
     public static void copyAndCloseInput(InputStream input, OutputStream output) throws IOException {
         copyAndCloseInput(input, output, 8192);
