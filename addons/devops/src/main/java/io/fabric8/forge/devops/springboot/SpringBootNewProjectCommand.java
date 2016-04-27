@@ -60,7 +60,8 @@ public class SpringBootNewProjectCommand extends AbstractDevOpsCommand implement
     private static final String STARTER_URL = "https://start.spring.io/starter.zip";
 
     // fabric8 only dependencies which we should not pass on to start.spring.io
-    private static final String[] fabric8Deps = new String[]{"spring-cloud-kubernetes", "kubeflix-ribbon-discovery", "kubeflix-turbine-discovery", "kubeflix-turbine-server"};
+    private static final String[] fabric8Deps = new String[]{"spring-cloud-kubernetes", "kubeflix-ribbon-discovery",
+            "kubeflix-turbine-discovery", "kubeflix-turbine-server", "camel-zipkin-starter"};
 
     private List<SpringBootDependencyDTO> choices;
 
@@ -93,20 +94,6 @@ public class SpringBootNewProjectCommand extends AbstractDevOpsCommand implement
     private List<SpringBootDependencyDTO> initDependencies() {
         List<SpringBootDependencyDTO> list = new ArrayList<>();
 
-        // add fabric8 group first
-        SpringBootDependencyDTO dto = new SpringBootDependencyDTO("Fabric8", "spring-cloud-kubernetes", "Spring Cloud Kubernetes", "Kubernetes integration with Spring Cloud");
-        dto.setMavenCoord("io.fabric8", "spring-cloud-starter-kubernetes-all", "0.0.11");
-        list.add(dto);
-        dto = new SpringBootDependencyDTO("Fabric8", "kubeflix-ribbon-discovery", "Kubeflix Ribbon Discovery", "Discovery module to detect Kubernetes endpoints for loadbalancing with the Ribbon IPC framework");
-        dto.setMavenCoord("io.fabric8.kubeflix", "ribbon-discovery", "1.0.15");
-        list.add(dto);
-        dto = new SpringBootDependencyDTO("Fabric8", "kubeflix-turbine-discovery", "Kubeflix Turbine Discovery", "Discovery module for Hystrix metrics streams");
-        dto.setMavenCoord("io.fabric8.kubeflix", "turbine-discovery", "1.0.15");
-        list.add(dto);
-        dto = new SpringBootDependencyDTO("Fabric8", "kubeflix-turbine-server", "Kubeflix Turbine Server", "Turbine server with the Kubernetes discovery module pre-installed and pre-configured");
-        dto.setMavenCoord("io.fabric8.kubeflix", "turbine-server", "1.0.15");
-        list.add(dto);
-
         Yaml yaml = new Yaml();
         // load the application.yaml file from the spring-boot initializr project and parse it
         // and grab all the dependencies it has so we have those as choices
@@ -125,8 +112,31 @@ public class SpringBootNewProjectCommand extends AbstractDevOpsCommand implement
                 String name = (String) item.get("name");
                 String description = (String) item.get("description");
                 list.add(new SpringBootDependencyDTO(groupName, id, name, description));
+
+                // are we at apache camel, then inject other Camel modules that are not in the spring-boot-application yet
+                if ("camel".equals(id)) {
+                    SpringBootDependencyDTO dto = new SpringBootDependencyDTO(groupName, "camel-zipkin-starter", "Apache Camel Zipin", "Distributed tracing with an existing Zipkin installation with Apache Camel.");
+                    dto.setMavenCoord("org.apache.camel", "camel-zipkin", "2.18-SNAPSHOT");
+                    list.add(dto);
+                }
             }
         }
+
+        // TODO: load those versions from pom.xml instead of hardcoded
+
+        // and then add the fabric8 group
+        SpringBootDependencyDTO dto = new SpringBootDependencyDTO("Fabric8", "spring-cloud-kubernetes", "Spring Cloud Kubernetes", "Kubernetes integration with Spring Cloud");
+        dto.setMavenCoord("io.fabric8", "spring-cloud-starter-kubernetes-all", "0.0.11");
+        list.add(dto);
+        dto = new SpringBootDependencyDTO("Fabric8", "kubeflix-ribbon-discovery", "Kubeflix Ribbon Discovery", "Discovery module to detect Kubernetes endpoints for loadbalancing with the Ribbon IPC framework");
+        dto.setMavenCoord("io.fabric8.kubeflix", "ribbon-discovery", "1.0.15");
+        list.add(dto);
+        dto = new SpringBootDependencyDTO("Fabric8", "kubeflix-turbine-discovery", "Kubeflix Turbine Discovery", "Discovery module for Hystrix metrics streams");
+        dto.setMavenCoord("io.fabric8.kubeflix", "turbine-discovery", "1.0.15");
+        list.add(dto);
+        dto = new SpringBootDependencyDTO("Fabric8", "kubeflix-turbine-server", "Kubeflix Turbine Server", "Turbine server with the Kubernetes discovery module pre-installed and pre-configured");
+        dto.setMavenCoord("io.fabric8.kubeflix", "turbine-server", "1.0.15");
+        list.add(dto);
 
         return list;
     }
