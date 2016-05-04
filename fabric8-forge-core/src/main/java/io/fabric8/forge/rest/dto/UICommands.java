@@ -227,6 +227,23 @@ public class UICommands {
                 }
             }
             value = Proxies.unwrap(value);
+            if (value instanceof ProjectProvider) {
+                ProjectProvider projectProvider = (ProjectProvider) value;
+                return projectProvider.getType();
+            }
+            if (value instanceof ProjectType) {
+                ProjectType projectType = (ProjectType) value;
+                return projectType.getType();
+            }
+            if (value instanceof StackFacet) {
+                StackFacet stackFacet = (StackFacet) value;
+                Stack stack = stackFacet.getStack();
+                if (stack != null) {
+                    return stack.getName();
+                } else {
+                    return null;
+                }
+            }
             if (isJsonObject(value)) {
                 return value;
             }
