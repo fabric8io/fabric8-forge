@@ -18,6 +18,7 @@ package io.fabric8.forge.devops;
 import io.fabric8.devops.ProjectConfig;
 import io.fabric8.devops.ProjectConfigs;
 import io.fabric8.forge.addon.utils.CommandHelpers;
+import io.fabric8.forge.addon.utils.ProfilesProjectHelper;
 import io.fabric8.forge.devops.dto.PipelineDTO;
 import io.fabric8.forge.devops.dto.ProjectOverviewDTO;
 import io.fabric8.kubernetes.api.Controller;
@@ -272,6 +273,9 @@ public abstract class AbstractDevOpsCommand extends AbstractProjectCommand imple
                 Project project = getSelectedProject(uiContext);
                 if (findCamelCoreDependency(project) != null) {
                     projectOveriew.addPerspective("camel");
+                }
+                if (ProfilesProjectHelper.isProfilesProject(project)) {
+                    projectOveriew.addPerspective("fabric8-profiles");
                 }
             }
         }
