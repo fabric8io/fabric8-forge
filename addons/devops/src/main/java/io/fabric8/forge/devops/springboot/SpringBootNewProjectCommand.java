@@ -128,16 +128,6 @@ public class SpringBootNewProjectCommand extends AbstractDevOpsCommand implement
         SpringBootDependencyDTO dto = new SpringBootDependencyDTO("Fabric8", "spring-cloud-kubernetes", "Spring Cloud Kubernetes", "Kubernetes integration with Spring Cloud");
         dto.setMavenCoord("io.fabric8", "spring-cloud-starter-kubernetes-all", version);
         list.add(dto);
-        version = SpringBootVersionHelper.getVersion("fabric8.kubeflix.version");
-        dto = new SpringBootDependencyDTO("Fabric8", "kubeflix-ribbon-discovery", "Kubeflix Ribbon Discovery", "Discovery module to detect Kubernetes endpoints for loadbalancing with the Ribbon IPC framework");
-        dto.setMavenCoord("io.fabric8.kubeflix", "ribbon-discovery", version);
-        list.add(dto);
-        dto = new SpringBootDependencyDTO("Fabric8", "kubeflix-turbine-discovery", "Kubeflix Turbine Discovery", "Discovery module for Hystrix metrics streams");
-        dto.setMavenCoord("io.fabric8.kubeflix", "turbine-discovery", version);
-        list.add(dto);
-        dto = new SpringBootDependencyDTO("Fabric8", "kubeflix-turbine-server", "Kubeflix Turbine Server", "Turbine server with the Kubernetes discovery module pre-installed and pre-configured");
-        dto.setMavenCoord("io.fabric8.kubeflix", "turbine-server", version);
-        list.add(dto);
 
         return list;
     }
