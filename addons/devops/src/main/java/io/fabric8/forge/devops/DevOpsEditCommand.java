@@ -15,6 +15,7 @@
  */
 package io.fabric8.forge.devops;
 
+import io.fabric8.forge.addon.utils.ProfilesProjectHelper;
 import io.fabric8.forge.devops.setup.Fabric8SetupStep;
 import io.fabric8.forge.devops.setup.SetupProjectHelper;
 import org.jboss.forge.addon.projects.Project;
@@ -46,7 +47,10 @@ public class DevOpsEditCommand extends AbstractDevOpsCommand implements UIWizard
         try {
             Project project = getSelectedProject(context.getUIContext());
             if (project != null) {
-                if (!SetupProjectHelper.fabric8ProjectSetupCorrectly(project)) {
+                if( ProfilesProjectHelper.isProfilesProject(project) ) {
+                    // TODO: in the future we might want to verify the setup
+                    // of a profiles project here.
+                } else if (!SetupProjectHelper.fabric8ProjectSetupCorrectly(project)) {
                     builder.add(Fabric8SetupStep.class);
                 }
             }
