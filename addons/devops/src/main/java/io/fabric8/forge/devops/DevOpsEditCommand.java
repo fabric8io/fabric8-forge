@@ -31,6 +31,8 @@ import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
 import org.jboss.forge.addon.ui.wizard.UIWizard;
 
+import static io.fabric8.forge.devops.setup.Fabric8SetupStep.setupSitePlugin;
+
 public class DevOpsEditCommand extends AbstractDevOpsCommand implements UIWizard {
 
     @Override
@@ -47,6 +49,8 @@ public class DevOpsEditCommand extends AbstractDevOpsCommand implements UIWizard
         try {
             Project project = getSelectedProject(context.getUIContext());
             if (project != null) {
+                setupSitePlugin(project);
+
                 if( ProfilesProjectHelper.isProfilesProject(project) ) {
                     // TODO: in the future we might want to verify the setup
                     // of a profiles project here.
