@@ -44,6 +44,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import static com.sun.imageio.plugins.jpeg.JPEG.version;
+
 /**
  */
 public class MavenHelpers {
@@ -155,6 +157,17 @@ public class MavenHelpers {
             getLOG().warn("Could not find the version for groupId: " + groupId + " artifactId: " + artifactId + " in: " + map);
         }
         return version;
+    }
+
+    /**
+     * Returns the version from the list of pre-configured versions of common groupId/artifact pairs
+     */
+    public static String getVersion(String groupId, String artifactId, String defaultVersion) {
+        String answer = getVersion(groupId, artifactId);
+        if (Strings.isNullOrBlank(answer)) {
+            answer = defaultVersion;
+        }
+        return answer;
     }
 
     protected static Map<String, String> getGroupArtifactVersionMap() {
