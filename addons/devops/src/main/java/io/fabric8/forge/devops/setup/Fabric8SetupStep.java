@@ -29,6 +29,7 @@ import org.apache.maven.model.Profile;
 import org.apache.maven.model.ReportPlugin;
 import org.apache.maven.model.Reporting;
 import org.apache.maven.model.Site;
+import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.jboss.forge.addon.dependencies.Dependency;
 import org.jboss.forge.addon.dependencies.builder.DependencyBuilder;
 import org.jboss.forge.addon.facets.FacetFactory;
@@ -439,6 +440,14 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
                         reportPlugin.setArtifactId(PLUGIN_JAVADOC_ARTIFACT_ID);
                         reportPlugin.setVersion(PLUGIN_JAVADOC_VERSION);
                         reporting.addPlugin(reportPlugin);
+
+                        // lets set configuration
+                        Xpp3Dom config = new Xpp3Dom("configuration");
+                        addChildElement(config, "detectLinks", "true");
+                        addChildElement(config, "detectJavaApiLink", "true");
+                        addChildElement(config, "linksource", "true");
+
+                        reportPlugin.setConfiguration(config);
                         changed = true;
                     }
 
@@ -477,6 +486,12 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
                 }
             }
         }
+    }
+
+    public static void addChildElement(Xpp3Dom config, String name, String value) {
+        Xpp3Dom includeDependencySources = new Xpp3Dom(name);
+        includeDependencySources.setValue(value);
+        config.addChild(includeDependencySources);
     }
 
     private void setupFabricProperties(Project project, MavenFacet maven) {
