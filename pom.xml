@@ -75,7 +75,7 @@
 
     <fabric8.version>2.2.122</fabric8.version>
     <fabric8.archetypes.release.version>2.2.123</fabric8.archetypes.release.version>
-    <fabric8.devops.version>2.2.191</fabric8.devops.version>
+    <fabric8.devops.version>2.2.192</fabric8.devops.version>
 
     <furnace.version>2.23.4.Final</furnace.version>
     <jboss.forge.version>3.2.0.Final</jboss.forge.version>
