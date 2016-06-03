@@ -80,8 +80,10 @@ import java.util.concurrent.Callable;
 
 import static io.fabric8.forge.addon.utils.MavenHelpers.getVersion;
 import static io.fabric8.forge.devops.setup.DockerSetupHelper.getDockerFromImage;
+import static io.fabric8.forge.devops.setup.DockerSetupHelper.hasFunktion;
 import static io.fabric8.forge.devops.setup.DockerSetupHelper.hasSpringBoot;
 import static io.fabric8.forge.devops.setup.DockerSetupHelper.hasSpringBootWeb;
+import static io.fabric8.forge.devops.setup.DockerSetupHelper.hasVertx;
 import static io.fabric8.forge.devops.setup.DockerSetupHelper.hasWildlySwarm;
 import static io.fabric8.forge.devops.setup.DockerSetupHelper.setupDocker;
 import static io.fabric8.forge.devops.setup.SetupProjectHelper.findCamelArtifacts;
@@ -282,6 +284,10 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
         icon.setDefaultValue(new Callable<String>() {
             @Override
             public String call() throws Exception {
+                if (hasFunktion(project)) {
+                    return "funktion";
+                }
+
                 // favor Camel if there is a Camel dependency
                 if (!findCamelArtifacts(project).isEmpty()) {
                     return "camel";
@@ -292,7 +298,7 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
                 if (springBoot) {
                     return "spring-boot";
                 }
-                boolean vertx = hasSpringBoot(project);
+                boolean vertx = hasVertx(project);
                 if (vertx) {
                     return "vertx";
                 }

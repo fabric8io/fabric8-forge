@@ -263,6 +263,10 @@ public class DockerSetupHelper {
         return CamelProjectHelper.hasDependency(project, "io.vertx");
     }
 
+    public static boolean hasFunktion(Project project) {
+        return CamelProjectHelper.hasDependency(project, "io.fabric8.funktion");
+    }
+
     public static String defaultDockerImage(Project project) {
         String packaging = getProjectPackaging(project);
         if ("jar".equals(packaging)) {
