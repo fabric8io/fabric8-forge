@@ -87,6 +87,7 @@ import static io.fabric8.forge.devops.setup.DockerSetupHelper.hasVertx;
 import static io.fabric8.forge.devops.setup.DockerSetupHelper.hasWildlySwarm;
 import static io.fabric8.forge.devops.setup.DockerSetupHelper.setupDocker;
 import static io.fabric8.forge.devops.setup.SetupProjectHelper.findCamelArtifacts;
+import static io.fabric8.forge.devops.setup.SetupProjectHelper.isFunktionParentPom;
 
 @FacetConstraint({MavenFacet.class, MavenPluginFacet.class, ResourcesFacet.class})
 public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UIWizardStep {
@@ -461,7 +462,7 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
                     DistributionManagement distributionManagement = model.getDistributionManagement();
                     if (distributionManagement == null) {
                         Parent parent = model.getParent();
-                        if (parent == null) {
+                        if (parent == null || isFunktionParentPom(project)) {
                             // lets only add a distributionManagement if there is no parent
                             // as usually we add the distributionManagement in a parent pom once to reuse across projects
                             distributionManagement = new DistributionManagement();

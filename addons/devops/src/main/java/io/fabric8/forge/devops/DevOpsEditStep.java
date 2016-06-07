@@ -75,6 +75,8 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import static io.fabric8.forge.devops.setup.SetupProjectHelper.isFabric8MavenPlugin3OrGreater;
+import static io.fabric8.forge.devops.setup.SetupProjectHelper.isFunktionParentPom;
 import static io.fabric8.kubernetes.api.KubernetesHelper.loadYaml;
 
 public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardStep {
@@ -359,7 +361,7 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
         if (Strings.isNotBlank(projectName) && project != null) {
             MavenFacet maven = project.getFacet(MavenFacet.class);
             Model pom = maven.getModel();
-            if (pom != null) {
+            if (pom != null && !isFunktionParentPom(project) && !isFabric8MavenPlugin3OrGreater(project)) {
                 Properties properties = pom.getProperties();
                 boolean updated = false;
                 updated = MavenHelpers.updatePomProperty(properties, "fabric8.label.project", projectName, updated);

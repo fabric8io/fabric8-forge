@@ -21,9 +21,13 @@ import java.util.List;
 import java.util.Set;
 
 import io.fabric8.forge.addon.utils.MavenHelpers;
+import org.apache.maven.model.Model;
+import org.apache.maven.model.Parent;
+import org.jboss.forge.addon.dependencies.Coordinate;
 import org.jboss.forge.addon.dependencies.Dependency;
 import org.jboss.forge.addon.maven.plugins.MavenPlugin;
 import org.jboss.forge.addon.maven.projects.MavenFacet;
+import org.jboss.forge.addon.maven.projects.MavenPluginFacet;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.facets.DependencyFacet;
 
@@ -48,7 +52,42 @@ public class SetupProjectHelper {
     }
 
 
+    public static boolean isFunktionParentPom(Project project) {
+        MavenFacet mavenFacet = project.getFacet(MavenFacet.class);
+        if (mavenFacet != null) {
+            Model model = mavenFacet.getModel();
+            if (model != null) {
+                Parent parent = model.getParent();
+                if (parent != null) {
+                    String groupId = parent.getGroupId();
+                    if (groupId != null && groupId.startsWith("io.fabric8.funktion")) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    public static boolean isFabric8MavenPlugin3OrGreater(Project project) {
+        MavenPlugin plugin = MavenHelpers.findPlugin(project, "io.fabric8", "fabric8-maven-plugin");
+        if (plugin != null) {
+            Coordinate coordinate = plugin.getCoordinate();
+            if (coordinate != null) {
+                String version = coordinate.getVersion();
+                if (version != null) {
+                    return !version.startsWith("1.") && !version.startsWith("2.");
+                }
+            }
+        }
+        return false;
+    }
+
     public static boolean fabric8ProjectSetupCorrectly(Project project) {
+        if (isFunktionParentPom(project) || isFabric8MavenPlugin3OrGreater(project)) {
+            return true;
+        }
+
         MavenPlugin plugin = MavenHelpers.findPlugin(project, "io.fabric8", "fabric8-maven-plugin");
         if (plugin != null) {
             return DockerSetupHelper.verifyDocker(project);
