@@ -29,6 +29,10 @@ public class CamelProjectHelper {
         return findCamelArtifactDependency(project, "camel-core");
     }
 
+    public static boolean hasFunktionDependency(Project project) {
+        return hasDependency(project, "io.fabric8.funktion", "funktion-runtime");
+    }
+
     public static Dependency findCamelSpringDependency(Project project) {
         return findCamelArtifactDependency(project, "camel-spring");
     }
