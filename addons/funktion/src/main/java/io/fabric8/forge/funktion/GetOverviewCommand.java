@@ -24,6 +24,9 @@ import io.fabric8.funktion.model.FunktionConfig;
 import io.fabric8.funktion.model.FunktionConfigs;
 import io.fabric8.funktion.model.FunktionRule;
 import io.fabric8.utils.TablePrinter;
+import org.apache.maven.model.Build;
+import org.apache.maven.model.Model;
+import org.jboss.forge.addon.maven.projects.MavenFacet;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
 import org.jboss.forge.addon.ui.context.UIBuilder;
@@ -36,10 +39,13 @@ import org.jboss.forge.addon.ui.result.Result;
 import org.jboss.forge.addon.ui.result.Results;
 import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
+import org.jboss.forge.furnace.util.Strings;
 
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static io.fabric8.forge.addon.utils.OutputFormatHelper.addTableTextOutput;
@@ -67,7 +73,8 @@ public class GetOverviewCommand extends AbstractFunktionCommand {
 
     @Override
     public boolean isEnabled(UIContext context) {
-        FunktionConfig config = getFunktionConfig(context);
+        Project project = getSelectedProject(context);
+        FunktionConfig config = getFunktionConfig(project);
         return config != null && config.getRules().size() > 0;
     }
 
@@ -80,18 +87,74 @@ public class GetOverviewCommand extends AbstractFunktionCommand {
     @Override
     public Result execute(UIExecutionContext context) throws Exception {
         ProjectDto projectDto = new ProjectDto();
-        FunktionConfig config = getFunktionConfig(context.getUIContext());
+        Project project = getSelectedProject(context);
+        FunktionConfig config = getFunktionConfig(project);
         if (config != null) {
             projectDto.setConfig(config);
+            List<FunktionRule> rules = config.getRules();
+            File baseDir = CommandHelpers.getBaseDir(project);
+            if (baseDir != null && rules != null) {
+                for (FunktionRule rule : rules) {
+                    String action = rule.getAction();
+                    if (!Strings.isNullOrEmpty(action)) {
+                        // lets try find the location of the file
+                        String location = findFunktionLocation(project, baseDir, action);
+                        if (location != null) {
+                            projectDto.addActionLocation(action, location);
+                        }
+                    }
+                }
+            }
         }
         String result = formatResult(projectDto);
         return Results.success(result);
     }
 
+    protected String findFunktionLocation(Project project, File baseDir, String action) {
+        // lets try find maven stuff
+        MavenFacet maven = project.getFacet(MavenFacet.class);
+        List<String> directories = new ArrayList<>();
+        if (maven != null) {
+            Model pom = maven.getModel();
+            if (pom != null) {
+                Build build = pom.getBuild();
+                if (build != null) {
+                    String sourceDirectory = build.getSourceDirectory();
+                    if (sourceDirectory != null) {
+                        directories.add(sourceDirectory);
+                    }
+                }
+            }
+        }
+        directories.addAll(Arrays.asList("src/main/groovy", "src/main/kotlin", "src/main/java", "src/main/scala"));
+        int idx = action.indexOf("::");
+        String className = action;
+        String methodName = null;
+        if (idx > 0) {
+            className = action.substring(0, idx);
+            methodName = action.substring(idx + 2);
+        }
+        List<String> extensions = Arrays.asList(".groovy", ".kotlin", ".kt", ".java", "Kt.kt");
+        className = className.replace('.', '/');
+        for (String directory : directories) {
+            File dir = new File(baseDir, directory);
+            if (dir.isDirectory()) {
+                // lets look for the files that match
+                for (String extension : extensions) {
+                    String fileName = directory + "/" + className + extension;
+                    File file = new File(baseDir, fileName);
+                    if (file.isFile()) {
+                        return fileName;
+                    }
+                }
+            }
+        }
+        return null;
+    }
 
-    public FunktionConfig getFunktionConfig(UIContext context) {
+
+    public FunktionConfig getFunktionConfig(Project project) {
         FunktionConfig config = null;
-        Project project = getSelectedProject(context);
         File baseDir = CommandHelpers.getBaseDir(project);
         if (baseDir != null) {
             try {

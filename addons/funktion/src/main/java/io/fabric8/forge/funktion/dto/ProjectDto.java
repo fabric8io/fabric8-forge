@@ -18,9 +18,13 @@ package io.fabric8.forge.funktion.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.fabric8.funktion.model.FunktionConfig;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ProjectDto {
     private FunktionConfig config = new FunktionConfig();
+    private Map<String, String> actionLocations = new HashMap<>();
 
     public FunktionConfig getConfig() {
         return config;
@@ -28,5 +32,17 @@ public class ProjectDto {
 
     public void setConfig(FunktionConfig config) {
         this.config = config;
+    }
+
+    public Map<String, String> getActionLocations() {
+        return actionLocations;
+    }
+
+    public void setActionLocations(Map<String, String> actionLocations) {
+        this.actionLocations = actionLocations;
+    }
+
+    public void addActionLocation(String action, String location) {
+        actionLocations.put(action, location);
     }
 }
