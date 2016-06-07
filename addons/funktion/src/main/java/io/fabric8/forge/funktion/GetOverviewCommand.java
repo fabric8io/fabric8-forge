@@ -100,17 +100,22 @@ public class GetOverviewCommand extends AbstractFunktionCommand {
             if (baseDir != null && rules != null) {
                 for (FunktionRule rule : rules) {
                     String action = rule.getAction();
+                    String name = rule.getName();
                     if (!Strings.isNullOrEmpty(action)) {
                         // lets try find the location of the file
                         String location = findFunktionLocation(project, baseDir, action);
                         if (location != null) {
-                            String name = rule.getName();
                             if (!Strings.isNullOrEmpty(name)) {
                                 projectDto.addActionLocation(name, location);
                             }
                             // TODO after the next funktion release we always have a name
                             // so we can remove the action hack
                             projectDto.addActionLocation(action, location);
+                        }
+                    } else if (!Strings.isNullOrEmpty(name)) {
+                        String location = findFirstLanguageFunktion(baseDir);
+                        if (location != null) {
+                            projectDto.addActionLocation(name, location);
                         }
                     }
                 }
@@ -159,7 +164,10 @@ public class GetOverviewCommand extends AbstractFunktionCommand {
                 }
             }
         }
+        return null;
+    }
 
+    private String findFirstLanguageFunktion(File baseDir) {
         String answer = findSingleFileInDirectory(baseDir, "", ".js", ".swift", ".go");
         if (answer == null) {
             answer =  findSingleFileInDirectory(baseDir, "Sources/", ".swift");
@@ -186,7 +194,12 @@ public class GetOverviewCommand extends AbstractFunktionCommand {
                         }
                     }
                 }
+                System.out.println("No files with extensions " + Arrays.asList(extensions) + " for files: " + Arrays.asList(files));
+            } else {
+                System.out.println("No files in directory: " + dir.getAbsolutePath());
             }
+        } else {
+            System.out.println("Not a direcotry: " + dir.getAbsolutePath());
         }
         return null;
     }
