@@ -158,6 +158,7 @@
                   <addonIds>
                     <addonId>io.fabric8.forge:camel,${project.version}</addonId>
                     <addonId>io.fabric8.forge:devops,${project.version}</addonId>
+                    <addonId>io.fabric8.forge:funktion,${project.version}</addonId>
                     <addonId>org.jboss.forge.addon:git,${jboss.forge.version}</addonId>
                   </addonIds>
                 </configuration>

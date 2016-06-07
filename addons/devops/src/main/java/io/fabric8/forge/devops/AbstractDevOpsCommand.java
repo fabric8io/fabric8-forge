@@ -62,6 +62,7 @@ import java.util.List;
 import java.util.Map;
 
 import static io.fabric8.forge.addon.utils.CamelProjectHelper.findCamelCoreDependency;
+import static io.fabric8.forge.addon.utils.CamelProjectHelper.hasFunktionDependency;
 
 /**
  * An abstract base class for DevOps related commands
@@ -272,6 +273,11 @@ public abstract class AbstractDevOpsCommand extends AbstractProjectCommand imple
             if (containsProject(uiContext)) {
                 Project project = getSelectedProject(uiContext);
                 if (findCamelCoreDependency(project) != null) {
+                    if (hasFunktionDependency(project)) {
+                        projectOveriew.addPerspective("funktion");
+                    } else {
+                    }
+                    // TOD should we show funktion instead of camel?
                     projectOveriew.addPerspective("camel");
                 }
                 if (ProfilesProjectHelper.isProfilesProject(project)) {
