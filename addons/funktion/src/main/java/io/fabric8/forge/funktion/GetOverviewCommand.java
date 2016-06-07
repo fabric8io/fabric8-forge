@@ -23,6 +23,7 @@ import io.fabric8.forge.funktion.dto.ProjectDto;
 import io.fabric8.funktion.model.FunktionConfig;
 import io.fabric8.funktion.model.FunktionConfigs;
 import io.fabric8.funktion.model.FunktionRule;
+import io.fabric8.utils.Files;
 import io.fabric8.utils.TablePrinter;
 import org.apache.maven.model.Build;
 import org.apache.maven.model.Model;
@@ -40,6 +41,8 @@ import org.jboss.forge.addon.ui.result.Results;
 import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
 import org.jboss.forge.furnace.util.Strings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -54,6 +57,7 @@ import static io.fabric8.forge.addon.utils.OutputFormatHelper.toJson;
 /**
  */
 public class GetOverviewCommand extends AbstractFunktionCommand {
+    private static final transient Logger LOG = LoggerFactory.getLogger(GetOverviewCommand.class);
 
     public static String CATEGORY = "Funktion";
 
@@ -100,6 +104,12 @@ public class GetOverviewCommand extends AbstractFunktionCommand {
                         // lets try find the location of the file
                         String location = findFunktionLocation(project, baseDir, action);
                         if (location != null) {
+                            String name = rule.getName();
+                            if (!Strings.isNullOrEmpty(name)) {
+                                projectDto.addActionLocation(name, location);
+                            }
+                            // TODO after the next funktion release we always have a name
+                            // so we can remove the action hack
                             projectDto.addActionLocation(action, location);
                         }
                     }
@@ -145,6 +155,35 @@ public class GetOverviewCommand extends AbstractFunktionCommand {
                     File file = new File(baseDir, fileName);
                     if (file.isFile()) {
                         return fileName;
+                    }
+                }
+            }
+        }
+
+        String answer = findSingleFileInDirectory(baseDir, "", ".js", ".swift", ".go");
+        if (answer == null) {
+            answer =  findSingleFileInDirectory(baseDir, "Sources/", ".swift");
+        }
+        return answer;
+    }
+
+    private String findSingleFileInDirectory(File baseDir, String directoryPath, String... extensions) {
+        File dir = baseDir;
+        if (!Strings.isNullOrEmpty(directoryPath)) {
+            dir = new File(baseDir, directoryPath);
+        }
+        if (dir.isDirectory()) {
+            File[] files = dir.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    for (String extension : extensions) {
+                        if (file.getName().endsWith(extension)) {
+                            try {
+                                return Files.getRelativePath(baseDir, file);
+                            } catch (IOException e) {
+                                LOG.warn("Failed to calculate relative path of " + file + ". " + e, e);
+                            }
+                        }
                     }
                 }
             }
