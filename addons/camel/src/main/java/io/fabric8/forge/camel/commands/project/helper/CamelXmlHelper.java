@@ -16,6 +16,7 @@
 package io.fabric8.forge.camel.commands.project.helper;
 
 import java.io.File;
+import java.io.InputStream;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,6 +35,7 @@ import io.fabric8.camel.tooling.util.RouteXml;
 import io.fabric8.camel.tooling.util.XmlModel;
 import io.fabric8.forge.addon.utils.CommandHelpers;
 import io.fabric8.forge.addon.utils.JaxbNoNamespaceWriter;
+import io.fabric8.forge.addon.utils.XmlLineNumberParser;
 import io.fabric8.forge.camel.commands.project.dto.ContextDto;
 import io.fabric8.forge.camel.commands.project.dto.NodeDto;
 import io.fabric8.forge.camel.commands.project.dto.RouteDto;
@@ -86,7 +88,7 @@ public final class CamelXmlHelper {
 
     public static List<Element> findAllContexts(Document dom) {
         List<Element> nodes = new ArrayList<>();
-        NodeList list = dom.getElementsByTagName("camelContext");
+        NodeList list = getCamelContextElements(dom);
         for (int i = 0; i < list.getLength(); i++) {
             Node child = list.item(i);
             String ns = child.getNamespaceURI();
@@ -107,6 +109,14 @@ public final class CamelXmlHelper {
             }
         }
         return nodes;
+    }
+
+    public static NodeList getCamelContextElements(Document dom) {
+        NodeList camels = dom.getElementsByTagName("camelContext");
+        if (camels == null || camels.getLength() == 0) {
+            camels = dom.getElementsByTagName("routes");
+        }
+        return camels;
     }
 
     public static List<Node> findAllEndpoints(Document dom) {
@@ -346,7 +356,7 @@ public final class CamelXmlHelper {
         Node selectedNode = null;
         if (root != null && Strings.isNotBlank(key)) {
             String[] paths = key.split("/");
-            NodeList camels = root.getElementsByTagName("camelContext");
+            NodeList camels = getCamelContextElements(root);
             if (camels != null) {
                 Map<String, Integer> rootNodeCounts = new HashMap<>();
                 for (int i = 0, size = camels.getLength(); i < size; i++) {
@@ -397,6 +407,9 @@ public final class CamelXmlHelper {
         if (node instanceof Element) {
             Element element = (Element) node;
             String elementName = element.getTagName();
+            if ("routes".equals(elementName)) {
+                elementName = "camelContext";
+            }
             Integer countObject = nodeCounts.get(elementName);
             int count = countObject != null ? countObject.intValue() : 0;
             nodeCounts.put(elementName, ++count);
@@ -471,4 +484,20 @@ public final class CamelXmlHelper {
         return answer;
     }
 
+    public static boolean isCamelContextOrRoutesNode(Node camel) {
+        String nodeName = camel.getNodeName();
+        return "camelContext".equals(nodeName) || "routes".equals(nodeName);
+    }
+
+    public static Element getSelectedCamelElementNode(String key, InputStream resourceInputStream) throws Exception {
+        Document root = XmlLineNumberParser.parseXml(resourceInputStream, "camelContext,routes,rests", "http://camel.apache.org/schema/spring");
+        Element selectedElement = null;
+        if (root != null) {
+            Node selectedNode = findCamelNodeInDocument(root, key);
+            if (selectedNode instanceof Element) {
+                selectedElement = (Element) selectedNode;
+            }
+        }
+        return selectedElement;
+    }
 }

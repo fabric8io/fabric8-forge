@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Set;
 
 public class NodeDtos {
-    private static final Set<String> patternsToPrefix = new HashSet<>(Arrays.asList("camelContext", "route", "from", "to"));
+    private static final Set<String> patternsToPrefix = new HashSet<>(Arrays.asList("camelContext", "routes", "route", "from", "to"));
 
     public static List<NodeDto> toNodeList(Iterable<? extends NodeDto> nodes) {
         return toNodeList(nodes, "  ");
