@@ -154,6 +154,20 @@
     </dependency>
     <dependency>
       <groupId>io.fabric8.devops.apps</groupId>
+      <artifactId>maven-shell</artifactId>
+      <version>${fabric8.devops.version}</version>
+      <classifier>kubernetes</classifier>
+      <type>json</type>
+    </dependency>
+    <dependency>
+      <groupId>io.fabric8.devops.apps</groupId>
+      <artifactId>manageiq</artifactId>
+      <version>${fabric8.devops.version}</version>
+      <classifier>kubernetes</classifier>
+      <type>json</type>
+    </dependency>
+    <dependency>
+      <groupId>io.fabric8.devops.apps</groupId>
       <artifactId>nexus</artifactId>
       <version>${fabric8.devops.version}</version>
       <classifier>kubernetes</classifier>
