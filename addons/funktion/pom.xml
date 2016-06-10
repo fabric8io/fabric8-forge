@@ -66,6 +66,7 @@
       <artifactId>utils</artifactId>
       <version>${project.version}</version>
     </dependency>
+
 <!--
     <dependency>
       <groupId>io.fabric8.forge</groupId>
@@ -156,6 +157,11 @@
       <groupId>org.jboss.forge.addon</groupId>
       <artifactId>bean-validation</artifactId>
       <classifier>forge-addon</classifier>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.forge.addon</groupId>
+      <artifactId>maven-impl-projects</artifactId>
+      <version>${jboss.forge.version}</version>
     </dependency>
     <dependency>
       <groupId>io.fabric8</groupId>

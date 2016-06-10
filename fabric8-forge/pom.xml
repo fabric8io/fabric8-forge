@@ -271,13 +271,6 @@
               <goal>attach</goal>
             </goals>
           </execution>
-          <execution>
-            <id>helm</id>
-            <phase>package</phase>
-            <goals>
-              <goal>helm</goal>
-            </goals>
-          </execution>
         </executions>
         <configuration>
           <replaceReadmeLinksPrefix>/apps/</replaceReadmeLinksPrefix>
@@ -392,13 +385,6 @@
                 <phase>install</phase>
                 <goals>
                   <goal>apply</goal>
-                </goals>
-              </execution>
-              <execution>
-                <id>helm</id>
-                <phase>package</phase>
-                <goals>
-                  <goal>helm</goal>
                 </goals>
               </execution>
             </executions>
