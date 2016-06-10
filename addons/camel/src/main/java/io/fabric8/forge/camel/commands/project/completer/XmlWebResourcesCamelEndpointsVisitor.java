@@ -26,6 +26,8 @@ import org.jboss.forge.addon.resource.Resource;
 import org.jboss.forge.addon.resource.visit.ResourceVisitor;
 import org.jboss.forge.addon.resource.visit.VisitContext;
 
+import static io.fabric8.forge.camel.commands.project.completer.XmlResourcesCamelEndpointsVisitor.containsCamelRoutes;
+
 public class XmlWebResourcesCamelEndpointsVisitor implements ResourceVisitor {
 
     private final WebResourcesFacet facet;
@@ -51,8 +53,7 @@ public class XmlWebResourcesCamelEndpointsVisitor implements ResourceVisitor {
             }
 
             if (include) {
-                // must contain <camelContext...
-                boolean camel = resource.getContents().contains("<camelContext");
+                boolean camel = containsCamelRoutes(resource);
                 if (camel) {
                     // find all the endpoints (currently only <endpoint> and within <route>)
                     try {

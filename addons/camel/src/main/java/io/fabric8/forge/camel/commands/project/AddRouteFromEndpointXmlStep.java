@@ -19,6 +19,7 @@ import java.util.List;
 
 import io.fabric8.forge.addon.utils.LineNumberHelper;
 import io.fabric8.forge.addon.utils.XmlLineNumberParser;
+import io.fabric8.forge.camel.commands.project.helper.CamelXmlHelper;
 import org.apache.camel.catalog.CamelCatalog;
 import org.jboss.forge.addon.projects.ProjectFactory;
 import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
@@ -33,6 +34,8 @@ import org.jboss.forge.addon.ui.util.Metadata;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+
+import static io.fabric8.forge.camel.commands.project.helper.CamelXmlHelper.getCamelContextElements;
 
 /**
  * A wizard step to add a from endpoint for a newly created route
@@ -57,25 +60,25 @@ public class AddRouteFromEndpointXmlStep extends ConfigureEndpointPropertiesStep
     protected Result addOrEditEndpointXml(FileResource file, String uri, String endpointUrl, String endpointInstanceName, String xml, String lineNumber, String lineNumberEnd) throws Exception {
         Document root = XmlLineNumberParser.parseXml(file.getResourceInputStream());
         if (root != null) {
-            NodeList camels = root.getElementsByTagName("camelContext");
+            NodeList camels = getCamelContextElements(root);
             // TODO: what about 2+ camel's ?
             if (camels != null && camels.getLength() == 1) {
                 Node camel = camels.item(0);
                 Node camelContext = null;
 
                 for (int i = 0; i < camel.getChildNodes().getLength(); i++) {
-                    if ("camelContext".equals(camel.getNodeName())) {
+                    if (CamelXmlHelper.isCamelContextOrRoutesNode(camel)) {
                         camelContext = camel;
                     }
 
                     Node child = camel.getChildNodes().item(i);
-                    if ("camelContext".equals(child.getNodeName())) {
+                    if (CamelXmlHelper.isCamelContextOrRoutesNode(child)) {
                         camelContext = child;
                     }
                 }
 
                 if (camelContext == null) {
-                    return Results.fail("Cannot find <camelContext> in XML file " + xml);
+                    return Results.fail("Cannot find <camelContext> or <routes> in XML file " + xml);
                 }
 
                 // we need to add after the parent node, so use line number information from the parent

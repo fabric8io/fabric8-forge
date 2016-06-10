@@ -51,8 +51,7 @@ public class XmlResourcesCamelEndpointsVisitor implements ResourceVisitor {
             }
 
             if (include) {
-                // must contain <camelContext...
-                boolean camel = resource.getContents().contains("<camelContext");
+                boolean camel = containsCamelRoutes(resource);
                 if (camel) {
                     // find all the endpoints (currently only <endpoint> and within <route>)
                     try {
@@ -66,5 +65,11 @@ public class XmlResourcesCamelEndpointsVisitor implements ResourceVisitor {
                 }
             }
         }
+    }
+
+    public static boolean containsCamelRoutes(Resource<?> resource) {
+        // must contain <camelContext... or <routes...
+        String contents = resource.getContents();
+        return contents.contains("<camelContext") || contents.contains("<routes");
     }
 }

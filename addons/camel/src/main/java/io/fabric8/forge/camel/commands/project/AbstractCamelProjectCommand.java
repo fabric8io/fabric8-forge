@@ -15,6 +15,7 @@
  */
 package io.fabric8.forge.camel.commands.project;
 
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -26,8 +27,6 @@ import java.util.function.Function;
 import javax.inject.Inject;
 
 import io.fabric8.forge.addon.utils.CamelProjectHelper;
-import io.fabric8.forge.addon.utils.LineNumberHelper;
-import io.fabric8.forge.addon.utils.XmlLineNumberParser;
 import io.fabric8.forge.camel.commands.project.completer.CurrentLineCompleter;
 import io.fabric8.forge.camel.commands.project.completer.RouteBuilderCompleter;
 import io.fabric8.forge.camel.commands.project.completer.RouteBuilderEndpointsCompleter;
@@ -49,7 +48,6 @@ import org.jboss.forge.addon.dependencies.Coordinate;
 import org.jboss.forge.addon.dependencies.Dependency;
 import org.jboss.forge.addon.dependencies.builder.CoordinateBuilder;
 import org.jboss.forge.addon.parser.java.facets.JavaSourceFacet;
-import org.jboss.forge.addon.parser.java.resources.JavaResource;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.ProjectFactory;
 import org.jboss.forge.addon.projects.Projects;
@@ -66,9 +64,7 @@ import org.jboss.forge.addon.ui.input.events.ValueChangeEvent;
 import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
 import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
-import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 
 import static io.fabric8.forge.camel.commands.project.helper.CollectionHelper.first;
 
@@ -348,15 +344,8 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
 
     protected Element getSelectedCamelElementNode(Project project, String xmlResourceName, String key) throws Exception {
         FileResource file = getXmlResourceFile(project, xmlResourceName);
-        Document root = XmlLineNumberParser.parseXml(file.getResourceInputStream(), "camelContext,routes,rests", "http://camel.apache.org/schema/spring");
-        Element selectedElement = null;
-        if (root != null) {
-            Node selectedNode = CamelXmlHelper.findCamelNodeInDocument(root, key);
-            if (selectedNode instanceof Element) {
-                selectedElement = (Element) selectedNode;
-            }
-        }
-        return selectedElement;
+        InputStream resourceInputStream = file.getResourceInputStream();
+        return CamelXmlHelper.getSelectedCamelElementNode(key, resourceInputStream);
     }
 
     protected String getSelectedFile(UIContext context) {

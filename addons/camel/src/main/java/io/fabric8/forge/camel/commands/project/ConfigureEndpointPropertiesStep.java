@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import io.fabric8.forge.addon.utils.CamelProjectHelper;
 import io.fabric8.forge.addon.utils.LineNumberHelper;
 import io.fabric8.forge.addon.utils.XmlLineNumberParser;
 import io.fabric8.forge.camel.commands.project.helper.CamelJavaParserHelper;
@@ -29,7 +28,6 @@ import io.fabric8.forge.camel.commands.project.helper.PoorMansLogger;
 import io.fabric8.forge.camel.commands.project.helper.StringHelper;
 import io.fabric8.forge.camel.commands.project.model.CamelComponentDetails;
 import org.apache.camel.catalog.CamelCatalog;
-import org.jboss.forge.addon.dependencies.Dependency;
 import org.jboss.forge.addon.parser.java.facets.JavaSourceFacet;
 import org.jboss.forge.addon.parser.java.resources.JavaResource;
 import org.jboss.forge.addon.projects.Project;
@@ -38,7 +36,6 @@ import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
 import org.jboss.forge.addon.projects.facets.ResourcesFacet;
 import org.jboss.forge.addon.projects.facets.WebResourcesFacet;
 import org.jboss.forge.addon.resource.FileResource;
-import org.jboss.forge.addon.resource.ResourceFacet;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
@@ -61,12 +58,14 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import static io.fabric8.forge.addon.utils.CamelProjectHelper.findCamelArtifactDependency;
+import static io.fabric8.forge.camel.commands.project.helper.CamelXmlHelper.isCamelContextOrRoutesNode;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.getPrefix;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.isDefaultValue;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.isMultiValue;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.isNonePlaceholderEnumValue;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.ensureCamelArtifactIdAdded;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.loadCamelComponentDetails;
+import static io.fabric8.forge.camel.commands.project.helper.CamelXmlHelper.getCamelContextElements;
 
 public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand implements UIWizardStep {
 
@@ -316,7 +315,7 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
 
         // The DOM api is so fucking terrible!
         if (root != null) {
-            NodeList camels = root.getElementsByTagName("camelContext");
+            NodeList camels = getCamelContextElements(root);
             // TODO: what about 2+ camel's ?
             if (camels != null && camels.getLength() == 1) {
                 Node camel = camels.item(0);
@@ -326,12 +325,12 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
                 // find existing by id
                 Node found = null;
                 for (int i = 0; i < camel.getChildNodes().getLength(); i++) {
-                    if ("camelContext".equals(camel.getNodeName())) {
+                    if (isCamelContextOrRoutesNode(camel)) {
                         camelContext = camel;
                     }
 
                     Node child = camel.getChildNodes().item(i);
-                    if ("camelContext".equals(child.getNodeName())) {
+                    if (isCamelContextOrRoutesNode(child)) {
                         camelContext = child;
                     }
                     if ("endpoint".equals(child.getNodeName())) {
@@ -358,7 +357,7 @@ public class ConfigureEndpointPropertiesStep extends AbstractCamelProjectCommand
                 }
 
                 if (found == null) {
-                    return Results.fail("Cannot find <camelContext> in XML file " + xml);
+                    return Results.fail("Cannot find <camelContext> or <routes> in XML file " + xml);
                 }
 
                 lineNumber = (String) found.getUserData(XmlLineNumberParser.LINE_NUMBER);

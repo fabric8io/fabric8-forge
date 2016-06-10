@@ -23,6 +23,8 @@ import org.jboss.forge.addon.resource.Resource;
 import org.jboss.forge.addon.resource.visit.ResourceVisitor;
 import org.jboss.forge.addon.resource.visit.VisitContext;
 
+import static io.fabric8.forge.camel.commands.project.completer.XmlResourcesCamelEndpointsVisitor.containsCamelRoutes;
+
 public class XmlWebResourcesCamelFilesVisitor implements ResourceVisitor {
 
     private final WebResourcesFacet facet;
@@ -50,8 +52,7 @@ public class XmlWebResourcesCamelFilesVisitor implements ResourceVisitor {
             }
 
             if (include) {
-                // must contain <camelContext...
-                boolean camel = resource.getContents().contains("<camelContext");
+                boolean camel = containsCamelRoutes(resource);
                 if (camel) {
                     // we only want the relative dir name from the resource directory, eg WEB-INF/foo.xml
                     String baseDir = facet.getWebRootDirectory().getFullyQualifiedName();

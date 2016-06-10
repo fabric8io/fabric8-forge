@@ -17,8 +17,8 @@ package io.fabric8.forge.camel.commands.project.archetype;
 
 import com.google.common.base.Objects;
 import io.fabric8.forge.addon.utils.VersionHelper;
+import io.fabric8.forge.addon.utils.archetype.FabricArchetypeCatalogFactory;
 import io.fabric8.utils.Strings;
-import io.fabric8.utils.Systems;
 import org.apache.maven.archetype.catalog.Archetype;
 import org.jboss.forge.addon.maven.projects.archetype.ui.ConstantArchetypeSelectionWizardStep;
 
