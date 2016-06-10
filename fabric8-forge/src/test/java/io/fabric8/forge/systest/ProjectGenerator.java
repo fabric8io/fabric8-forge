@@ -208,6 +208,9 @@ public class ProjectGenerator {
         request.setPomFile(pomFile);
         request.setGoals(goalList);
 
+        // lets use a dummy service name to avoid it being too long
+        request.setMavenOpts("-Dfabric8.service.name=dummy-name");
+
         Invoker invoker = new DefaultInvoker();
         InvocationResult result = invoker.execute(request);
         int exitCode = result.getExitCode();
