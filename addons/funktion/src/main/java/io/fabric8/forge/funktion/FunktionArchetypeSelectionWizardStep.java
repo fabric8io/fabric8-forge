@@ -98,7 +98,7 @@ public class FunktionArchetypeSelectionWizardStep extends AbstractUICommand impl
                         if (archetypes != null) {
                             List<Archetype> list = archetypes.getArchetypes();
                             for (Archetype archetype : list) {
-                                if (isFunktionArchetype(archetype)) {
+                                if (isValidArchetype(archetype)) {
                                     result.add(archetype);
                                 }
                             }
@@ -147,7 +147,7 @@ public class FunktionArchetypeSelectionWizardStep extends AbstractUICommand impl
     }
 
 
-    protected boolean isFunktionArchetype(Archetype archetype) {
+    protected boolean isValidArchetype(Archetype archetype) {
         String artifactId = archetype.getArtifactId();
         return artifactId != null && artifactId.contains("funktion");
     }
