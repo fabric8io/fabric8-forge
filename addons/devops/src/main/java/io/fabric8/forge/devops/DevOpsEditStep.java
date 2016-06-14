@@ -72,7 +72,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.TreeSet;
 
 import static io.fabric8.forge.devops.setup.SetupProjectHelper.isFabric8MavenPlugin3OrGreater;
@@ -92,8 +91,8 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
     private UIInput<PipelineDTO> pipeline;
 
     @Inject
-    @WithAttributes(label = "copyFlowToProject", required = false, description = "Should we copy the Jenkinsfile for the pipeline into the project source code")
-    private UIInput<Boolean> copyFlowToProject;
+    @WithAttributes(label = "copyPipelineToProject", required = false, description = "Should we copy the pipeline definition (in the Jenkinsfile) into the project source code")
+    private UIInput<Boolean> copyPipelineToProject;
 
     @Inject
     @WithAttributes(label = "chatRoom", required = false, description = "Name of chat room to use for this project")
@@ -117,14 +116,14 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
         return Metadata.forCommand(getClass())
                 .category(Categories.create(AbstractDevOpsCommand.CATEGORY))
                 .name(AbstractDevOpsCommand.CATEGORY + ": Configure")
-                .description("Configure the DevOps options for the new project");
+                .description("Configure the Pipeline for the new project");
     }
 
 
     @Override
     public void initializeUI(UIBuilder builder) throws Exception {
         final UIContext context = builder.getUIContext();
-        copyFlowToProject.setValue(Boolean.TRUE);
+        copyPipelineToProject.setValue(Boolean.TRUE);
         pipeline.setCompleter(new UICompleter<PipelineDTO>() {
             @Override
             public Iterable<PipelineDTO> getCompletionProposals(UIContext context, InputComponent<?, PipelineDTO> input, String value) {
@@ -148,7 +147,7 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
                     pipeline.setNote("");
                 }
                 boolean canCopy = Strings.isNotBlank(value);
-                copyFlowToProject.setEnabled(canCopy);
+                copyPipelineToProject.setEnabled(canCopy);
             }
         });
         if (getCurrentSelectedProject(context) != null) {
@@ -216,7 +215,7 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
         boolean hasJenkinsFile = Files.isFile(jenkinsFile);
         LOG.debug("Has Jenkinsfile " + hasJenkinsFile + " with file: " + jenkinsFile);
         if (!hasJenkinsFile) {
-            inputComponents.addAll(CommandHelpers.addInputComponents(builder, pipeline, copyFlowToProject));
+            inputComponents.addAll(CommandHelpers.addInputComponents(builder, pipeline, copyPipelineToProject));
         }
         inputComponents.addAll(CommandHelpers.addInputComponents(builder, chatRoom, issueProjectName, codeReview));
     }
@@ -377,7 +376,7 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
             }
         }
 
-        Boolean copyFlowToProjectValue = copyFlowToProject.getValue();
+        Boolean copyFlowToProjectValue = copyPipelineToProject.getValue();
         if (copyFlowToProjectValue != null && copyFlowToProjectValue.booleanValue()) {
             if (basedir == null || !basedir.isDirectory()) {
                 LOG.warn("Cannot copy the pipeline to the project as no basedir!");
