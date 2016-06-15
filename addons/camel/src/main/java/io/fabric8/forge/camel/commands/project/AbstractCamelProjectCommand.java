@@ -384,24 +384,28 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
         String target = null;
         if (!javaFile) {
             Project project = getSelectedProject(context);
-            ResourcesFacet facet = project.getFacet(ResourcesFacet.class);
-            if (facet != null) {
-                // we only want the relative dir name from the resource directory, eg WEB-INF/foo.xml
-                String baseDir = facet.getResourceDirectory().getFullyQualifiedName();
-                String fqn = currentFile;
-                if (fqn != null && fqn.startsWith(baseDir)) {
-                    target = fqn.substring(baseDir.length() + 1);
+            if (project.hasFacet(ResourcesFacet.class)) {
+                ResourcesFacet facet = project.getFacet(ResourcesFacet.class);
+                if (facet != null) {
+                    // we only want the relative dir name from the resource directory, eg WEB-INF/foo.xml
+                    String baseDir = facet.getResourceDirectory().getFullyQualifiedName();
+                    String fqn = currentFile;
+                    if (fqn != null && fqn.startsWith(baseDir)) {
+                        target = fqn.substring(baseDir.length() + 1);
+                    }
                 }
             }
             if (target == null) {
                 // try web-resource
-                WebResourcesFacet facet2 = project.getFacet(WebResourcesFacet.class);
-                if (facet2 != null) {
-                    // we only want the relative dir name from the resource directory, eg WEB-INF/foo.xml
-                    String baseDir = facet2.getWebRootDirectory().getFullyQualifiedName();
-                    String fqn = currentFile;
-                    if (fqn != null && fqn.startsWith(baseDir)) {
-                        target = fqn.substring(baseDir.length() + 1);
+                if (project.hasFacet(WebResourcesFacet.class)) {
+                    WebResourcesFacet facet2 = project.getFacet(WebResourcesFacet.class);
+                    if (facet2 != null) {
+                        // we only want the relative dir name from the resource directory, eg WEB-INF/foo.xml
+                        String baseDir = facet2.getWebRootDirectory().getFullyQualifiedName();
+                        String fqn = currentFile;
+                        if (fqn != null && fqn.startsWith(baseDir)) {
+                            target = fqn.substring(baseDir.length() + 1);
+                        }
                     }
                 }
             }
