@@ -61,6 +61,12 @@
 			<version>${jboss.forge.version}</version>
 		</dependency>
 		<dependency>
+			<groupId>org.jboss.forge.addon</groupId>
+			<artifactId>convert</artifactId>
+			<classifier>forge-addon</classifier>
+			<version>${jboss.forge.version}</version>
+		</dependency>
+		<dependency>
 			<groupId>io.fabric8.forge</groupId>
 			<artifactId>utils</artifactId>
 			<version>${project.version}</version>

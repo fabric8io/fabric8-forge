@@ -52,13 +52,14 @@ import static io.fabric8.forge.addon.utils.OutputFormatHelper.toJson;
 public class GetPropertiesCommand extends AbstractIntrospectionCommand {
 
 	@Inject
-	@WithAttributes(label = "className", required = true, description = "Fully qualified class name")
-	private UIInput<String> className;
+	@WithAttributes(label = "classNames", required = true, description = "Fully qualified class name")
+	private UIInput<List<String>> classNames;
 
 	private List<InputComponent> inputComponents;
 
 	@Override
 	public void initializeUI(UIBuilder builder) throws Exception {
+		/*
 		className.setCompleter(new UICompleter<String>() {
 			@Override
 			public Iterable<String> getCompletionProposals(UIContext uiContext, InputComponent<?, String> inputComponent, String s) {
@@ -69,7 +70,8 @@ public class GetPropertiesCommand extends AbstractIntrospectionCommand {
 				return answer;
 			}
 		});
-		inputComponents = CommandHelpers.addInputComponents(builder, className);
+		*/
+		inputComponents = CommandHelpers.addInputComponents(builder, classNames);
 	}
 
 	@Override
@@ -88,8 +90,8 @@ public class GetPropertiesCommand extends AbstractIntrospectionCommand {
 		CommandHelpers.putComponentValuesInAttributeMap(context, inputComponents);
 		UIContext uiContext = context.getUIContext();
 		Map<Object, Object> map = uiContext.getAttributeMap();
-		String className = (String) map.get("className");
-		if (className == null) {
+		List<String> classNames = (List<String>) map.get("classNames");
+		if (classNames == null || classNames.size() == 0) {
 			return Results.fail("No className field provided");
 		}
 		Project project = Projects.getSelectedProject(getProjectFactory(), uiContext);
@@ -109,25 +111,28 @@ public class GetPropertiesCommand extends AbstractIntrospectionCommand {
 		*/
 		ClassLoaderFacet classLoaderFacet = project.getFacet(ClassLoaderFacet.class);
 		URLClassLoader classLoader = classLoaderFacet.getClassLoader();
-		List<PropertyDTO> answer = new ArrayList<PropertyDTO>();
-		Class clazz;
-		try {
-			clazz = classLoader.loadClass(className);
-		} catch (Exception e) {
-			return Results.fail("Failed to load class: " + e.getMessage());
-		} finally {
-			classLoader.close();
-		}
-		BeanInfo beanInfo = java.beans.Introspector.getBeanInfo(clazz);
-		PropertyDescriptor[] propertyDescriptors = beanInfo.getPropertyDescriptors();
-		for (PropertyDescriptor propertyDescriptor : propertyDescriptors) {
-			// ignore the class property
-			if (propertyDescriptor.getName().equals("class")) {
-				continue;
+		Map<String, List<Object>> answer = new HashMap<String, List<Object>>();
+		for (String className : classNames) {
+			List<Object> props = new ArrayList<Object>();
+			Class clazz;
+			try {
+				clazz = classLoader.loadClass(className);
+				BeanInfo beanInfo = java.beans.Introspector.getBeanInfo(clazz);
+				PropertyDescriptor[] propertyDescriptors = beanInfo.getPropertyDescriptors();
+				for (PropertyDescriptor propertyDescriptor : propertyDescriptors) {
+					// ignore the class property
+					if (propertyDescriptor.getName().equals("class")) {
+						continue;
+					}
+					PropertyDTO info = new PropertyDTO(propertyDescriptor);
+					props.add(info);
+				}
+			} catch (Exception e) {
+				props.add("Failed to load class, error: " + e.getMessage());
 			}
-			PropertyDTO info = new PropertyDTO(propertyDescriptor);
-			answer.add(info);
+			answer.put(className, props);
 		}
+		classLoader.close();
 		String result = toJson(answer);
 		return Results.success(result);
 	}
