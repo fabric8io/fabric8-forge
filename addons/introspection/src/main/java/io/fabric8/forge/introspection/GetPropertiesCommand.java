@@ -93,6 +93,7 @@ public class GetPropertiesCommand extends AbstractIntrospectionCommand {
 			return Results.fail("No className field provided");
 		}
 		Project project = Projects.getSelectedProject(getProjectFactory(), uiContext);
+		/*
 		PackagingFacet packaging = project.getFacet(PackagingFacet.class);
 		ProjectBuilder builder = packaging.createBuilder();
 		builder.runTests(false);
@@ -105,6 +106,8 @@ public class GetPropertiesCommand extends AbstractIntrospectionCommand {
 		} catch (BuildException be) {
 			return Results.fail("Failed to build project: " + be + "\n\n" + baos.toString());
 		}
+		*/
+		ClassLoaderFacet classLoaderFacet = project.getFacet(ClassLoaderFacet.class);
 		URLClassLoader classLoader = classLoaderFacet.getClassLoader();
 		List<PropertyDTO> answer = new ArrayList<PropertyDTO>();
 		Class clazz;
@@ -125,11 +128,7 @@ public class GetPropertiesCommand extends AbstractIntrospectionCommand {
 			PropertyDTO info = new PropertyDTO(propertyDescriptor);
 			answer.add(info);
 		}
-		String result = formatResult(answer);
+		String result = toJson(answer);
 		return Results.success(result);
-	}
-
-	protected String formatResult(Object result) throws JsonProcessingException {
-		return toJson(result);
 	}
 }
