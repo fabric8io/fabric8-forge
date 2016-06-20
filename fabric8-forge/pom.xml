@@ -81,6 +81,13 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
+      <groupId>io.fabric8.forge</groupId>
+      <artifactId>introspection</artifactId>
+      <version>${project.version}</version>
+      <classifier>forge-addon</classifier>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
       <groupId>org.jboss.forge.addon</groupId>
       <artifactId>wildfly-swarm</artifactId>
       <version>${wildfly.swarm.version}</version>
@@ -208,6 +215,7 @@
                 <addonId>io.fabric8.forge:camel,${project.version}</addonId>
                 <addonId>io.fabric8.forge:devops,${project.version}</addonId>
                 <addonId>io.fabric8.forge:funktion,${project.version}</addonId>
+                <addonId>io.fabric8.forge:introspection,${project.version}</addonId>
                 <addonId>org.jboss.forge.addon:git,${jboss.forge.version}</addonId>
                 <addonId>org.jboss.forge.addon:wildfly-swarm,${wildfly.swarm.version}</addonId>
               </addonIds>
