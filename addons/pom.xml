@@ -47,6 +47,7 @@
     <module>devops</module>
     <module>utils</module>
     <module>fabric8-camel-maven-plugin</module>
+    <module>introspection</module>
   </modules>
 
 

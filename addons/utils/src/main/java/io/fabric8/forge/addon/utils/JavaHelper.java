@@ -15,6 +15,7 @@
  */
 package io.fabric8.forge.addon.utils;
 
+import java.io.IOException;
 import java.net.URLClassLoader;
 
 import org.jboss.forge.addon.projects.Project;
@@ -67,6 +68,12 @@ public final class JavaHelper {
                 return classLoader.loadClass(className);
             } catch (ClassNotFoundException e) {
                 // ignore
+            } finally {
+                try {
+                    classLoader.close();
+                } catch (IOException e) {
+                    // ignore
+                }
             }
         }
         return null;
