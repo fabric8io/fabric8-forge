@@ -78,9 +78,11 @@ public class CamelAddEndpointCommand extends AbstractCamelProjectCommand impleme
     public boolean isEnabled(UIContext context) {
         boolean answer = super.isEnabled(context);
         if (answer) {
-            // we are only enabled if there is a file open in the editor and we have a cursor position
-            int pos = getCurrentCursorPosition(context);
-            answer = pos > -1;
+            if (isRunningInGui(context)) {
+                // we are only enabled if there is a file open in the editor and we have a cursor position
+                int pos = getCurrentCursorPosition(context);
+                answer = pos > -1;
+            }
         }
         return answer;
     }

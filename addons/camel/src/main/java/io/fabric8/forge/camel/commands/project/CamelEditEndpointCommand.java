@@ -77,9 +77,11 @@ public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implem
     public boolean isEnabled(UIContext context) {
         boolean answer = super.isEnabled(context);
         if (answer) {
-            // we are only enabled if there is a file open in the editor
-            final String currentFile = getSelectedFile(context);
-            answer = currentFile != null;
+            if (isRunningInGui(context)) {
+                // we are only enabled if there is a file open in the editor
+                final String currentFile = getSelectedFile(context);
+                answer = currentFile != null;
+            }
         }
         return answer;
     }
