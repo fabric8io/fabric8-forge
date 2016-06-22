@@ -95,20 +95,19 @@ public class GetPropertiesCommand extends AbstractIntrospectionCommand {
 			return Results.fail("No className field provided");
 		}
 		Project project = Projects.getSelectedProject(getProjectFactory(), uiContext);
-		/*
+		// force build
 		PackagingFacet packaging = project.getFacet(PackagingFacet.class);
 		ProjectBuilder builder = packaging.createBuilder();
 		builder.runTests(false);
 		builder.addArguments("clean", "compile");
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		PrintStream stdout = new PrintStream(baos, true);
-		Resource<?> resources;
 		try {
-			resources = builder.build(stdout, stdout);
+			builder.build(stdout, stdout);
 		} catch (BuildException be) {
+			// no point in continuing the operation
 			return Results.fail("Failed to build project: " + be + "\n\n" + baos.toString());
 		}
-		*/
 		ClassLoaderFacet classLoaderFacet = project.getFacet(ClassLoaderFacet.class);
 		URLClassLoader classLoader = classLoaderFacet.getClassLoader();
 		Map<String, List<Object>> answer = new HashMap<String, List<Object>>();
