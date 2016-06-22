@@ -17,6 +17,7 @@ package io.fabric8.forge.camel.commands.project;
 
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -92,16 +93,18 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
                 if (Strings.isNullOrBlank(xmlResourceName)) {
                     xmlResourceName = selected;
                 }
-                List<ContextDto> camelContexts = CamelXmlHelper.loadCamelContext(camelCatalog, context, project, xmlResourceName);
-                List<NodeDto> nodes = NodeDtos.toNodeList(camelContexts);
-                // if there is one CamelContext then pre-select the first node (which is the route)
-                if (camelContexts.size() == 1 && nodes.size() > 1) {
-                    node.setDefaultValue(nodes.get(1));
+                if (Strings.isNotBlank(xmlResourceName)) {
+                    List<ContextDto> camelContexts = CamelXmlHelper.loadCamelContext(camelCatalog, context, project, xmlResourceName);
+                    List<NodeDto> nodes = NodeDtos.toNodeList(camelContexts);
+                    // if there is one CamelContext then pre-select the first node (which is the route)
+                    if (camelContexts.size() == 1 && nodes.size() > 1) {
+                        node.setDefaultValue(nodes.get(1));
+                    }
+                    return nodes;
+                } else {
+                    return Collections.EMPTY_SET;
                 }
-                return nodes;
             }
-
-            ;
         });
     }
 
