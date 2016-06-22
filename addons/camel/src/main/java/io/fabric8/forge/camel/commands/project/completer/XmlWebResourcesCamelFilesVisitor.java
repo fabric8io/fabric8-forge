@@ -18,7 +18,10 @@ package io.fabric8.forge.camel.commands.project.completer;
 import java.util.Set;
 import java.util.function.Function;
 
+import io.fabric8.forge.camel.commands.project.AbstractCamelProjectCommand;
+import io.fabric8.forge.camel.commands.project.helper.PoorMansLogger;
 import org.jboss.forge.addon.projects.facets.WebResourcesFacet;
+import org.jboss.forge.addon.resource.FileResource;
 import org.jboss.forge.addon.resource.Resource;
 import org.jboss.forge.addon.resource.visit.ResourceVisitor;
 import org.jboss.forge.addon.resource.visit.VisitContext;
@@ -26,6 +29,8 @@ import org.jboss.forge.addon.resource.visit.VisitContext;
 import static io.fabric8.forge.camel.commands.project.completer.XmlResourcesCamelEndpointsVisitor.containsCamelRoutes;
 
 public class XmlWebResourcesCamelFilesVisitor implements ResourceVisitor {
+
+    private static final PoorMansLogger LOG = new PoorMansLogger(false);
 
     private final WebResourcesFacet facet;
     private final Set<String> files;
@@ -41,13 +46,22 @@ public class XmlWebResourcesCamelFilesVisitor implements ResourceVisitor {
 
     @Override
     public void visit(VisitContext visitContext, Resource<?> resource) {
-        String name = resource.getName();
-        if (name.endsWith(".xml")) {
+        // skip directories
+        if (resource instanceof FileResource) {
+            if (((FileResource) resource).isDirectory()) {
+                return;
+            }
+        }
 
+        String name = resource.getFullyQualifiedName();
+        name = AbstractCamelProjectCommand.asRelativeFile(name, null, null, facet);
+        LOG.info("Resource name " + name);
+
+        if (name.endsWith(".xml")) {
             boolean include = true;
             if (filter != null) {
-                String fqn = resource.getFullyQualifiedName();
-                Boolean out = filter.apply(fqn);
+                Boolean out = filter.apply(name);
+                LOG.info("Filter " + name + " -> " + out);
                 include = out == null || out;
             }
 

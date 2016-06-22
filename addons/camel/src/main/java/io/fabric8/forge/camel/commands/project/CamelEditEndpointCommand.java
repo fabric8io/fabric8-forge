@@ -48,7 +48,7 @@ import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper
 
 public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implements UIWizard {
 
-    private static final PoorMansLogger LOG = new PoorMansLogger(true);
+    private static final PoorMansLogger LOG = new PoorMansLogger(false);
 
     private static final int MAX_OPTIONS = 20;
 
@@ -140,7 +140,9 @@ public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implem
 
             boolean found = false;
             if (cursorLineNumber != -1) {
+                LOG.info("Cursor line " + cursorLineNumber);
                 for (CamelEndpointDetails detail : xmlCompleter.getEndpoints()) {
+                    LOG.info("Endpoint candidate: " + detail);
                     if (detail.getLineNumber() != null && Integer.valueOf(detail.getLineNumber()) == cursorLineNumber) {
                         endpoints.setValue(detail.getEndpointUri());
                         endpoints.setRequired(false);
@@ -149,6 +151,7 @@ public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implem
                     }
                 }
             }
+            LOG.info("Found " + found);
             if (!found && !xmlCompleter.getEndpoints().isEmpty()) {
 
                 // must add dummy <select> in the dropdown as otherwise there is problems with auto selecting

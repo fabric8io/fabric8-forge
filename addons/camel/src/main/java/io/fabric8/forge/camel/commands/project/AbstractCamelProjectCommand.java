@@ -215,20 +215,28 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
     }
 
     protected XmlEndpointsCompleter createXmlEndpointsCompleter(Project project, Function<String, Boolean> filter) {
-        final ResourcesFacet resourcesFacet = project.getFacet(ResourcesFacet.class);
+        ResourcesFacet resourcesFacet = null;
         WebResourcesFacet webResourcesFacet = null;
+        if (project.hasFacet(ResourcesFacet.class)) {
+            resourcesFacet = project.getFacet(ResourcesFacet.class);
+        }
         if (project.hasFacet(WebResourcesFacet.class)) {
             webResourcesFacet = project.getFacet(WebResourcesFacet.class);
         }
+
         return new XmlEndpointsCompleter(resourcesFacet, webResourcesFacet, filter);
     }
 
     protected XmlFileCompleter createXmlFileCompleter(Project project, Function<String, Boolean> filter) {
-        final ResourcesFacet resourcesFacet = project.getFacet(ResourcesFacet.class);
+        ResourcesFacet resourcesFacet = null;
         WebResourcesFacet webResourcesFacet = null;
+        if (project.hasFacet(ResourcesFacet.class)) {
+            resourcesFacet = project.getFacet(ResourcesFacet.class);
+        }
         if (project.hasFacet(WebResourcesFacet.class)) {
             webResourcesFacet = project.getFacet(WebResourcesFacet.class);
         }
+
         return new XmlFileCompleter(resourcesFacet, webResourcesFacet, filter);
     }
 
@@ -417,62 +425,65 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
     }
 
     protected String asRelativeFile(UIContext context, String currentFile) {
+        Project project = getSelectedProject(context);
+
+        JavaSourceFacet javaSourceFacet = null;
+        ResourcesFacet resourcesFacet = null;
+        WebResourcesFacet webResourcesFacet = null;
+        if (project.hasFacet(JavaSourceFacet.class)) {
+            javaSourceFacet = project.getFacet(JavaSourceFacet.class);
+        }
+        if (project.hasFacet(ResourcesFacet.class)) {
+            resourcesFacet = project.getFacet(ResourcesFacet.class);
+        }
+        if (project.hasFacet(WebResourcesFacet.class)) {
+            webResourcesFacet = project.getFacet(WebResourcesFacet.class);
+        }
+        return asRelativeFile(currentFile, javaSourceFacet, resourcesFacet, webResourcesFacet);
+    }
+
+    public static String asRelativeFile(String currentFile, JavaSourceFacet javaSourceFacet, ResourcesFacet resourcesFacet, WebResourcesFacet webResourcesFacet) {
         boolean javaFile = currentFile != null && currentFile.endsWith(".java");
 
         // if its not a java file, then we need to have the relative path name
         String target = null;
-        if (javaFile) {
-            Project project = getSelectedProject(context);
-            if (project.hasFacet(JavaSourceFacet.class)) {
-                JavaSourceFacet facet = project.getFacet(JavaSourceFacet.class);
-                if (facet != null) {
-                    // we only want the relative dir name from the source directory, eg src/main/java
-                    String baseDir = facet.getSourceDirectory().getFullyQualifiedName();
-                    String fqn = currentFile;
-                    if (fqn != null && fqn.startsWith(baseDir)) {
-                        target = fqn.substring(baseDir.length() + 1);
-                    }
-                }
-                // could be in test directory
-                if (target == null) {
-                    // we only want the relative dir name from the source directory, eg src/test/java
-                    String baseDir = facet.getTestSourceDirectory().getFullyQualifiedName();
-                    String fqn = currentFile;
-                    if (fqn != null && fqn.startsWith(baseDir)) {
-                        target = fqn.substring(baseDir.length() + 1);
-                    }
-                }
+        if (javaFile && javaSourceFacet != null) {
+            // we only want the relative dir name from the source directory, eg src/main/java
+            String baseDir = javaSourceFacet.getSourceDirectory().getFullyQualifiedName();
+            String fqn = currentFile;
+            if (fqn != null && fqn.startsWith(baseDir) && fqn.length() > baseDir.length()) {
+                target = fqn.substring(baseDir.length() + 1);
             }
-        } else {
-            Project project = getSelectedProject(context);
-            if (project.hasFacet(ResourcesFacet.class)) {
-                ResourcesFacet facet = project.getFacet(ResourcesFacet.class);
-                if (facet != null) {
-                    // we only want the relative dir name from the resource directory, eg WEB-INF/foo.xml
-                    String baseDir = facet.getResourceDirectory().getFullyQualifiedName();
-                    String fqn = currentFile;
-                    if (fqn != null && fqn.startsWith(baseDir)) {
-                        target = fqn.substring(baseDir.length() + 1);
-                    }
-                }
-            }
+            // could be in test directory
             if (target == null) {
-                // try web-resource
-                if (project.hasFacet(WebResourcesFacet.class)) {
-                    WebResourcesFacet facet2 = project.getFacet(WebResourcesFacet.class);
-                    if (facet2 != null) {
-                        // we only want the relative dir name from the resource directory, eg WEB-INF/foo.xml
-                        String baseDir = facet2.getWebRootDirectory().getFullyQualifiedName();
-                        String fqn = currentFile;
-                        if (fqn != null && fqn.startsWith(baseDir)) {
-                            target = fqn.substring(baseDir.length() + 1);
-                        }
-                    }
+                // we only want the relative dir name from the source directory, eg src/test/java
+                baseDir = javaSourceFacet.getTestSourceDirectory().getFullyQualifiedName();
+                fqn = currentFile;
+                if (fqn != null && fqn.startsWith(baseDir) && fqn.length() > baseDir.length()) {
+                    target = fqn.substring(baseDir.length() + 1);
+                }
+            }
+        } else if (resourcesFacet != null || webResourcesFacet != null) {
+            if (resourcesFacet != null) {
+                // we only want the relative dir name from the resource directory, eg src/main/resources
+                String baseDir = resourcesFacet.getResourceDirectory().getFullyQualifiedName();
+                String fqn = currentFile;
+                if (fqn != null && fqn.startsWith(baseDir) && fqn.length() > baseDir.length()) {
+                    target = fqn.substring(baseDir.length() + 1);
+                }
+            }
+            if (target == null && webResourcesFacet != null) {
+                // we only want the relative dir name from the web resource directory, eg WEB-INF/foo.xml
+                String baseDir = webResourcesFacet.getWebRootDirectory().getFullyQualifiedName();
+                String fqn = currentFile;
+                if (fqn != null && fqn.startsWith(baseDir) && fqn.length() > baseDir.length()) {
+                    target = fqn.substring(baseDir.length() + 1);
                 }
             }
         }
 
         return target != null ? target : currentFile;
     }
+
 
 }
