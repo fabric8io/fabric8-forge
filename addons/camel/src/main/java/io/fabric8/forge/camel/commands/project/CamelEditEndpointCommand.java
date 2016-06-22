@@ -133,12 +133,16 @@ public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implem
                 builder.add(endpoints);
             }
         } else if (xmlFile) {
+            LOG.info("XML file");
+
             // find all endpoints
             xmlCompleter = createXmlEndpointsCompleter(builder.getUIContext(), currentFile::equals);
 
             boolean found = false;
             if (cursorLineNumber != -1) {
+                LOG.info("Cursor line " + cursorLineNumber);
                 for (CamelEndpointDetails detail : xmlCompleter.getEndpoints()) {
+                    LOG.info("Endpoint candidate: " + detail);
                     if (detail.getLineNumber() != null && Integer.valueOf(detail.getLineNumber()) == cursorLineNumber) {
                         endpoints.setValue(detail.getEndpointUri());
                         endpoints.setRequired(false);
@@ -147,6 +151,7 @@ public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implem
                     }
                 }
             }
+            LOG.info("Found " + found);
             if (!found && !xmlCompleter.getEndpoints().isEmpty()) {
 
                 // must add dummy <select> in the dropdown as otherwise there is problems with auto selecting
