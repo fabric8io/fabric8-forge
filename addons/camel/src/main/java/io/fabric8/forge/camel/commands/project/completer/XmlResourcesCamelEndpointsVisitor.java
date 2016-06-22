@@ -19,6 +19,7 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.function.Function;
 
+import io.fabric8.forge.camel.commands.project.helper.PoorMansLogger;
 import io.fabric8.forge.camel.commands.project.helper.XmlRouteParser;
 import io.fabric8.forge.camel.commands.project.model.CamelEndpointDetails;
 import org.jboss.forge.addon.projects.facets.ResourcesFacet;
@@ -27,6 +28,8 @@ import org.jboss.forge.addon.resource.visit.ResourceVisitor;
 import org.jboss.forge.addon.resource.visit.VisitContext;
 
 public class XmlResourcesCamelEndpointsVisitor implements ResourceVisitor {
+
+    private static final PoorMansLogger LOG = new PoorMansLogger(false);
 
     private final ResourcesFacet facet;
     private final List<CamelEndpointDetails> endpoints;
@@ -47,6 +50,7 @@ public class XmlResourcesCamelEndpointsVisitor implements ResourceVisitor {
             if (filter != null) {
                 String fqn = resource.getFullyQualifiedName();
                 Boolean out = filter.apply(fqn);
+                LOG.info("Filter " + name + " -> " + out);
                 include = out == null || out;
             }
 

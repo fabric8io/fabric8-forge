@@ -48,7 +48,7 @@ import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper
 
 public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implements UIWizard {
 
-    private static final PoorMansLogger LOG = new PoorMansLogger(false);
+    private static final PoorMansLogger LOG = new PoorMansLogger(true);
 
     private static final int MAX_OPTIONS = 20;
 
@@ -133,6 +133,8 @@ public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implem
                 builder.add(endpoints);
             }
         } else if (xmlFile) {
+            LOG.info("XML file");
+
             // find all endpoints
             xmlCompleter = createXmlEndpointsCompleter(builder.getUIContext(), currentFile::equals);
 
