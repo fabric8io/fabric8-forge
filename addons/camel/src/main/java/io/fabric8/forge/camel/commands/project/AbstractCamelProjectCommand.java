@@ -238,21 +238,30 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
 
     protected CurrentLineCompleter createCurrentLineCompleter(int lineNumber, String file, UIContext context) throws Exception {
         Project project = getSelectedProject(context);
-        final ResourcesFacet resourcesFacet = project.getFacet(ResourcesFacet.class);
+
+        ResourcesFacet resourcesFacet = null;
         WebResourcesFacet webResourcesFacet = null;
+        if (project.hasFacet(ResourcesFacet.class)) {
+            resourcesFacet = project.getFacet(ResourcesFacet.class);
+        }
         if (project.hasFacet(WebResourcesFacet.class)) {
             webResourcesFacet = project.getFacet(WebResourcesFacet.class);
         }
+
         String relativeFile = asRelativeFile(context, file);
         return new CurrentLineCompleter(lineNumber, relativeFile, resourcesFacet, webResourcesFacet);
     }
 
     protected FileResource getXmlResourceFile(Project project, String xmlResourceName) {
-        ResourcesFacet facet = project.getFacet(ResourcesFacet.class);
+        ResourcesFacet facet = null;
         WebResourcesFacet webResourcesFacet = null;
+        if (project.hasFacet(ResourcesFacet.class)) {
+            facet = project.getFacet(ResourcesFacet.class);
+        }
         if (project.hasFacet(WebResourcesFacet.class)) {
             webResourcesFacet = project.getFacet(WebResourcesFacet.class);
         }
+
         FileResource file = facet != null ? facet.getResource(xmlResourceName) : null;
         if (file == null || !file.exists()) {
             file = webResourcesFacet != null ? webResourcesFacet.getWebResource(xmlResourceName) : null;
