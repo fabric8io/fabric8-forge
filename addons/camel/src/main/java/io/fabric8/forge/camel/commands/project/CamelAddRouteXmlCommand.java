@@ -77,7 +77,7 @@ public class CamelAddRouteXmlCommand extends AbstractCamelProjectCommand impleme
         boolean enabled = super.isEnabled(context);
         if (enabled) {
 
-            // TODO: must be an xml file to chose from
+            // TODO: must be an xml file to choose from
 
             // must be spring or blueprint project for editing xml files
             boolean spring = CamelCommandsHelper.isSpringProject(getSelectedProject(context));

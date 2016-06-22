@@ -77,9 +77,12 @@ public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implem
     public boolean isEnabled(UIContext context) {
         boolean answer = super.isEnabled(context);
         if (answer) {
-            // we are only enabled if there is a file open in the editor
-            final String currentFile = getSelectedFile(context);
-            answer = currentFile != null;
+            if (isRunningInGui(context)) {
+                LOG.info("Running in gui");
+                // we are only enabled if there is a file open in the editor
+                final String currentFile = getSelectedFile(context);
+                answer = currentFile != null;
+            }
         }
         return answer;
     }
@@ -89,19 +92,25 @@ public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implem
         Map<Object, Object> attributeMap = builder.getUIContext().getAttributeMap();
         attributeMap.remove("navigationResult");
 
-        final String currentFile = getSelectedFile(builder.getUIContext());
+        String selectedFile = getSelectedFile(builder.getUIContext());
+        final String currentFile = asRelativeFile(builder.getUIContext(), selectedFile);
         final int cursorLineNumber = getCurrentCursorLine(builder.getUIContext());
+        LOG.info("Current file " + currentFile + " line number: " + cursorLineNumber);
 
-        boolean javaFile = currentFile.endsWith(".java");
-        boolean xmlFile = currentFile.endsWith(".xml");
+        boolean javaFile = isSelectedFileJava(builder.getUIContext());
+        boolean xmlFile = isSelectedFileXml(builder.getUIContext());
 
         if (javaFile) {
+            LOG.info("Java file");
+
             // find all endpoints
             javaCompleter = createRouteBuilderEndpointsCompleter(builder.getUIContext(), currentFile::equals);
 
             boolean found = false;
             if (cursorLineNumber != -1) {
+                LOG.info("Cursor line " + cursorLineNumber);
                 for (CamelEndpointDetails detail : javaCompleter.getEndpoints()) {
+                    LOG.info("Endpoint candidate: " + detail);
                     if (detail.getLineNumber() != null && Integer.valueOf(detail.getLineNumber()) == cursorLineNumber) {
                         endpoints.setValue(detail.getEndpointUri());
                         endpoints.setRequired(false);
@@ -110,6 +119,7 @@ public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implem
                     }
                 }
             }
+            LOG.info("Found " + found);
             if (!found && !javaCompleter.getEndpoints().isEmpty()) {
 
                 // must add dummy <select> in the dropdown as otherwise there is problems with auto selecting
@@ -150,6 +160,7 @@ public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implem
                 builder.add(endpoints);
             }
         } else {
+            // non java file such as properties/cfg/yaml files
             currentLineCompleter = createCurrentLineCompleter(cursorLineNumber, currentFile, builder.getUIContext());
             CamelEndpointDetails detail = currentLineCompleter.getEndpoint();
             if (detail != null && detail.getEndpointUri() != null) {
@@ -187,6 +198,9 @@ public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implem
         } else if (currentLineCompleter != null) {
             detail = currentLineCompleter.getEndpoint();
         }
+
+        LOG.info("Endpoint detail: " + detail);
+
         if (detail == null) {
             return null;
         }
@@ -218,6 +232,8 @@ public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implem
             throw new IllegalArgumentException("Could not find catalog entry for component name: " + camelComponentName);
         }
 
+        LOG.info("Component json: " + json);
+
         boolean consumerOnly = detail.isConsumerOnly();
         boolean producerOnly = detail.isProducerOnly();
 
@@ -230,6 +246,8 @@ public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implem
         for (InputOptionByGroup group : groups) {
             allInputs.addAll(group.getInputs());
         }
+
+        LOG.info(allInputs.size() + " input fields in the UI wizard");
 
         NavigationResultBuilder builder = Results.navigationBuilder();
         int pages = groups.size();

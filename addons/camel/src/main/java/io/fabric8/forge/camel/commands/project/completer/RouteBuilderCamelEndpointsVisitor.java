@@ -18,6 +18,7 @@ package io.fabric8.forge.camel.commands.project.completer;
 import java.util.List;
 import java.util.function.Function;
 
+import io.fabric8.forge.camel.commands.project.helper.PoorMansLogger;
 import io.fabric8.forge.camel.commands.project.helper.RouteBuilderParser;
 import io.fabric8.forge.camel.commands.project.model.CamelEndpointDetails;
 import org.jboss.forge.addon.parser.java.facets.JavaSourceFacet;
@@ -27,6 +28,8 @@ import org.jboss.forge.addon.resource.visit.VisitContext;
 import org.jboss.forge.roaster.model.source.JavaClassSource;
 
 public class RouteBuilderCamelEndpointsVisitor extends JavaResourceVisitor {
+
+    private static final PoorMansLogger LOG = new PoorMansLogger(false);
 
     private final JavaSourceFacet facet;
     private final List<CamelEndpointDetails> endpoints;
@@ -49,6 +52,7 @@ public class RouteBuilderCamelEndpointsVisitor extends JavaResourceVisitor {
             boolean include = true;
             if (filter != null) {
                 Boolean out = filter.apply(name);
+                LOG.info("Filter " + name + " -> " + out);
                 include = out == null || out;
             }
 

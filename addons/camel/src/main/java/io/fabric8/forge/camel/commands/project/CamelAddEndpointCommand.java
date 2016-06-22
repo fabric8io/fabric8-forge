@@ -78,9 +78,11 @@ public class CamelAddEndpointCommand extends AbstractCamelProjectCommand impleme
     public boolean isEnabled(UIContext context) {
         boolean answer = super.isEnabled(context);
         if (answer) {
-            // we are only enabled if there is a file open in the editor and we have a cursor position
-            int pos = getCurrentCursorPosition(context);
-            answer = pos > -1;
+            if (isRunningInGui(context)) {
+                // we are only enabled if there is a file open in the editor and we have a cursor position
+                int pos = getCurrentCursorPosition(context);
+                answer = pos > -1;
+            }
         }
         return answer;
     }
@@ -95,7 +97,7 @@ public class CamelAddEndpointCommand extends AbstractCamelProjectCommand impleme
         final String currentFile = asRelativeFile(builder.getUIContext(), selectedFile);
         attributeMap.put("currentFile", currentFile);
 
-        boolean xmlFile = currentFile != null && currentFile.endsWith(".xml");
+        boolean xmlFile = isSelectedFileXml(builder.getUIContext());
 
         // determine if the current cursor position is in a route where we should be either consumer or producer only
         AtomicBoolean consumerOnly = new AtomicBoolean();
@@ -196,7 +198,10 @@ public class CamelAddEndpointCommand extends AbstractCamelProjectCommand impleme
         // where we use EIPs so we can know if its a from/pollEnrich = consumer, and if not = producer)
 
         if (xmlFile) {
-            ResourcesFacet facet = project.getFacet(ResourcesFacet.class);
+            ResourcesFacet facet = null;
+            if (project.hasFacet(ResourcesFacet.class)) {
+                facet = project.getFacet(ResourcesFacet.class);
+            }
             WebResourcesFacet webResourcesFacet = null;
             if (project.hasFacet(WebResourcesFacet.class)) {
                 webResourcesFacet = project.getFacet(WebResourcesFacet.class);
@@ -229,8 +234,11 @@ public class CamelAddEndpointCommand extends AbstractCamelProjectCommand impleme
             }
         } else {
             // java code
-            JavaSourceFacet facet = project.getFacet(JavaSourceFacet.class);
-            JavaResource file = facet.getJavaResource(currentFile);
+            JavaSourceFacet facet = null;
+            if (project.hasFacet(JavaSourceFacet.class)) {
+                facet = project.getFacet(JavaSourceFacet.class);
+            }
+            JavaResource file = facet != null ? facet.getJavaResource(currentFile) : null;
             try {
                 if (file != null && file.exists() && cursorLineNumber > 0) {
                     // read all the lines

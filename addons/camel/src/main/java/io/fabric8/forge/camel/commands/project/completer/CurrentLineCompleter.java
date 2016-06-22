@@ -21,6 +21,7 @@ import java.util.List;
 import io.fabric8.forge.addon.utils.LineNumberHelper;
 import io.fabric8.forge.camel.commands.project.helper.PoorMansLogger;
 import io.fabric8.forge.camel.commands.project.model.CamelEndpointDetails;
+import org.jboss.forge.addon.parser.java.facets.JavaSourceFacet;
 import org.jboss.forge.addon.projects.facets.ResourcesFacet;
 import org.jboss.forge.addon.projects.facets.WebResourcesFacet;
 import org.jboss.forge.addon.resource.FileResource;
@@ -34,14 +35,17 @@ public class CurrentLineCompleter implements UICompleter<String> {
 
     private final int lineNumber;
     private final String relativeFile;
-    private final ResourcesFacet facet;
+    private final JavaSourceFacet sourceFacet;
+    private final ResourcesFacet resourcesFacet;
     private final WebResourcesFacet webFacet;
     private final String line;
 
-    public CurrentLineCompleter(int lineNumber, String relativeFile, final ResourcesFacet facet, final WebResourcesFacet webFacet) throws Exception {
+    public CurrentLineCompleter(int lineNumber, String relativeFile, final JavaSourceFacet sourceFacet,
+                                final ResourcesFacet resourcesFacet, final WebResourcesFacet webFacet) throws Exception {
         this.lineNumber = lineNumber;
         this.relativeFile = relativeFile;
-        this.facet = facet;
+        this.sourceFacet = sourceFacet;
+        this.resourcesFacet = resourcesFacet;
         this.webFacet = webFacet;
         this.line = getCurrentCursorLineText();
         LOG.info("Created CurrentLineCompleter[lineNumber=" + lineNumber + ",relativeFile=" + relativeFile + ",line=" + line + "]");
@@ -74,17 +78,24 @@ public class CurrentLineCompleter implements UICompleter<String> {
         }
 
         return answer;
-
     }
 
     protected String getCurrentCursorLineText() throws Exception {
-        FileResource file = facet != null ? facet.getResource(relativeFile) : null;
+        LOG.info("Loading relative file: " + relativeFile + " using java source facet: " + sourceFacet);
+        FileResource file = sourceFacet != null ? sourceFacet.getJavaResource(relativeFile) : null;
         if (file == null || !file.exists()) {
+            LOG.info("Loading relative file: " + relativeFile + " using resource facet: " + resourcesFacet);
+            file = resourcesFacet != null ? resourcesFacet.getResource(relativeFile) : null;
+        }
+        if (file == null || !file.exists()) {
+            LOG.info("Loading relative file: " + relativeFile + " using web facet: " + webFacet);
             file = webFacet != null ? webFacet.getWebResource(relativeFile) : null;
         }
         if (file != null) {
             // read all the lines
             List<String> lines = LineNumberHelper.readLines(file.getResourceInputStream());
+
+            LOG.info("Read " + lines.size() + " lines from file: " + relativeFile);
 
             // the list is 0-based, and line number is 1-based
             int idx = lineNumber - 1;
@@ -92,6 +103,7 @@ public class CurrentLineCompleter implements UICompleter<String> {
 
             return line;
         }
+
         return null;
     }
 
