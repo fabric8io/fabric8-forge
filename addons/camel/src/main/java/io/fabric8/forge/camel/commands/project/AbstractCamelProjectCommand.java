@@ -49,6 +49,7 @@ import org.jboss.forge.addon.dependencies.Coordinate;
 import org.jboss.forge.addon.dependencies.Dependency;
 import org.jboss.forge.addon.dependencies.builder.CoordinateBuilder;
 import org.jboss.forge.addon.parser.java.facets.JavaSourceFacet;
+import org.jboss.forge.addon.parser.java.resources.JavaResource;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.ProjectFactory;
 import org.jboss.forge.addon.projects.Projects;
@@ -375,6 +376,28 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
         return currentFile;
     }
 
+    protected boolean isSelectedFileJava(UIContext context) {
+        Optional<UIRegion<Object>> region = context.getSelection().getRegion();
+        if (region.isPresent()) {
+            Object resource = region.get().getResource();
+            if (resource instanceof FileResource) {
+                return ((FileResource) resource).getFullyQualifiedName().endsWith(".java");
+            }
+        }
+        return false;
+    }
+
+    protected boolean isSelectedFileXml(UIContext context) {
+        Optional<UIRegion<Object>> region = context.getSelection().getRegion();
+        if (region.isPresent()) {
+            Object resource = region.get().getResource();
+            if (resource instanceof FileResource) {
+                return ((FileResource) resource).getFullyQualifiedName().endsWith(".xml");
+            }
+        }
+        return false;
+    }
+
     protected int getCurrentCursorLine(UIContext context) {
         int answer = -1;
         Optional<UIRegion<Object>> region = context.getSelection().getRegion();
@@ -398,7 +421,29 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
 
         // if its not a java file, then we need to have the relative path name
         String target = null;
-        if (!javaFile) {
+        if (javaFile) {
+            Project project = getSelectedProject(context);
+            if (project.hasFacet(JavaSourceFacet.class)) {
+                JavaSourceFacet facet = project.getFacet(JavaSourceFacet.class);
+                if (facet != null) {
+                    // we only want the relative dir name from the source directory, eg src/main/java
+                    String baseDir = facet.getSourceDirectory().getFullyQualifiedName();
+                    String fqn = currentFile;
+                    if (fqn != null && fqn.startsWith(baseDir)) {
+                        target = fqn.substring(baseDir.length() + 1);
+                    }
+                }
+                // could be in test directory
+                if (target == null) {
+                    // we only want the relative dir name from the source directory, eg src/test/java
+                    String baseDir = facet.getTestSourceDirectory().getFullyQualifiedName();
+                    String fqn = currentFile;
+                    if (fqn != null && fqn.startsWith(baseDir)) {
+                        target = fqn.substring(baseDir.length() + 1);
+                    }
+                }
+            }
+        } else {
             Project project = getSelectedProject(context);
             if (project.hasFacet(ResourcesFacet.class)) {
                 ResourcesFacet facet = project.getFacet(ResourcesFacet.class);

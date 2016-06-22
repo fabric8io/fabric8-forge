@@ -55,7 +55,7 @@ public class CamelAddEndpointCommand extends AbstractCamelProjectCommand impleme
 
     private static final int MAX_OPTIONS = 20;
 
-    private static final PoorMansLogger LOG = new PoorMansLogger(true);
+    private static final PoorMansLogger LOG = new PoorMansLogger(false);
 
     @Inject
     @WithAttributes(label = "Name", required = true, description = "Name of component to use for the endpoint")
@@ -97,7 +97,7 @@ public class CamelAddEndpointCommand extends AbstractCamelProjectCommand impleme
         final String currentFile = asRelativeFile(builder.getUIContext(), selectedFile);
         attributeMap.put("currentFile", currentFile);
 
-        boolean xmlFile = currentFile != null && currentFile.endsWith(".xml");
+        boolean xmlFile = isSelectedFileXml(builder.getUIContext());
 
         // determine if the current cursor position is in a route where we should be either consumer or producer only
         AtomicBoolean consumerOnly = new AtomicBoolean();
@@ -198,7 +198,10 @@ public class CamelAddEndpointCommand extends AbstractCamelProjectCommand impleme
         // where we use EIPs so we can know if its a from/pollEnrich = consumer, and if not = producer)
 
         if (xmlFile) {
-            ResourcesFacet facet = project.getFacet(ResourcesFacet.class);
+            ResourcesFacet facet = null;
+            if (project.hasFacet(ResourcesFacet.class)) {
+                facet = project.getFacet(ResourcesFacet.class);
+            }
             WebResourcesFacet webResourcesFacet = null;
             if (project.hasFacet(WebResourcesFacet.class)) {
                 webResourcesFacet = project.getFacet(WebResourcesFacet.class);
@@ -231,8 +234,11 @@ public class CamelAddEndpointCommand extends AbstractCamelProjectCommand impleme
             }
         } else {
             // java code
-            JavaSourceFacet facet = project.getFacet(JavaSourceFacet.class);
-            JavaResource file = facet.getJavaResource(currentFile);
+            JavaSourceFacet facet = null;
+            if (project.hasFacet(JavaSourceFacet.class)) {
+                facet = project.getFacet(JavaSourceFacet.class);
+            }
+            JavaResource file = facet != null ? facet.getJavaResource(currentFile) : null;
             try {
                 if (file != null && file.exists() && cursorLineNumber > 0) {
                     // read all the lines

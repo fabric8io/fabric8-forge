@@ -109,11 +109,6 @@ public class CamelEndpointDetails {
     }
 
     @Override
-    public String toString() {
-        return endpointUri;
-    }
-
-    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -141,5 +136,21 @@ public class CamelEndpointDetails {
         result = 31 * result + (endpointInstance != null ? endpointInstance.hashCode() : 0);
         result = 31 * result + endpointUri.hashCode();
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "CamelEndpointDetails[" +
+                "fileName='" + fileName + '\'' +
+                ", lineNumber='" + lineNumber + '\'' +
+                ", lineNumberEnd='" + lineNumberEnd + '\'' +
+                ", className='" + className + '\'' +
+                ", methodName='" + methodName + '\'' +
+                ", endpointComponentName='" + endpointComponentName + '\'' +
+                ", endpointInstance='" + endpointInstance + '\'' +
+                ", endpointUri='" + endpointUri + '\'' +
+                ", consumerOnly=" + consumerOnly +
+                ", producerOnly=" + producerOnly +
+                ']';
     }
 }
