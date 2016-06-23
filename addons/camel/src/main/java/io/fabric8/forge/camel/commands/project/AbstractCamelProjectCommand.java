@@ -17,6 +17,7 @@ package io.fabric8.forge.camel.commands.project;
 
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -84,6 +85,36 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
     @Inject
     protected CamelCatalog camelCatalog;
 
+    protected List<NodeDto> configureXmlNodes(final UIContext context, final Project project, final String selected,
+                                              final UISelectOne<String> xml, final UISelectOne<String> node) throws Exception {
+
+        List<NodeDto> nodes;
+
+        String xmlResourceName = xml.getValue();
+        if (Strings.isNullOrBlank(xmlResourceName)) {
+            xmlResourceName = selected;
+        }
+        if (Strings.isNotBlank(xmlResourceName)) {
+            List<ContextDto> camelContexts = CamelXmlHelper.loadCamelContext(camelCatalog, context, project, xmlResourceName);
+            nodes = NodeDtos.toNodeList(camelContexts);
+            // if there is one CamelContext then pre-select the first node (which is the route)
+            if (camelContexts.size() == 1 && nodes.size() > 1) {
+                node.setDefaultValue(nodes.get(1).getLabel());
+            }
+        } else {
+            nodes = Collections.EMPTY_LIST;
+        }
+
+        List<String> choices = new ArrayList<>();
+        for (NodeDto dto : nodes) {
+            choices.add(dto.getLabel());
+        }
+        node.setValueChoices(choices);
+
+        return nodes;
+    }
+
+    @Deprecated
     protected void configureXmlNode(final UIContext context, final Project project, final String selected, final UISelectOne<String> xml, final UISelectOne<NodeDto> node) {
         node.setValueConverter(new NodeDtoConverter(camelCatalog, project, context, xml));
         node.setItemLabelConverter(new NodeDtoLabelConverter());
