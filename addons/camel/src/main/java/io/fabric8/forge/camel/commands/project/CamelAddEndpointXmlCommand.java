@@ -22,7 +22,6 @@ import javax.inject.Inject;
 
 import io.fabric8.forge.camel.commands.project.dto.ComponentDto;
 import io.fabric8.forge.camel.commands.project.dto.NodeDto;
-import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
 import io.fabric8.forge.camel.commands.project.helper.PoorMansLogger;
 import io.fabric8.forge.camel.commands.project.model.InputOptionByGroup;
 import org.jboss.forge.addon.projects.Project;
@@ -59,7 +58,8 @@ public class CamelAddEndpointXmlCommand extends AbstractCamelProjectCommand impl
 
     @Inject
     @WithAttributes(label = "Node", required = true, description = "Parent node (where to add the endpoint)")
-    private UISelectOne<NodeDto> node;
+    private UISelectOne<String> node;
+    private transient List<NodeDto> nodes;
 
     @Inject
     @WithAttributes(label = "Name", required = true, description = "Name of component to use for the endpoint")
@@ -103,7 +103,7 @@ public class CamelAddEndpointXmlCommand extends AbstractCamelProjectCommand impl
         configureComponentName(project, componentName, false, false);
 
         String selected = configureXml(project, xml, currentFile);
-        configureXmlNode(context, project, selected, xml, node);
+        nodes = configureXmlNodes(context, project, selected, xml, node);
 
         builder.add(xml).add(node).add(componentName);
     }
@@ -131,7 +131,11 @@ public class CamelAddEndpointXmlCommand extends AbstractCamelProjectCommand impl
 
         attributeMap.put("componentName", camelComponentName);
 
-        NodeDto parentNode = node.getValue();
+        NodeDto parentNode = null;
+        int selectedIdx = node.getSelectedIndex();
+        if (selectedIdx != -1) {
+            parentNode = nodes.get(selectedIdx);
+        }
         LOG.info("Parent node " + parentNode);
 
         // if the parent node is route, then lets add to the end of the route, eg its last child

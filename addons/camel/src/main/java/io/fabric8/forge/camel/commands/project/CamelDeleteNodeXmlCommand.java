@@ -45,7 +45,6 @@ public class CamelDeleteNodeXmlCommand extends AbstractCamelProjectCommand {
     @Inject
     @WithAttributes(label = "Node", required = true, description = "Node to delete")
     private UISelectOne<String> node;
-
     private transient List<NodeDto> nodes;
 
     @Override

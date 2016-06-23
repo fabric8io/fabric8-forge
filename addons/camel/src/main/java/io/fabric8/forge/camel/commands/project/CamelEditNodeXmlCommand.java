@@ -23,7 +23,6 @@ import javax.inject.Inject;
 
 import io.fabric8.forge.addon.utils.XmlLineNumberParser;
 import io.fabric8.forge.camel.commands.project.dto.NodeDto;
-import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
 import io.fabric8.forge.camel.commands.project.model.InputOptionByGroup;
 import org.apache.camel.catalog.CamelCatalog;
 import org.apache.camel.model.language.ExpressionDefinition;
@@ -61,7 +60,8 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
 
     @Inject
     @WithAttributes(label = "Node", required = true, description = "Node to edit")
-    private UISelectOne<NodeDto> node;
+    private UISelectOne<String> node;
+    private transient List<NodeDto> nodes;
 
     @Inject
     private InputComponentFactory componentFactory;
@@ -96,7 +96,7 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
         String currentFile = getSelectedFile(context);
 
         String selected = configureXml(project, xml, currentFile);
-        configureXmlNode(context, project, selected, xml, node);
+        nodes = configureXmlNodes(context, project, selected, xml, node);
 
         builder.add(xml).add(node);
     }
@@ -113,8 +113,12 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
         attributeMap.put("mode", "edit");
         attributeMap.put("kind", "xml");
 
-        NodeDto editNode = node.getValue();
-        String key = editNode.getKey();
+        NodeDto editNode = null;
+        int selectedIdx = node.getSelectedIndex();
+        if (selectedIdx != -1) {
+            editNode = nodes.get(selectedIdx);
+        }
+        String key = editNode != null ? editNode.getKey() : null;
 
         // must be same node to allow reusing existing navigation result
         String previous = getNodeKey(attributeMap.get("node"));
