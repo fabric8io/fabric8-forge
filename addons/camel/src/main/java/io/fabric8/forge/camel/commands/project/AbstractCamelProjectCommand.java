@@ -145,13 +145,24 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
             nodes = Collections.EMPTY_LIST;
         }
 
+        final List<NodeDto> answer = nodes;
+
         List<String> choices = new ArrayList<>();
         for (NodeDto dto : nodes) {
             choices.add(dto.getLabel());
         }
         node.setValueChoices(choices);
+        // to convert from key to label
+        node.setValueConverter(s -> {
+            for (NodeDto dto : answer) {
+                if (dto.getKey().equals(s)) {
+                    return dto.getLabel();
+                }
+            }
+            return s;
+        });
 
-        return nodes;
+        return answer;
     }
 
     @Override
