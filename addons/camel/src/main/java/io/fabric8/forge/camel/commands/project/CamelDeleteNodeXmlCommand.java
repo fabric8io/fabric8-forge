@@ -44,7 +44,8 @@ public class CamelDeleteNodeXmlCommand extends AbstractCamelProjectCommand {
 
     @Inject
     @WithAttributes(label = "Node", required = true, description = "Node to delete")
-    private UISelectOne<NodeDto> node;
+    private UISelectOne<String> node;
+    private transient List<NodeDto> nodes;
 
     @Override
     public boolean isEnabled(UIContext context) {
@@ -66,14 +67,19 @@ public class CamelDeleteNodeXmlCommand extends AbstractCamelProjectCommand {
         String currentFile = getSelectedFile(context);
 
         String selected = configureXml(project, xml, currentFile);
-        configureXmlNode(context, project, selected, xml, node);
+        nodes = configureXmlNodes(context, project, selected, xml, node);
         builder.add(xml).add(node);
     }
 
     @Override
     public Result execute(UIExecutionContext context) throws Exception {
         Project project = getSelectedProject(context);
-        NodeDto nodeValue = node.getValue();
+
+        NodeDto nodeValue = null;
+        int selectedIdx = node.getSelectedIndex();
+        if (selectedIdx != -1) {
+            nodeValue = nodes.get(selectedIdx);
+        }
         if (nodeValue == null) {
             return Results.fail("No node to delete!");
         }

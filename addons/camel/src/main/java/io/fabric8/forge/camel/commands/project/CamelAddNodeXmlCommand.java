@@ -61,7 +61,8 @@ public class CamelAddNodeXmlCommand extends AbstractCamelProjectCommand implemen
 
     @Inject
     @WithAttributes(label = "Parent Node", required = true, description = "Parent node (where to add the node)")
-    private UISelectOne<NodeDto> parent;
+    private UISelectOne<String> parent;
+    private transient List<NodeDto> parents;
 
     @Inject
     @WithAttributes(label = "Filter", required = false, description = "To filter patterns")
@@ -104,7 +105,7 @@ public class CamelAddNodeXmlCommand extends AbstractCamelProjectCommand implemen
         String currentFile = getSelectedFile(context);
 
         String selected = configureXml(project, xml, currentFile);
-        configureXmlNode(context, project, selected, xml, parent);
+        parents = configureXmlNodes(context, project, selected, xml, parent);
 
         nameFilter.setValueChoices(CamelCommandsHelper.createEipLabelValues(project, getCamelCatalog()));
         nameFilter.setDefaultValue("<all>");
@@ -146,8 +147,13 @@ public class CamelAddNodeXmlCommand extends AbstractCamelProjectCommand implemen
         attributeMap.put("mode", "add");
         attributeMap.put("kind", "xml");
 
-        NodeDto editNode = parent.getValue();
-        String key = editNode.getKey();
+        NodeDto editNode = null;
+        int selectedIdx = parent.getSelectedIndex();
+        if (selectedIdx != -1) {
+            editNode = parents.get(selectedIdx);
+        }
+
+        String key = editNode != null ? editNode.getKey() : null;
 
         String nodeName = name.getValue() != null ? name.getValue().getName() : null;
 
