@@ -23,6 +23,7 @@ import javax.inject.Inject;
 import io.fabric8.forge.camel.commands.project.dto.ComponentDto;
 import io.fabric8.forge.camel.commands.project.dto.NodeDto;
 import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
+import io.fabric8.forge.camel.commands.project.helper.PoorMansLogger;
 import io.fabric8.forge.camel.commands.project.model.InputOptionByGroup;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
@@ -49,6 +50,8 @@ import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper
  * Adds a from/to endpoint into chosen node in the route
  */
 public class CamelAddEndpointXmlCommand extends AbstractCamelProjectCommand implements UIWizard {
+
+    private static final PoorMansLogger LOG = new PoorMansLogger(false);
 
     @Inject
     @WithAttributes(label = "XML File", required = true, description = "The XML file to use (either Spring or Blueprint)")
@@ -130,9 +133,21 @@ public class CamelAddEndpointXmlCommand extends AbstractCamelProjectCommand impl
 
         NodeDto parentNode = node.getValue();
         boolean isFrom = parentNode == null || "route".equals(parentNode.getPattern()) || "routes".equals(parentNode.getPattern());
+        // if there is already a route that has a from then its not a from
+        if (isFrom && parentNode != null) {
+            for (NodeDto child : parentNode.getChildren()) {
+                if ("from".equals(child.getPattern())) {
+                    isFrom = false;
+                }
+            }
+        }
+
         // its either from or to
         boolean consumerOnly = isFrom;
         boolean producerOnly = !isFrom;
+
+        LOG.info("Consumer only " + consumerOnly + ", producer only " + producerOnly);
+        LOG.info("Parent node " + parentNode);
 
         // we need to figure out how many options there is so we can as many steps we need
         UIContext ui = context.getUIContext();

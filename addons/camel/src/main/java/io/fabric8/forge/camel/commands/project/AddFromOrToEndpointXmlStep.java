@@ -21,6 +21,7 @@ import io.fabric8.forge.addon.utils.LineNumberHelper;
 import io.fabric8.forge.addon.utils.XmlLineNumberParser;
 import io.fabric8.forge.camel.commands.project.dto.NodeDto;
 import io.fabric8.forge.camel.commands.project.helper.CamelXmlHelper;
+import io.fabric8.forge.camel.commands.project.helper.PoorMansLogger;
 import io.fabric8.utils.Strings;
 import org.apache.camel.catalog.CamelCatalog;
 import org.jboss.forge.addon.projects.ProjectFactory;
@@ -40,6 +41,9 @@ import org.w3c.dom.Node;
  * A wizard step to add a from or to endpoint to a node
  */
 public class AddFromOrToEndpointXmlStep extends ConfigureEndpointPropertiesStep {
+
+    private static final PoorMansLogger LOG = new PoorMansLogger(false);
+
     private final NodeDto parentNode;
     private final boolean isFrom;
 
@@ -72,6 +76,8 @@ public class AddFromOrToEndpointXmlStep extends ConfigureEndpointPropertiesStep 
                 // we need to add after the parent node, so use line number information from the parent
                 lineNumber = (String) selectedNode.getUserData(XmlLineNumberParser.LINE_NUMBER);
                 lineNumberEnd = (String) selectedNode.getUserData(XmlLineNumberParser.LINE_NUMBER_END);
+
+                LOG.info("Add endpoint at line number " + lineNumber + "-" + lineNumberEnd + " at selected node " + selectedNode.getNodeName());
 
                 if (lineNumber != null && lineNumberEnd != null) {
 
