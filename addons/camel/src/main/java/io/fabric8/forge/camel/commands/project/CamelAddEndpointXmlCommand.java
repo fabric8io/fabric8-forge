@@ -132,6 +132,15 @@ public class CamelAddEndpointXmlCommand extends AbstractCamelProjectCommand impl
         attributeMap.put("componentName", camelComponentName);
 
         NodeDto parentNode = node.getValue();
+        LOG.info("Parent node " + parentNode);
+
+        // if the parent node is route, then lets add to the end of the route, eg its last child
+        if (parentNode != null && !parentNode.getChildren().isEmpty()) {
+            int size = parentNode.getChildren().size();
+            parentNode = parentNode.getChildren().get(size - 1);
+            LOG.info("Parent node changed to " + parentNode);
+        }
+
         boolean isFrom = parentNode == null || "route".equals(parentNode.getPattern()) || "routes".equals(parentNode.getPattern());
         // if there is already a route that has a from then its not a from
         if (isFrom && parentNode != null) {
