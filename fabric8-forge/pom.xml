@@ -32,6 +32,9 @@
     <fabric8.serviceAccount>fabric8</fabric8.serviceAccount>
     <guava.version>15.0</guava.version>
     <wildfly.swarm.version>1.0.0.CR1</wildfly.swarm.version>
+    <!-- avoid using too much memory -->
+    <fabric8.resources.requests.memory>256Mi</fabric8.resources.requests.memory>
+    <fabric8.resources.limits.memory>512Mi</fabric8.resources.limits.memory>
   </properties>
   <dependencyManagement>
     <dependencies>
