@@ -26,7 +26,6 @@ import io.fabric8.forge.camel.commands.project.dto.NodeDto;
 import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
 import io.fabric8.forge.camel.commands.project.helper.PoorMansLogger;
 import io.fabric8.forge.camel.commands.project.model.InputOptionByGroup;
-import org.jboss.forge.addon.convert.Converter;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
@@ -35,8 +34,6 @@ import org.jboss.forge.addon.ui.context.UINavigationContext;
 import org.jboss.forge.addon.ui.input.InputComponent;
 import org.jboss.forge.addon.ui.input.InputComponentFactory;
 import org.jboss.forge.addon.ui.input.UISelectOne;
-import org.jboss.forge.addon.ui.input.ValueChangeListener;
-import org.jboss.forge.addon.ui.input.events.ValueChangeEvent;
 import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
 import org.jboss.forge.addon.ui.metadata.WithAttributes;
 import org.jboss.forge.addon.ui.result.NavigationResult;
@@ -115,25 +112,7 @@ public class CamelAddNodeXmlCommand extends AbstractCamelProjectCommand implemen
 
         name.setValueChoices(CamelCommandsHelper.createAllEipDtoValues(project, getCamelCatalog(), nameFilter));
         // include converter from string->dto
-        name.setValueConverter(new Converter<String, EipDto>() {
-            @Override
-            public EipDto convert(String text) {
-                return createEipDto(getCamelCatalog(), text);
-            }
-        });
-        // show note about the chosen eip
-        name.addValueChangeListener(new ValueChangeListener() {
-            @Override
-            public void valueChanged(ValueChangeEvent event) {
-                EipDto eip = (EipDto) event.getNewValue();
-                if (eip != null) {
-                    String description = eip.getDescription();
-                    name.setNote(description != null ? description : "");
-                } else {
-                    name.setNote("");
-                }
-            }
-        });
+        name.setValueConverter(text -> createEipDto(getCamelCatalog(), text));
 
         builder.add(xml).add(parent).add(nameFilter).add(name);
     }
