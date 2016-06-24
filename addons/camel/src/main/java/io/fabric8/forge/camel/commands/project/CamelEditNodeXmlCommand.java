@@ -22,13 +22,16 @@ import java.util.Map;
 import javax.inject.Inject;
 
 import io.fabric8.forge.addon.utils.XmlLineNumberParser;
+import io.fabric8.forge.camel.commands.project.completer.XmlEndpointsCompleter;
 import io.fabric8.forge.camel.commands.project.dto.NodeDto;
 import io.fabric8.forge.camel.commands.project.helper.PoorMansLogger;
+import io.fabric8.forge.camel.commands.project.model.CamelEndpointDetails;
 import io.fabric8.forge.camel.commands.project.model.InputOptionByGroup;
 import org.apache.camel.catalog.CamelCatalog;
 import org.apache.camel.model.language.ExpressionDefinition;
 import org.apache.camel.util.IntrospectionSupport;
 import org.jboss.forge.addon.projects.Project;
+import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
@@ -48,6 +51,7 @@ import org.jboss.forge.addon.ui.wizard.UIWizard;
 import org.w3c.dom.Element;
 
 import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.createUIInputsForCamelEIP;
+import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.createUIInputsForCamelEndpoint;
 import static io.fabric8.forge.camel.commands.project.helper.CamelXmlHelper.xmlAsModel;
 
 /**
@@ -68,6 +72,11 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
 
     @Inject
     private InputComponentFactory componentFactory;
+
+    @Inject
+    private DependencyInstaller dependencyInstaller;
+
+    private XmlEndpointsCompleter xmlCompleter;
 
     @Override
     public UICommandMetadata getMetadata(UIContext context) {
@@ -106,8 +115,6 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
 
     @Override
     public NavigationResult next(UINavigationContext context) throws Exception {
-        Project project = getSelectedProject(context);
-
         Map<Object, Object> attributeMap = context.getUIContext().getAttributeMap();
 
         // always refresh these as the end user may have edited the instance name
@@ -122,7 +129,7 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
             editNode = nodes.get(selectedIdx);
         }
 
-        LOG.info("Edit node " + editNode);
+        LOG.info("Edit node " + editNode + " pattern " + editNode.getPattern());
 
         String key = editNode != null ? editNode.getKey() : null;
 
@@ -139,6 +146,84 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
         String nodeName = editNode.getPattern();
         attributeMap.put("nodeName", nodeName);
         attributeMap.put("pattern", editNode.getPattern());
+
+        // if its "from" or "to" then lets edit the node as an endpoint
+        if (editNode != null && ("from".equals(editNode.getPattern()) || "to".equals(editNode.getPattern()))) {
+            return nextEditEndpoint(context, xmlResourceName, key, editNode);
+        } else {
+            return nextEditEip(context, xmlResourceName, key, editNode, nodeName);
+        }
+    }
+
+    private NavigationResult nextEditEndpoint(UINavigationContext context, String xmlResourceName, String key, NodeDto editNode) throws Exception {
+        Map<Object, Object> attributeMap = context.getUIContext().getAttributeMap();
+
+        // find all endpoints
+        xmlCompleter = createXmlEndpointsCompleter(context.getUIContext(), xmlResourceName::equals);
+
+        String uri = editNode.getProperty("uri");
+        LOG.info("Endpoint uri " + uri);
+
+        CamelEndpointDetails detail = xmlCompleter.getEndpointDetail(uri);
+        LOG.info("Endpoint detail " + detail);
+
+        if (detail == null) {
+            return null;
+        }
+
+        attributeMap.put("componentName", detail.getEndpointComponentName());
+        attributeMap.put("instanceName", detail.getEndpointInstance());
+        attributeMap.put("endpointUri", detail.getEndpointUri());
+        attributeMap.put("lineNumber", detail.getLineNumber());
+        attributeMap.put("lineNumberEnd", detail.getLineNumberEnd());
+        attributeMap.put("mode", "edit");
+        attributeMap.put("xml", detail.getFileName());
+        attributeMap.put("kind", "xml");
+
+        // we need to figure out how many options there is so we can as many steps we need
+        String camelComponentName = detail.getEndpointComponentName();
+        uri = detail.getEndpointUri();
+
+        String json = getCamelCatalog().componentJSonSchema(camelComponentName);
+        if (json == null) {
+            throw new IllegalArgumentException("Could not find catalog entry for component name: " + camelComponentName);
+        }
+
+        LOG.info("Component json: " + json);
+
+        boolean consumerOnly = detail.isConsumerOnly();
+        boolean producerOnly = detail.isProducerOnly();
+
+        UIContext ui = context.getUIContext();
+        List<InputOptionByGroup> groups = createUIInputsForCamelEndpoint(camelComponentName, uri, MAX_OPTIONS, consumerOnly, producerOnly,
+                getCamelCatalog(), componentFactory, converterFactory, ui);
+
+        // need all inputs in a list as well
+        List<InputComponent> allInputs = new ArrayList<>();
+        for (InputOptionByGroup group : groups) {
+            allInputs.addAll(group.getInputs());
+        }
+
+        LOG.info(allInputs.size() + " input fields in the UI wizard");
+
+        NavigationResultBuilder builder = Results.navigationBuilder();
+        int pages = groups.size();
+        for (int i = 0; i < pages; i++) {
+            boolean last = i == pages - 1;
+            InputOptionByGroup current = groups.get(i);
+            ConfigureEndpointPropertiesStep step = new ConfigureEndpointPropertiesStep(projectFactory, dependencyInstaller, getCamelCatalog(),
+                    camelComponentName, current.getGroup(), allInputs, current.getInputs(), last, i, pages);
+            builder.add(step);
+        }
+
+        NavigationResult navigationResult = builder.build();
+        attributeMap.put("navigationResult", navigationResult);
+        return navigationResult;
+    }
+
+    private NavigationResult nextEditEip(UINavigationContext context, String xmlResourceName, String key, NodeDto editNode, String nodeName) throws Exception {
+        Project project = getSelectedProject(context);
+        Map<Object, Object> attributeMap = context.getUIContext().getAttributeMap();
 
         Element selectedElement = getSelectedCamelElementNode(project, xmlResourceName, key);
         if (selectedElement == null) {
@@ -235,7 +320,7 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
 
     @Override
     public Result execute(UIExecutionContext context) throws Exception {
-        return Results.success();
+        return null;
     }
 
 }
