@@ -47,6 +47,7 @@ import org.apache.camel.model.WhenDefinition;
 
 import java.beans.Introspector;
 import java.util.List;
+import javax.xml.bind.annotation.XmlRootElement;
 
 
 public class CamelModelHelper {
@@ -118,7 +119,7 @@ public class CamelModelHelper {
             return "choice";
         } else if (camelNode instanceof ConvertBodyDefinition) {
             ConvertBodyDefinition node = (ConvertBodyDefinition) camelNode;
-            return "convertBody " + getOrBlank(node.getType());
+            return "convertBodyTo " + getOrBlank(node.getType());
         } else if (camelNode instanceof EnrichDefinition) {
             EnrichDefinition node = (EnrichDefinition) camelNode;
             //return "enrich " + getOrBlank(node.getResourceUri());
@@ -234,6 +235,11 @@ public class CamelModelHelper {
      * Returns the pattern name
      */
     public static String getPatternName(OptionalIdentifiedDefinition camelNode) {
+        // we should grab the annotation instead
+        XmlRootElement root = camelNode.getClass().getAnnotation(XmlRootElement.class);
+        if (root != null) {
+            return root.name();
+        }
         String simpleName = Strings.stripSuffix(camelNode.getClass().getSimpleName(), "Definition");
         return Introspector.decapitalize(simpleName);
     }

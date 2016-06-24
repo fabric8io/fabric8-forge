@@ -16,8 +16,10 @@
 package io.fabric8.camel.tooling.util;
 
 import org.apache.camel.model.BeanDefinition;
+import org.apache.camel.model.ConvertBodyDefinition;
 import org.apache.camel.model.FilterDefinition;
 import org.apache.camel.model.MarshalDefinition;
+import org.apache.camel.model.ToDefinition;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -35,6 +37,18 @@ public class CamelModelUtilsTest {
         String name = aClass.getName();
         boolean actual = CamelModelUtils.canAcceptInput(name);
         assertEquals("canAcceptInput for " + name, expected, actual);
+    }
+
+    @Test
+    public void testPatternNameConvertBodyTo() {
+        ConvertBodyDefinition node = new ConvertBodyDefinition();
+        assertEquals("convertBodyTo", CamelModelHelper.getPatternName(node));
+    }
+
+    @Test
+    public void testPatternNameTo() {
+        ToDefinition node = new ToDefinition();
+        assertEquals("to", CamelModelHelper.getPatternName(node));
     }
 
 }
