@@ -18,6 +18,7 @@ package io.fabric8.forge.camel.commands.project;
 import java.util.List;
 
 import io.fabric8.forge.addon.utils.LineNumberHelper;
+import io.fabric8.forge.camel.commands.project.helper.PoorMansLogger;
 import org.apache.camel.catalog.CamelCatalog;
 import org.jboss.forge.addon.projects.ProjectFactory;
 import org.jboss.forge.addon.resource.FileResource;
@@ -33,6 +34,8 @@ import org.jboss.forge.addon.ui.util.Metadata;
  * A wizard step to edit a XML node
  */
 public class EditNodeXmlStep extends ConfigureEipPropertiesStep {
+
+    private static final PoorMansLogger LOG = new PoorMansLogger(false);
 
     public EditNodeXmlStep(ProjectFactory projectFactory, CamelCatalog camelCatalog, String eipName, String group, List<InputComponent> allInputs, List<InputComponent> inputs,
                            boolean last, int index, int total) {
@@ -61,6 +64,8 @@ public class EditNodeXmlStep extends ConfigureEipPropertiesStep {
             delta--;
             lines.remove(idx);
         }
+
+        LOG.info("Spaces " + spaces);
 
         String[] editLines = modelXml.split("\n");
         for (String line : editLines) {

@@ -21,6 +21,7 @@ import java.util.Map;
 
 import io.fabric8.forge.addon.utils.CamelProjectHelper;
 import io.fabric8.forge.addon.utils.LineNumberHelper;
+import io.fabric8.forge.camel.commands.project.helper.PoorMansLogger;
 import org.apache.camel.catalog.CamelCatalog;
 import org.apache.camel.util.IntrospectionSupport;
 import org.jboss.forge.addon.dependencies.Dependency;
@@ -49,6 +50,8 @@ import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.
 import static io.fabric8.forge.camel.commands.project.helper.CamelXmlHelper.dumpModelAsXml;
 
 public abstract class ConfigureEipPropertiesStep extends AbstractCamelProjectCommand implements UIWizardStep {
+
+    private static final PoorMansLogger LOG = new PoorMansLogger(false);
 
     private final CamelCatalog camelCatalog;
 
@@ -245,8 +248,10 @@ public abstract class ConfigureEipPropertiesStep extends AbstractCamelProjectCom
             }
             // calculate indent to use
             int indent = calculateIndent(file, lineNumber);
+            LOG.info("Calculated indent " + indent);
             // marshal to xml
             modelXml = dumpModelAsXml(instance, cl, includeEndTag, indent);
+            LOG.info("Generated XML model:\n" + modelXml + "\n");
         } catch (Exception e) {
             // ignore
         }

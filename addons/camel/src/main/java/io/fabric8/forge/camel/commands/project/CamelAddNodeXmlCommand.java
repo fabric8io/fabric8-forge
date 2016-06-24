@@ -24,6 +24,7 @@ import io.fabric8.forge.addon.utils.XmlLineNumberParser;
 import io.fabric8.forge.camel.commands.project.dto.EipDto;
 import io.fabric8.forge.camel.commands.project.dto.NodeDto;
 import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
+import io.fabric8.forge.camel.commands.project.helper.PoorMansLogger;
 import io.fabric8.forge.camel.commands.project.model.InputOptionByGroup;
 import org.jboss.forge.addon.convert.Converter;
 import org.jboss.forge.addon.projects.Project;
@@ -54,6 +55,8 @@ import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper
  * Adds an EIP to an existing XML route
  */
 public class CamelAddNodeXmlCommand extends AbstractCamelProjectCommand implements UIWizard {
+
+    private static final PoorMansLogger LOG = new PoorMansLogger(false);
 
     @Inject
     @WithAttributes(label = "XML File", required = true, description = "The XML file to use (either Spring or Blueprint)")
@@ -147,13 +150,15 @@ public class CamelAddNodeXmlCommand extends AbstractCamelProjectCommand implemen
         attributeMap.put("mode", "add");
         attributeMap.put("kind", "xml");
 
-        NodeDto editNode = null;
+        NodeDto parentNode = null;
         int selectedIdx = parent.getSelectedIndex();
         if (selectedIdx != -1) {
-            editNode = parents.get(selectedIdx);
+            parentNode = parents.get(selectedIdx);
         }
 
-        String key = editNode != null ? editNode.getKey() : null;
+        LOG.info("Parent node " + parentNode);
+
+        String key = parentNode != null ? parentNode.getKey() : null;
 
         String nodeName = name.getValue() != null ? name.getValue().getName() : null;
 
@@ -169,11 +174,11 @@ public class CamelAddNodeXmlCommand extends AbstractCamelProjectCommand implemen
 
         attributeMap.put("node", key);
         attributeMap.put("name", nodeName);
-        attributeMap.put("pattern", editNode.getPattern());
+        attributeMap.put("pattern", parentNode.getPattern());
 
         Element selectedElement = getSelectedCamelElementNode(project, xmlResourceName, key);
         if (selectedElement == null) {
-            throw new IllegalArgumentException("Cannot find xml for node " + editNode);
+            throw new IllegalArgumentException("Cannot find xml for node " + parentNode);
         }
         String lineNumber = (String) selectedElement.getUserData(XmlLineNumberParser.LINE_NUMBER);
         String lineNumberEnd = (String) selectedElement.getUserData(XmlLineNumberParser.LINE_NUMBER_END);

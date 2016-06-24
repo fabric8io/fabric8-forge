@@ -18,6 +18,7 @@ package io.fabric8.forge.camel.commands.project;
 import java.util.List;
 
 import io.fabric8.forge.addon.utils.LineNumberHelper;
+import io.fabric8.forge.camel.commands.project.helper.PoorMansLogger;
 import org.apache.camel.catalog.CamelCatalog;
 import org.jboss.forge.addon.projects.ProjectFactory;
 import org.jboss.forge.addon.resource.FileResource;
@@ -33,6 +34,8 @@ import org.jboss.forge.addon.ui.util.Metadata;
  * A wizard step to add a node to XML
  */
 public class AddNodeXmlStep extends ConfigureEipPropertiesStep {
+
+    private static final PoorMansLogger LOG = new PoorMansLogger(false);
 
     public AddNodeXmlStep(ProjectFactory projectFactory, CamelCatalog camelCatalog, String eipName, String group, List<InputComponent> allInputs, List<InputComponent> inputs,
                           boolean last, int index, int total) {
@@ -58,9 +61,17 @@ public class AddNodeXmlStep extends ConfigureEipPropertiesStep {
 
         // use the same indent from the parent line
         int spaces = LineNumberHelper.leadingSpaces(lines, idx - 1);
-        String line = LineNumberHelper.padString(modelXml, spaces);
-        // add the line at the position
-        lines.add(idx, line);
+
+        LOG.info("Spaces " + spaces);
+
+        String[] editLines = modelXml.split("\n");
+        for (String line : editLines) {
+            // use the same indent from the eip we are replacing
+            line = LineNumberHelper.padString(line, spaces);
+            // add the new line at the old starting position
+            lines.add(idx, line);
+            idx++;
+        }
 
         // and save the file back
         String content = LineNumberHelper.linesToString(lines);
