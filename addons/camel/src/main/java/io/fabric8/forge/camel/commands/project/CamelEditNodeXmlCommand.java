@@ -23,6 +23,7 @@ import javax.inject.Inject;
 
 import io.fabric8.forge.addon.utils.XmlLineNumberParser;
 import io.fabric8.forge.camel.commands.project.dto.NodeDto;
+import io.fabric8.forge.camel.commands.project.helper.PoorMansLogger;
 import io.fabric8.forge.camel.commands.project.model.InputOptionByGroup;
 import org.apache.camel.catalog.CamelCatalog;
 import org.apache.camel.model.language.ExpressionDefinition;
@@ -53,6 +54,8 @@ import static io.fabric8.forge.camel.commands.project.helper.CamelXmlHelper.xmlA
  * Edits an EIP to an existing XML route
  */
 public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand implements UIWizard {
+
+    private static final PoorMansLogger LOG = new PoorMansLogger(false);
 
     @Inject
     @WithAttributes(label = "XML File", required = true, description = "The XML file to use (either Spring or Blueprint)")
@@ -118,6 +121,9 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
         if (selectedIdx != -1) {
             editNode = nodes.get(selectedIdx);
         }
+
+        LOG.info("Edit node " + editNode);
+
         String key = editNode != null ? editNode.getKey() : null;
 
         // must be same node to allow reusing existing navigation result
