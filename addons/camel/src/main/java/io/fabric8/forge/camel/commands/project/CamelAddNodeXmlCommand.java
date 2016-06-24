@@ -86,6 +86,11 @@ public class CamelAddNodeXmlCommand extends AbstractCamelProjectCommand implemen
     public boolean isEnabled(UIContext context) {
         boolean enabled = super.isEnabled(context);
         if (enabled) {
+            // we should only be enabled in non gui
+            boolean gui = isRunningInGui(context);
+            enabled = !gui;
+        }
+        if (enabled) {
             // must have xml files with camel routes to be enabled
             Project project = getSelectedProject(context);
             String currentFile = getSelectedFile(context);

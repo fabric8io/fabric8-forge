@@ -88,6 +88,7 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
     @Override
     public boolean isEnabled(UIContext context) {
         boolean enabled = super.isEnabled(context);
+        // this command works both in Web UI and in GUI mode
         if (enabled) {
             // must have xml files with camel routes to be enabled
             Project project = getSelectedProject(context);
@@ -106,6 +107,8 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
 
         Project project = getSelectedProject(context);
         String currentFile = getSelectedFile(context);
+
+        // TODO: add support for pre selecting the EIP based on the cursor position
 
         String selected = configureXml(project, xml, currentFile);
         nodes = configureXmlNodes(context, project, selected, xml, node);
