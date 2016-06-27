@@ -152,10 +152,14 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
         }
 
         if (candidate != null) {
+            // lets pre-select the EIP from the cursor line so the wizard can move on
             node.setDefaultValue(candidate.getLabel());
+            node.setRequired(false);
+            xml.setRequired(false);
+        } else {
+            // show the UI where you can chose the xml and EIPs to select
+            builder.add(xml).add(node);
         }
-
-        builder.add(xml).add(node);
     }
 
     @Override
