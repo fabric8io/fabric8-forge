@@ -15,6 +15,7 @@
  */
 package io.fabric8.forge.camel.commands.project;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -32,6 +33,7 @@ import org.apache.camel.model.language.ExpressionDefinition;
 import org.apache.camel.util.IntrospectionSupport;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
+import org.jboss.forge.addon.resource.FileResource;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
@@ -48,7 +50,10 @@ import org.jboss.forge.addon.ui.result.navigation.NavigationResultBuilder;
 import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
 import org.jboss.forge.addon.ui.wizard.UIWizard;
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.createUIInputsForCamelEIP;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.createUIInputsForCamelEndpoint;
@@ -59,7 +64,7 @@ import static io.fabric8.forge.camel.commands.project.helper.CamelXmlHelper.xmlA
  */
 public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand implements UIWizard {
 
-    private static final PoorMansLogger LOG = new PoorMansLogger(false);
+    private static final PoorMansLogger LOG = new PoorMansLogger(true);
 
     @Inject
     @WithAttributes(label = "XML File", required = true, description = "The XML file to use (either Spring or Blueprint)")
@@ -106,12 +111,55 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
         attributeMap.remove("navigationResult");
 
         Project project = getSelectedProject(context);
-        String currentFile = getSelectedFile(context);
-
-        // TODO: add support for pre selecting the EIP based on the cursor position
+        String selectedFile = getSelectedFile(builder.getUIContext());
+        final String currentFile = asRelativeFile(builder.getUIContext(), selectedFile);
+        final int cursorLineNumber = getCurrentCursorLine(builder.getUIContext());
+        LOG.info("Current file " + currentFile + " line number: " + cursorLineNumber);
 
         String selected = configureXml(project, xml, currentFile);
         nodes = configureXmlNodes(context, project, selected, xml, node);
+
+        boolean xmlFile = isSelectedFileXml(builder.getUIContext());
+        if (xmlFile && cursorLineNumber != -1) {
+            LOG.info("XML file");
+
+            Node candidate = null;
+            NodeDto selectedCandidate = null;
+            Document root = loadCamelXmlFileAsDom(project, currentFile);
+            if (root != null) {
+                List<Node> children = new ArrayList<>();
+                findAllChildren(root, children);
+                int index = 0;
+                for (Node child : children) {
+                    // we need to add after the parent node, so use line number information from the parent
+                    String lineNumber = (String) child.getUserData(XmlLineNumberParser.LINE_NUMBER);
+                    String lineNumberEnd = (String) child.getUserData(XmlLineNumberParser.LINE_NUMBER_END);
+
+                    if (lineNumber != null && lineNumberEnd != null) {
+                        int start = Integer.valueOf(lineNumber);
+                        int end = Integer.valueOf(lineNumberEnd);
+                        if (start >= cursorLineNumber && end <= cursorLineNumber) {
+                            candidate = child;
+                            if (index < nodes.size()) {
+                                selectedCandidate = nodes.get(index);
+                            }
+                        }
+                    }
+
+                    index++;
+                }
+            }
+
+            LOG.info("Candidate " + candidate);
+            LOG.info("Selected Candidate " + selectedCandidate);
+
+            if (candidate != null) {
+                // find the candidate and select it
+            }
+            if (selectedCandidate != null) {
+                node.setDefaultValue(selectedCandidate.getLabel());
+            }
+        }
 
         builder.add(xml).add(node);
     }
@@ -324,6 +372,26 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
     @Override
     public Result execute(UIExecutionContext context) throws Exception {
         return null;
+    }
+
+    protected Document loadCamelXmlFileAsDom(Project project, String xmlResourceName) throws Exception {
+        FileResource file = getXmlResourceFile(project, xmlResourceName);
+        InputStream resourceInputStream = file.getResourceInputStream();
+        Document root = XmlLineNumberParser.parseXml(resourceInputStream, "camelContext,routes,rests", "http://camel.apache.org/schema/spring");
+        return root;
+    }
+
+    protected void findAllChildren(Node root, List<Node> children) {
+        NodeList list = root.getChildNodes();
+        if (list != null) {
+            for (int i = 0; i < list.getLength(); i++) {
+                Node node = list.item(i);
+                children.add(node);
+                if (node.hasChildNodes()) {
+                    findAllChildren(node, children);
+                }
+            }
+        }
     }
 
 }
