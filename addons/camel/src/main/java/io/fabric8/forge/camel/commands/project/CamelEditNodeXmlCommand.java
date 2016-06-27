@@ -25,6 +25,7 @@ import javax.inject.Inject;
 import io.fabric8.forge.addon.utils.XmlLineNumberParser;
 import io.fabric8.forge.camel.commands.project.completer.XmlEndpointsCompleter;
 import io.fabric8.forge.camel.commands.project.dto.NodeDto;
+import io.fabric8.forge.camel.commands.project.helper.CamelXmlHelper;
 import io.fabric8.forge.camel.commands.project.helper.PoorMansLogger;
 import io.fabric8.forge.camel.commands.project.model.CamelEndpointDetails;
 import io.fabric8.forge.camel.commands.project.model.InputOptionByGroup;
@@ -53,10 +54,10 @@ import org.jboss.forge.addon.ui.wizard.UIWizard;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.createUIInputsForCamelEIP;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.createUIInputsForCamelEndpoint;
+import static io.fabric8.forge.camel.commands.project.helper.CamelXmlHelper.loadCamelXmlFileAsDom;
 import static io.fabric8.forge.camel.commands.project.helper.CamelXmlHelper.xmlAsModel;
 
 /**
@@ -64,7 +65,7 @@ import static io.fabric8.forge.camel.commands.project.helper.CamelXmlHelper.xmlA
  */
 public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand implements UIWizard {
 
-    private static final PoorMansLogger LOG = new PoorMansLogger(true);
+    private static final PoorMansLogger LOG = new PoorMansLogger(false);
 
     @Inject
     @WithAttributes(label = "XML File", required = true, description = "The XML file to use (either Spring or Blueprint)")
@@ -119,46 +120,39 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
         String selected = configureXml(project, xml, currentFile);
         nodes = configureXmlNodes(context, project, selected, xml, node);
 
-        boolean xmlFile = isSelectedFileXml(builder.getUIContext());
-        if (xmlFile && cursorLineNumber != -1) {
-            LOG.info("XML file");
+        NodeDto candidate = null;
 
-            Node candidate = null;
-            NodeDto selectedCandidate = null;
-            Document root = loadCamelXmlFileAsDom(project, currentFile);
-            if (root != null) {
-                List<Node> children = new ArrayList<>();
-                findAllChildren(root, children);
-                int index = 0;
-                for (Node child : children) {
+        FileResource file = getXmlResourceFile(project, currentFile);
+        InputStream resourceInputStream = file.getResourceInputStream();
+        Document root = loadCamelXmlFileAsDom(resourceInputStream);
+        if (root != null) {
+            for (NodeDto node : nodes) {
+                String key = node.getKey();
+                Node selectedNode = CamelXmlHelper.findCamelNodeInDocument(root, key);
+                LOG.info("Node " + key + " in XML " + selectedNode);
+
+                if (selectedNode != null) {
                     // we need to add after the parent node, so use line number information from the parent
-                    String lineNumber = (String) child.getUserData(XmlLineNumberParser.LINE_NUMBER);
-                    String lineNumberEnd = (String) child.getUserData(XmlLineNumberParser.LINE_NUMBER_END);
+                    String lineNumber = (String) selectedNode.getUserData(XmlLineNumberParser.LINE_NUMBER);
+                    String lineNumberEnd = (String) selectedNode.getUserData(XmlLineNumberParser.LINE_NUMBER_END);
+
+                    LOG.info("Node " + key + " line " + lineNumber + "-" + lineNumberEnd);
 
                     if (lineNumber != null && lineNumberEnd != null) {
-                        int start = Integer.valueOf(lineNumber);
-                        int end = Integer.valueOf(lineNumberEnd);
-                        if (start >= cursorLineNumber && end <= cursorLineNumber) {
-                            candidate = child;
-                            if (index < nodes.size()) {
-                                selectedCandidate = nodes.get(index);
-                            }
+                        int start = Integer.parseInt(lineNumber);
+                        int end = Integer.parseInt(lineNumberEnd);
+                        if (start <= cursorLineNumber && end >= cursorLineNumber) {
+                            // its okay to select new candidate as a child is better than a parent if its within the range
+                            LOG.info("Selecting candidate " + node);
+                            candidate = node;
                         }
                     }
-
-                    index++;
                 }
             }
+        }
 
-            LOG.info("Candidate " + candidate);
-            LOG.info("Selected Candidate " + selectedCandidate);
-
-            if (candidate != null) {
-                // find the candidate and select it
-            }
-            if (selectedCandidate != null) {
-                node.setDefaultValue(selectedCandidate.getLabel());
-            }
+        if (candidate != null) {
+            node.setDefaultValue(candidate.getLabel());
         }
 
         builder.add(xml).add(node);
@@ -180,8 +174,6 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
             editNode = nodes.get(selectedIdx);
         }
 
-        LOG.info("Edit node " + editNode + " pattern " + editNode.getPattern());
-
         String key = editNode != null ? editNode.getKey() : null;
 
         // must be same node to allow reusing existing navigation result
@@ -192,6 +184,8 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
                 return navigationResult;
             }
         }
+
+        LOG.info("Edit node " + editNode + " pattern " + editNode.getPattern());
 
         attributeMap.put("node", key);
         String nodeName = editNode.getPattern();
@@ -372,26 +366,6 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
     @Override
     public Result execute(UIExecutionContext context) throws Exception {
         return null;
-    }
-
-    protected Document loadCamelXmlFileAsDom(Project project, String xmlResourceName) throws Exception {
-        FileResource file = getXmlResourceFile(project, xmlResourceName);
-        InputStream resourceInputStream = file.getResourceInputStream();
-        Document root = XmlLineNumberParser.parseXml(resourceInputStream, "camelContext,routes,rests", "http://camel.apache.org/schema/spring");
-        return root;
-    }
-
-    protected void findAllChildren(Node root, List<Node> children) {
-        NodeList list = root.getChildNodes();
-        if (list != null) {
-            for (int i = 0; i < list.getLength(); i++) {
-                Node node = list.item(i);
-                children.add(node);
-                if (node.hasChildNodes()) {
-                    findAllChildren(node, children);
-                }
-            }
-        }
     }
 
 }
