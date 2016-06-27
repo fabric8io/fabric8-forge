@@ -75,6 +75,7 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
     @WithAttributes(label = "Node", required = true, description = "Node to edit")
     private UISelectOne<String> node;
     private transient List<NodeDto> nodes;
+    private transient NodeDto preSelectedNode;
 
     @Inject
     private InputComponentFactory componentFactory;
@@ -157,9 +158,7 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
 
         if (candidate != null) {
             // lets pre-select the EIP from the cursor line so the wizard can move on
-            node.setDefaultValue(candidate.getLabel());
-            node.setRequired(false);
-            xml.setRequired(false);
+            preSelectedNode = candidate;
         } else {
             // show the UI where you can chose the xml and EIPs to select
             builder.add(xml).add(node);
@@ -176,10 +175,12 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
         attributeMap.put("mode", "edit");
         attributeMap.put("kind", "xml");
 
-        NodeDto editNode = null;
-        int selectedIdx = node.getSelectedIndex();
-        if (selectedIdx != -1) {
-            editNode = nodes.get(selectedIdx);
+        NodeDto editNode = preSelectedNode;
+        if (editNode == null && node != null) {
+            int selectedIdx = node.getSelectedIndex();
+            if (selectedIdx != -1) {
+                editNode = nodes.get(selectedIdx);
+            }
         }
 
         String key = editNode != null ? editNode.getKey() : null;
@@ -201,7 +202,7 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
         attributeMap.put("pattern", editNode.getPattern());
 
         // if its "from" or "to" then lets edit the node as an endpoint
-        if (editNode != null && ("from".equals(editNode.getPattern()) || "to".equals(editNode.getPattern()))) {
+        if (("from".equals(editNode.getPattern()) || "to".equals(editNode.getPattern()))) {
             return nextEditEndpoint(context, xmlResourceName, key, editNode);
         } else {
             return nextEditEip(context, xmlResourceName, key, editNode, nodeName);
