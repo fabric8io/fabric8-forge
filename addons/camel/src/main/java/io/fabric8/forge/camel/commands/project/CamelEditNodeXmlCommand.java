@@ -132,13 +132,17 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
                 LOG.info("Node " + key + " in XML " + selectedNode);
 
                 if (selectedNode != null) {
+                    // skip root types like routes/camelContext
+                    boolean skip = "camelContext".equals(node.getPattern()) || "routes".equals(node.getPattern()) || "rests".equals(node.getPattern());
+                    if (skip) {
+                        continue;
+                    }
+
                     // we need to add after the parent node, so use line number information from the parent
                     String lineNumber = (String) selectedNode.getUserData(XmlLineNumberParser.LINE_NUMBER);
                     String lineNumberEnd = (String) selectedNode.getUserData(XmlLineNumberParser.LINE_NUMBER_END);
-
-                    LOG.info("Node " + key + " line " + lineNumber + "-" + lineNumberEnd);
-
                     if (lineNumber != null && lineNumberEnd != null) {
+                        LOG.info("Node " + key + " line " + lineNumber + "-" + lineNumberEnd);
                         int start = Integer.parseInt(lineNumber);
                         int end = Integer.parseInt(lineNumberEnd);
                         if (start <= cursorLineNumber && end >= cursorLineNumber) {
