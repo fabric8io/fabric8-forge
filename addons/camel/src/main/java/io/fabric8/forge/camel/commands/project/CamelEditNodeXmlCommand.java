@@ -15,6 +15,7 @@
  */
 package io.fabric8.forge.camel.commands.project;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -24,6 +25,7 @@ import javax.inject.Inject;
 import io.fabric8.forge.addon.utils.XmlLineNumberParser;
 import io.fabric8.forge.camel.commands.project.completer.XmlEndpointsCompleter;
 import io.fabric8.forge.camel.commands.project.dto.NodeDto;
+import io.fabric8.forge.camel.commands.project.helper.CamelXmlHelper;
 import io.fabric8.forge.camel.commands.project.helper.PoorMansLogger;
 import io.fabric8.forge.camel.commands.project.model.CamelEndpointDetails;
 import io.fabric8.forge.camel.commands.project.model.InputOptionByGroup;
@@ -32,6 +34,7 @@ import org.apache.camel.model.language.ExpressionDefinition;
 import org.apache.camel.util.IntrospectionSupport;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
+import org.jboss.forge.addon.resource.FileResource;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
@@ -48,10 +51,13 @@ import org.jboss.forge.addon.ui.result.navigation.NavigationResultBuilder;
 import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
 import org.jboss.forge.addon.ui.wizard.UIWizard;
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 
 import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.createUIInputsForCamelEIP;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.createUIInputsForCamelEndpoint;
+import static io.fabric8.forge.camel.commands.project.helper.CamelXmlHelper.loadCamelXmlFileAsDom;
 import static io.fabric8.forge.camel.commands.project.helper.CamelXmlHelper.xmlAsModel;
 
 /**
@@ -106,14 +112,58 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
         attributeMap.remove("navigationResult");
 
         Project project = getSelectedProject(context);
-        String currentFile = getSelectedFile(context);
-
-        // TODO: add support for pre selecting the EIP based on the cursor position
+        String selectedFile = getSelectedFile(builder.getUIContext());
+        final String currentFile = asRelativeFile(builder.getUIContext(), selectedFile);
+        final int cursorLineNumber = getCurrentCursorLine(builder.getUIContext());
+        LOG.info("Current file " + currentFile + " line number: " + cursorLineNumber);
 
         String selected = configureXml(project, xml, currentFile);
         nodes = configureXmlNodes(context, project, selected, xml, node);
 
-        builder.add(xml).add(node);
+        NodeDto candidate = null;
+
+        FileResource file = getXmlResourceFile(project, currentFile);
+        InputStream resourceInputStream = file.getResourceInputStream();
+        Document root = loadCamelXmlFileAsDom(resourceInputStream);
+        if (root != null) {
+            for (NodeDto node : nodes) {
+                String key = node.getKey();
+                Node selectedNode = CamelXmlHelper.findCamelNodeInDocument(root, key);
+                LOG.info("Node " + key + " in XML " + selectedNode);
+
+                if (selectedNode != null) {
+                    // skip root types like routes/camelContext
+                    boolean skip = "camelContext".equals(node.getPattern()) || "routes".equals(node.getPattern()) || "rests".equals(node.getPattern());
+                    if (skip) {
+                        continue;
+                    }
+
+                    // we need to add after the parent node, so use line number information from the parent
+                    String lineNumber = (String) selectedNode.getUserData(XmlLineNumberParser.LINE_NUMBER);
+                    String lineNumberEnd = (String) selectedNode.getUserData(XmlLineNumberParser.LINE_NUMBER_END);
+                    if (lineNumber != null && lineNumberEnd != null) {
+                        LOG.info("Node " + key + " line " + lineNumber + "-" + lineNumberEnd);
+                        int start = Integer.parseInt(lineNumber);
+                        int end = Integer.parseInt(lineNumberEnd);
+                        if (start <= cursorLineNumber && end >= cursorLineNumber) {
+                            // its okay to select new candidate as a child is better than a parent if its within the range
+                            LOG.info("Selecting candidate " + node);
+                            candidate = node;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (candidate != null) {
+            // lets pre-select the EIP from the cursor line so the wizard can move on
+            node.setDefaultValue(candidate.getLabel());
+            node.setRequired(false);
+            xml.setRequired(false);
+        } else {
+            // show the UI where you can chose the xml and EIPs to select
+            builder.add(xml).add(node);
+        }
     }
 
     @Override
@@ -132,8 +182,6 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
             editNode = nodes.get(selectedIdx);
         }
 
-        LOG.info("Edit node " + editNode + " pattern " + editNode.getPattern());
-
         String key = editNode != null ? editNode.getKey() : null;
 
         // must be same node to allow reusing existing navigation result
@@ -144,6 +192,8 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
                 return navigationResult;
             }
         }
+
+        LOG.info("Edit node " + editNode + " pattern " + editNode.getPattern());
 
         attributeMap.put("node", key);
         String nodeName = editNode.getPattern();

@@ -490,7 +490,7 @@ public final class CamelXmlHelper {
     }
 
     public static Element getSelectedCamelElementNode(String key, InputStream resourceInputStream) throws Exception {
-        Document root = XmlLineNumberParser.parseXml(resourceInputStream, "camelContext,routes,rests", "http://camel.apache.org/schema/spring");
+        Document root = loadCamelXmlFileAsDom(resourceInputStream);
         Element selectedElement = null;
         if (root != null) {
             Node selectedNode = findCamelNodeInDocument(root, key);
@@ -500,4 +500,10 @@ public final class CamelXmlHelper {
         }
         return selectedElement;
     }
+
+    public static Document loadCamelXmlFileAsDom(InputStream resourceInputStream) throws Exception {
+        Document root = XmlLineNumberParser.parseXml(resourceInputStream, "camelContext,routes,rests", "http://camel.apache.org/schema/spring");
+        return root;
+    }
+
 }
