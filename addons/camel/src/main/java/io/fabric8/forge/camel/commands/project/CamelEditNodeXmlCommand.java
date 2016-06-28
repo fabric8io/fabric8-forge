@@ -16,7 +16,6 @@
 package io.fabric8.forge.camel.commands.project;
 
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -25,7 +24,6 @@ import javax.inject.Inject;
 
 import io.fabric8.forge.addon.utils.XmlLineNumberParser;
 import io.fabric8.forge.camel.commands.project.completer.XmlEndpointsCompleter;
-import io.fabric8.forge.camel.commands.project.dto.LanguageDto;
 import io.fabric8.forge.camel.commands.project.dto.NodeDto;
 import io.fabric8.forge.camel.commands.project.helper.CamelXmlHelper;
 import io.fabric8.forge.camel.commands.project.helper.PoorMansLogger;
@@ -34,7 +32,6 @@ import io.fabric8.forge.camel.commands.project.model.InputOptionByGroup;
 import org.apache.camel.catalog.CamelCatalog;
 import org.apache.camel.catalog.JSonSchemaHelper;
 import org.apache.camel.model.language.ExpressionDefinition;
-import org.apache.camel.model.language.MethodCallExpression;
 import org.apache.camel.util.CollectionStringBuffer;
 import org.apache.camel.util.IntrospectionSupport;
 import org.jboss.forge.addon.projects.Project;
@@ -60,7 +57,6 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
-import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.createLanguageDto;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.createUIInputsForCamelEIP;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.createUIInputsForCamelEndpoint;
 import static io.fabric8.forge.camel.commands.project.helper.CamelXmlHelper.loadCamelXmlFileAsDom;
