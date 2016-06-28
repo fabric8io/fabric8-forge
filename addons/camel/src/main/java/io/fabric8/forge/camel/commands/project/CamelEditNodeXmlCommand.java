@@ -30,7 +30,9 @@ import io.fabric8.forge.camel.commands.project.helper.PoorMansLogger;
 import io.fabric8.forge.camel.commands.project.model.CamelEndpointDetails;
 import io.fabric8.forge.camel.commands.project.model.InputOptionByGroup;
 import org.apache.camel.catalog.CamelCatalog;
+import org.apache.camel.catalog.JSonSchemaHelper;
 import org.apache.camel.model.language.ExpressionDefinition;
+import org.apache.camel.util.CollectionStringBuffer;
 import org.apache.camel.util.IntrospectionSupport;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
@@ -320,10 +322,7 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
                 // special for expression
                 if (v instanceof ExpressionDefinition) {
                     ExpressionDefinition exp = (ExpressionDefinition) v;
-                    String text = exp.getExpression();
-                    String lan = exp.getLanguage();
-                    options.put(k, lan);
-                    options.put(k + "_value", text);
+                    expressionOptions(k, exp, options);
                 } else {
                     // convert the value to a text based
                     String text = v != null ? v.toString() : null;
@@ -360,6 +359,46 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
         NavigationResult navigationResult = builder.build();
         attributeMap.put("navigationResult", navigationResult);
         return navigationResult;
+    }
+
+    private void expressionOptions(String k, ExpressionDefinition exp, Map<String, String> options) {
+        String text = exp.getExpression();
+        String lan = exp.getLanguage();
+        options.put(k, lan);
+        if (text != null) {
+            options.put(k + "_value", text);
+        }
+
+        // when using a language as an expression it can contain additional options which we
+        // cannot build a nice UI in forge as forge is not that dynamic. So instead we have an extra
+        // input field where we allow users to edit the values using a Camel multivalue uri style with
+        // key=value&key2=value2 ...
+        CollectionStringBuffer csb = new CollectionStringBuffer("&");
+        String json = getCamelCatalog().languageJSonSchema(lan);
+        if (json != null) {
+            List<Map<String, String>> data = JSonSchemaHelper.parseJsonSchema("properties", json, true);
+            if (data != null) {
+                for (Map<String, String> map : data) {
+                    String name = map.get("name");
+                    // skip expression/id as we are not interested in those
+                    if (name != null && !"id".equals(name) && !"expression".equals(name)) {
+                        try {
+                            Object value = IntrospectionSupport.getProperty(exp, name);
+                            if (value != null) {
+                                text = value.toString();
+                                csb.append(name + "=" + text);
+                            }
+                        } catch (Exception e) {
+                            // ignore
+                        }
+                    }
+                }
+            }
+            if (!csb.isEmpty()) {
+                String extra = csb.toString();
+                options.put(k + "_extra", extra);
+            }
+        }
     }
 
     private String getNodeKey(Object value) {

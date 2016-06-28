@@ -594,6 +594,12 @@ public final class CamelCatalogHelper {
 
     public static LanguageDto createLanguageDto(CamelCatalog camelCatalog, String name) {
         // use the camel catalog
+
+        // TODO: 2.17.3/2.18 method is bean language
+        if ("method".equals(name)) {
+            name = "bean";
+        }
+
         String json = camelCatalog.languageJSonSchema(name);
         if (json == null) {
             return null;

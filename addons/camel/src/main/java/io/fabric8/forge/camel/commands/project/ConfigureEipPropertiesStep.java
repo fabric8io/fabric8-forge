@@ -16,6 +16,7 @@
 package io.fabric8.forge.camel.commands.project;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -24,6 +25,7 @@ import io.fabric8.forge.addon.utils.LineNumberHelper;
 import io.fabric8.forge.camel.commands.project.helper.PoorMansLogger;
 import org.apache.camel.catalog.CamelCatalog;
 import org.apache.camel.util.IntrospectionSupport;
+import org.apache.camel.util.ObjectHelper;
 import org.jboss.forge.addon.dependencies.Dependency;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.ProjectFactory;
@@ -167,7 +169,7 @@ public abstract class ConfigureEipPropertiesStep extends AbstractCamelProjectCom
 
             // special for expression
             boolean expressionKey = isModelExpressionKind(camelCatalog, eipName, key);
-            boolean expressionValue = key.endsWith("_value");
+            boolean expressionValue = key.endsWith("_value") || key.endsWith("_extra");
 
             // only use the value if a value was set (and the value is not the same as the default value)
             if (input.hasValue()) {
@@ -226,6 +228,7 @@ public abstract class ConfigureEipPropertiesStep extends AbstractCamelProjectCom
                 String name = entry.getKey();
                 String language = entry.getValue();
                 String text = expressionValues.get(name + "_value");
+                String extra = expressionValues.get(name + "_extra");
 
                 // build the model
                 String lanJavaType = getModelJavaType(camelCatalog, language);
@@ -234,7 +237,22 @@ public abstract class ConfigureEipPropertiesStep extends AbstractCamelProjectCom
                     Object instance2 = clazz2.newInstance();
 
                     // set the value of the expression
-                    IntrospectionSupport.setProperty(instance2, "expression", text);
+                    if (text != null) {
+                        IntrospectionSupport.setProperty(instance2, "expression", text);
+                    }
+                    if (extra != null) {
+                        // the extra values are separated using & as uri parameters style
+                        Iterator it = ObjectHelper.createIterator(extra, "&");
+                        while (it.hasNext()) {
+                            String pair = (String) it.next();
+                            String key = ObjectHelper.before(pair, "=");
+                            String value = ObjectHelper.after(pair, "=");
+                            if (key != null && value != null) {
+                                // set the extra option
+                                IntrospectionSupport.setProperty(instance2, key, value);
+                            }
+                        }
+                    }
                     // add the expression to the parent
                     IntrospectionSupport.setProperty(instance, name, instance2);
                 }

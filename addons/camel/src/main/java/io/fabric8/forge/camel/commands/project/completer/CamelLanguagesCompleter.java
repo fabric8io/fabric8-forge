@@ -68,6 +68,10 @@ public class CamelLanguagesCompleter implements UICompleter<LanguageDto> {
 
         // filter names which are already on the classpath
         for (String name : filtered) {
+            // TODO: 2.17.3/2.18 method is bean language
+            if ("method".equals(name)) {
+                name = "bean";
+            }
             String json = camelCatalog.languageJSonSchema(name);
             String artifactId = findArtifactId(json);
 
