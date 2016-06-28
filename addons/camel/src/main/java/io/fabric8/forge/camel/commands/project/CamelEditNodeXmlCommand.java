@@ -16,6 +16,7 @@
 package io.fabric8.forge.camel.commands.project;
 
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -24,14 +25,17 @@ import javax.inject.Inject;
 
 import io.fabric8.forge.addon.utils.XmlLineNumberParser;
 import io.fabric8.forge.camel.commands.project.completer.XmlEndpointsCompleter;
+import io.fabric8.forge.camel.commands.project.dto.LanguageDto;
 import io.fabric8.forge.camel.commands.project.dto.NodeDto;
 import io.fabric8.forge.camel.commands.project.helper.CamelXmlHelper;
 import io.fabric8.forge.camel.commands.project.helper.PoorMansLogger;
 import io.fabric8.forge.camel.commands.project.model.CamelEndpointDetails;
 import io.fabric8.forge.camel.commands.project.model.InputOptionByGroup;
 import org.apache.camel.catalog.CamelCatalog;
+import org.apache.camel.catalog.JSonSchemaHelper;
 import org.apache.camel.model.language.ExpressionDefinition;
 import org.apache.camel.model.language.MethodCallExpression;
+import org.apache.camel.util.CollectionStringBuffer;
 import org.apache.camel.util.IntrospectionSupport;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
@@ -56,6 +60,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
+import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.createLanguageDto;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.createUIInputsForCamelEIP;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.createUIInputsForCamelEndpoint;
 import static io.fabric8.forge.camel.commands.project.helper.CamelXmlHelper.loadCamelXmlFileAsDom;
@@ -367,11 +372,36 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
         if (text != null) {
             options.put(k + "_value", text);
         }
-        // TODO: grab all those
-        // pickup the other values as key/values in a multivalued
-        if (exp instanceof MethodCallExpression) {
-            String ref = ((MethodCallExpression) exp).getRef();
-            options.put(k + "_extra", "ref=" + ref);
+
+        // when using a language as an expression it can contain additional options which we
+        // cannot build a nice UI in forge as forge is not that dynamic. So instead we have an extra
+        // input field where we allow users to edit the values using a Camel multivalue uri style with
+        // key=value&key2=value2 ...
+        CollectionStringBuffer csb = new CollectionStringBuffer("&");
+        String json = getCamelCatalog().languageJSonSchema(lan);
+        if (json != null) {
+            List<Map<String, String>> data = JSonSchemaHelper.parseJsonSchema("properties", json, true);
+            if (data != null) {
+                for (Map<String, String> map : data) {
+                    String name = map.get("name");
+                    // skip expression/id as we are not interested in those
+                    if (name != null && !"id".equals(name) && !"expression".equals(name)) {
+                        try {
+                            Object value = IntrospectionSupport.getProperty(exp, name);
+                            if (value != null) {
+                                text = value.toString();
+                                csb.append(name + "=" + text);
+                            }
+                        } catch (Exception e) {
+                            // ignore
+                        }
+                    }
+                }
+            }
+            if (!csb.isEmpty()) {
+                String extra = csb.toString();
+                options.put(k + "_extra", extra);
+            }
         }
     }
 
