@@ -516,7 +516,7 @@ public final class CamelCommandsHelper {
                             }
 
                             boolean multi = "true".equals(multiValue);
-                            InputComponent input = createUIInput(ui.getProvider(), componentFactory, converterFactory, name, inputClazz, required, currentValue, defaultValue, enums, description, promptInInteractiveMode, multi, prefix);
+                            InputComponent input = createUIInput(ui.getProvider(), componentFactory, converterFactory, null, name, inputClazz, required, currentValue, defaultValue, enums, description, promptInInteractiveMode, multi, prefix);
                             if (input != null) {
                                 inputs.add(input);
 
@@ -648,20 +648,46 @@ public final class CamelCommandsHelper {
                                 }
                             }
 
+                            if ("expression".equals(kind) && currentValue != null) {
+                                // these 3 languages do not have a value and should therefore not be required
+                                if ("method".equals(currentValue) || "tokenize".equals(currentValue) || "xtokenize".equals(currentValue)) {
+                                    required = "false";
+                                }
+                                // fix current value from bean to method because that is the oneOf choices
+                                if ("bean".equals(currentValue)) {
+                                    currentValue = "method";
+                                }
+                            }
+
                             // we cannot have both enum and oneOf at the same time
                             String enumsOrOneOfs = enums != null ? enums : oneOf;
 
-                            InputComponent input = createUIInput(ui.getProvider(), componentFactory, converterFactory, name, inputClazz, required, currentValue, defaultValue, enumsOrOneOfs, description, promptInInteractiveMode, false, null);
+                            InputComponent input = createUIInput(ui.getProvider(), componentFactory, converterFactory, eip, name, inputClazz, required, currentValue, defaultValue, enumsOrOneOfs, description, promptInInteractiveMode, false, null);
 
                             if (input != null) {
                                 inputs.add(input);
 
-                                // if its an expression then we need to add a 2nd input for the actual value
+                                // if its an expression then we need to add an input for the actual value and another for extra values
                                 if ("expression".equals(kind)) {
                                     currentValue = currentValues != null ? currentValues.get(name + "_value") : null;
-                                    InputComponent input2 = createUIInput(ui.getProvider(), componentFactory, converterFactory, name + "_value", String.class, required, currentValue, null, null, description, promptInInteractiveMode, false, null);
+                                    InputComponent input2 = createUIInput(ui.getProvider(), componentFactory, converterFactory, eip, name + "_value", String.class, required, currentValue, null, null, description, promptInInteractiveMode, false, null);
                                     if (input2 != null) {
                                         inputs.add(input2);
+                                        // listen for changes in the selection of languages
+                                        input.addValueChangeListener(event -> {
+                                            String value = (String) event.getNewValue();
+                                            // these 3 languages do not have a value and should therefore not be required
+                                            if ("method".equals(value) || "tokenize".equals(value) || "xtokenize".equals(value)) {
+                                                input2.setRequired(false);
+                                            } else {
+                                                input2.setRequired(true);
+                                            }
+                                        });
+                                    }
+                                    String extra = currentValues != null ? currentValues.get(name + "_extra") : null;
+                                    InputComponent input3 = createUIInput(ui.getProvider(), componentFactory, converterFactory, eip, name + "_extra", String.class, "false", extra, null, null, description, promptInInteractiveMode, true, "");
+                                    if (input3 != null) {
+                                        inputs.add(input3);
                                     }
                                 }
 

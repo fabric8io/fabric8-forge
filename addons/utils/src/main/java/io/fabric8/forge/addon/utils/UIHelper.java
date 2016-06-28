@@ -37,8 +37,8 @@ public final class UIHelper {
      * @return the input widget, or <tt>null</tt> if not supported because of inputClazz not possible to be used
      */
     @SuppressWarnings("unchecked")
-    public static InputComponent createUIInput(UIProvider provider, InputComponentFactory factory, ConverterFactory converterFactory, String name, Class inputClazz,
-                                               String required, String currentValue, String defaultValue, String enums, String description,
+    public static InputComponent createUIInput(UIProvider provider, InputComponentFactory factory, ConverterFactory converterFactory, String parentName, String name,
+                                               Class inputClazz, String required, String currentValue, String defaultValue, String enums, String description,
                                                boolean promptInInteractiveMode, boolean multiValue, String prefix) {
 
         // is the current value a property placeholder, then we need to use a regular text based UI
@@ -130,7 +130,20 @@ public final class UIHelper {
         if (Objects.equals("true", required)) {
             input.setRequired(true);
         }
-        String label = asTitleCase(name);
+
+        // if the name is "expression" then its a placeholder for the parent name to be used instead as label
+        String label;
+        if (name.equals("expression") && parentName != null) {
+            label = asTitleCase(parentName + "Language");
+        } else if (name.startsWith("expression_") && parentName != null) {
+            // the expression may have a number of extra inputs we need to show as well
+            String namePostfix = name.substring(11);
+            // upper case the first char
+            namePostfix = Character.toTitleCase(namePostfix.charAt(0)) + namePostfix.substring(1);
+            label = asTitleCase(parentName + namePostfix);
+        } else {
+            label = asTitleCase(name);
+        }
         if (multiValue) {
             label += " (multivalued)";
         }

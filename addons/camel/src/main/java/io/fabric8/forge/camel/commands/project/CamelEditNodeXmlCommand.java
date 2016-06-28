@@ -31,6 +31,7 @@ import io.fabric8.forge.camel.commands.project.model.CamelEndpointDetails;
 import io.fabric8.forge.camel.commands.project.model.InputOptionByGroup;
 import org.apache.camel.catalog.CamelCatalog;
 import org.apache.camel.model.language.ExpressionDefinition;
+import org.apache.camel.model.language.MethodCallExpression;
 import org.apache.camel.util.IntrospectionSupport;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
@@ -320,10 +321,7 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
                 // special for expression
                 if (v instanceof ExpressionDefinition) {
                     ExpressionDefinition exp = (ExpressionDefinition) v;
-                    String text = exp.getExpression();
-                    String lan = exp.getLanguage();
-                    options.put(k, lan);
-                    options.put(k + "_value", text);
+                    expressionOptions(k, exp, options);
                 } else {
                     // convert the value to a text based
                     String text = v != null ? v.toString() : null;
@@ -360,6 +358,21 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
         NavigationResult navigationResult = builder.build();
         attributeMap.put("navigationResult", navigationResult);
         return navigationResult;
+    }
+
+    private void expressionOptions(String k, ExpressionDefinition exp, Map<String, String> options) {
+        String text = exp.getExpression();
+        String lan = exp.getLanguage();
+        options.put(k, lan);
+        if (text != null) {
+            options.put(k + "_value", text);
+        }
+        // TODO: grab all those
+        // pickup the other values as key/values in a multivalued
+        if (exp instanceof MethodCallExpression) {
+            String ref = ((MethodCallExpression) exp).getRef();
+            options.put(k + "_extra", "ref=" + ref);
+        }
     }
 
     private String getNodeKey(Object value) {
