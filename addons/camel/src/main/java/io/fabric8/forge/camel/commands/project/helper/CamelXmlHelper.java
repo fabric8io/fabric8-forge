@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
@@ -448,6 +450,11 @@ public final class CamelXmlHelper {
 
         String answer = buffer.toString();
 
+        // we can collapse <method> <tokenize> and <xtokenize> as they do not include a value
+        answer = collapseNode(answer, "method");
+        answer = collapseNode(answer, "tokenize");
+        answer = collapseNode(answer, "xtokenize");
+
         // if there is only 1 element them collapse it, eg <log xxx></log> => <log xxx/>
         if (writer.getElements() == 1) {
             String token = "></" + writer.getRootElementName() + ">";
@@ -464,6 +471,24 @@ public final class CamelXmlHelper {
             answer = answer.trim();
         }
 
+        return answer;
+    }
+
+    /**
+     * Collapses all the named node in the XML
+     *
+     * @param xml  the XML
+     * @param name the name of the node
+     * @return the XML with collapsed nodes
+     */
+    private static String collapseNode(String xml, String name) {
+        String answer = xml;
+
+        Pattern pattern = Pattern.compile("<" + name + "(.*)></" + name + ">");
+        Matcher matcher = pattern.matcher(answer);
+        if (matcher.find()) {
+            answer = matcher.replaceAll("<" + name + "$1/>");
+        }
         return answer;
     }
 
