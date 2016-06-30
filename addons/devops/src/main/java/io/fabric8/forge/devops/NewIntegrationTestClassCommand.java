@@ -23,7 +23,6 @@ import io.fabric8.utils.Strings;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Profile;
 import org.jboss.forge.addon.dependencies.Coordinate;
-import org.jboss.forge.addon.dependencies.DependencyResolver;
 import org.jboss.forge.addon.maven.plugins.ConfigurationBuilder;
 import org.jboss.forge.addon.maven.plugins.MavenPlugin;
 import org.jboss.forge.addon.maven.plugins.MavenPluginBuilder;
@@ -37,6 +36,7 @@ import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
 import org.jboss.forge.addon.ui.input.UIInput;
+import org.jboss.forge.addon.ui.input.UISelectOne;
 import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
 import org.jboss.forge.addon.ui.metadata.WithAttributes;
 import org.jboss.forge.addon.ui.result.Result;
@@ -60,38 +60,35 @@ public class NewIntegrationTestClassCommand extends AbstractDevOpsCommand {
     private static final transient Logger LOG = LoggerFactory.getLogger(NewIntegrationTestClassCommand.class);
 
     @Inject
-    @WithAttributes(label = "targetPackage", required = false,
-            description = "The package name where the new test class will be created")
+    @WithAttributes(label = "Target Package", required = false,
+            description = "The Java package name where the new test class will be created")
     private UIInput<String> targetPackage;
 
     @Inject
-    @WithAttributes(label = "className", required = true,
-            description = "Name of the JUnit test class to generate")
+    @WithAttributes(label = "Class Name", required = true,
+            description = "Name of the Java JUnit test class to be created")
     private UIInput<String> className;
 
     @Inject
-    @WithAttributes(label = "profile", required = true,
-            description = "The maven profile name used to run the kubernetes integration test",
+    @WithAttributes(label = "Maven Profile", required = true,
+            description = "The Maven profile name used to run the kubernetes integration test",
             defaultValue = "kit")
     private UIInput<String> profile;
 
     @Inject
-    @WithAttributes(label = "integrationTestWildcard", required = true,
+    @WithAttributes(label = "Maven Test Wildcard", required = true,
             description = "The wildcard used to find the integration test classes in the generated integration test profile",
             defaultValue = "**/*KT.*")
     private UIInput<String> integrationTestWildcard;
 
     @Inject
-    @WithAttributes(label = "testPlugin", required = true,
-            description = "The integration test plugin for running integration tests",
+    @WithAttributes(label = "Maven Test Plugin", required = true,
+            description = "The Maven integration test plugin for running integration tests",
             defaultValue = "FailSafe")
-    private UIInput<ITestPlugin> itestPlugin;
+    private UISelectOne<ITestPlugin> itestPlugin;
 
     @Inject
     private DependencyInstaller dependencyInstaller;
-
-    @Inject
-    private DependencyResolver dependencyResolver;
 
     @Override
     public UICommandMetadata getMetadata(UIContext context) {
@@ -192,8 +189,8 @@ public class NewIntegrationTestClassCommand extends AbstractDevOpsCommand {
             generateClassName = generatePackageName + "." + generateClassName;
         }
         javaClass.addImport("io.fabric8.arquillian.kubernetes.Session");
-        javaClass.addImport("io.fabric8.kubernetes.api.KubernetesClient");
         javaClass.addImport("io.fabric8.kubernetes.api.model.Pod");
+        javaClass.addImport("io.fabric8.kubernetes.client.KubernetesClient");
         javaClass.addImport("org.assertj.core.api.Condition");
         javaClass.addImport("org.jboss.arquillian.junit.Arquillian");
         javaClass.addImport("org.jboss.arquillian.test.api.ArquillianResource");

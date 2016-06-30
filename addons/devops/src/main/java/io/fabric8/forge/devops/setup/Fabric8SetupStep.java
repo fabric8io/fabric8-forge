@@ -18,6 +18,7 @@ package io.fabric8.forge.devops.setup;
 import io.fabric8.forge.addon.utils.MavenHelpers;
 import io.fabric8.forge.addon.utils.VersionHelper;
 import io.fabric8.forge.addon.utils.validator.ClassNameOrMavenPropertyValidator;
+import io.fabric8.forge.devops.NewIntegrationTestClassCommand;
 import io.fabric8.utils.Objects;
 import io.fabric8.utils.Strings;
 import org.apache.maven.model.Build;
@@ -61,6 +62,7 @@ import org.jboss.forge.addon.ui.metadata.WithAttributes;
 import org.jboss.forge.addon.ui.result.NavigationResult;
 import org.jboss.forge.addon.ui.result.Result;
 import org.jboss.forge.addon.ui.result.Results;
+import org.jboss.forge.addon.ui.result.navigation.NavigationResultBuilder;
 import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
 import org.jboss.forge.addon.ui.wizard.UIWizardStep;
@@ -144,6 +146,10 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
     private UIInput<Boolean> profiles;
 
     @Inject
+    @WithAttributes(label = "Integration Test", required = false, defaultValue = "true", description = "Whether to create Kubernetes integration test")
+    private UIInput<Boolean> integrationTest;
+
+    @Inject
     private DependencyInstaller dependencyInstaller;
 
     @Inject
@@ -170,6 +176,10 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
 
     @Override
     public NavigationResult next(UINavigationContext context) throws Exception {
+        Boolean value = integrationTest.getValue();
+        if (value != null && value) {
+            return NavigationResultBuilder.create().add(NewIntegrationTestClassCommand.class).build();
+        }
         return null;
     }
 
@@ -326,7 +336,7 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
             }
         });
 
-        builder.add(profiles).add(icon).add(group).add(container);
+        builder.add(profiles).add(icon).add(group).add(container).add(integrationTest);
     }
 
     @Override
