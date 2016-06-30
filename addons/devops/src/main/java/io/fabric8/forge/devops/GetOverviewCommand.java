@@ -18,16 +18,11 @@ package io.fabric8.forge.devops;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.fabric8.forge.addon.utils.dto.OutputFormat;
 import io.fabric8.forge.devops.dto.ProjectOverviewDTO;
-import io.fabric8.utils.Files;
 import io.fabric8.utils.TablePrinter;
-import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
-import org.jboss.forge.addon.resource.Resource;
-import org.jboss.forge.addon.resource.util.ResourceUtil;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
-import org.jboss.forge.addon.ui.context.UISelection;
 import org.jboss.forge.addon.ui.input.UISelectOne;
 import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
 import org.jboss.forge.addon.ui.metadata.WithAttributes;
@@ -37,16 +32,10 @@ import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
 
 import javax.inject.Inject;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
-import static io.fabric8.forge.addon.utils.CamelProjectHelper.findCamelCoreDependency;
 import static io.fabric8.forge.addon.utils.OutputFormatHelper.addTableTextOutput;
 import static io.fabric8.forge.addon.utils.OutputFormatHelper.toJson;
-
 
 public class GetOverviewCommand extends AbstractDevOpsCommand {
 
@@ -62,6 +51,17 @@ public class GetOverviewCommand extends AbstractDevOpsCommand {
         return Metadata.forCommand(GetOverviewCommand.class).name(
                 "DevOps: Get Overview").category(Categories.create(CATEGORY))
                 .description("Gets the overview of the builders and perspectives for this project");
+    }
+
+    @Override
+    public boolean isEnabled(UIContext context) {
+        boolean answer = super.isEnabled(context);
+        if (answer) {
+            // we should only be enabled in non gui
+            boolean gui = isGUI();
+            answer = !gui;
+        }
+        return answer;
     }
 
     @Override

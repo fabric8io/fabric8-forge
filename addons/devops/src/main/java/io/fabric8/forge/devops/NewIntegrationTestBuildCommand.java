@@ -57,21 +57,21 @@ public class NewIntegrationTestBuildCommand extends AbstractDevOpsCommand {
 
     @Inject
     @WithAttributes(name = "mavenCommand", label = "Maven command",
-            description = "The docker image name to generate.",
+            description = "The Docker image name to generate.",
             required = true,
-                        defaultValue = "mvn failsafe:integration-test -Pkit")
+            defaultValue = "mvn failsafe:integration-test -Pkit")
     UIInput<String> mavenCommand;
 
     @Inject
     @WithAttributes(name = "image", label = "Docker image",
-            description = "The docker image to use to run the maven build.",
+            description = "The Docker image to use to run the maven build.",
             required = true,
             defaultValue = "fabric8/maven")
     UIInput<String> image;
 
     @Inject
-    @WithAttributes(name = "gitUri", label = "Git Uri",
-            description = "If the git URI is not specified in the pom.xml then this allows you to specify one to be used.",
+    @WithAttributes(name = "gitUri", label = "Git uri",
+            description = "If the git uri is not specified in the pom.xml then this allows you to specify one to be used.",
             required = false)
     UIInput<String> gitUri;
 

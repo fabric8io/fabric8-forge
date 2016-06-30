@@ -19,11 +19,13 @@ import java.util.Arrays;
 import java.util.Properties;
 import javax.inject.Inject;
 
+import io.fabric8.forge.addon.utils.MavenHelpers;
 import io.fabric8.utils.Strings;
 import org.apache.maven.model.Model;
 import org.hibernate.validator.constraints.Range;
 import org.hibernate.validator.valuehandling.UnwrapValidatedValue;
 import org.jboss.forge.addon.facets.constraints.FacetConstraint;
+import org.jboss.forge.addon.maven.plugins.MavenPlugin;
 import org.jboss.forge.addon.maven.projects.MavenFacet;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.ui.context.UIBuilder;
@@ -93,14 +95,8 @@ public class ReadinessProbeSetupCommand extends AbstractFabricProjectCommand {
 
     @Override
     public boolean isEnabled(UIContext context) {
-        Project project = getSelectedProjectOrNull(context);
-        // only enable if we do not have Camel yet
-        if (project == null) {
-            // must have a project
-            return false;
-        } else {
-            return true;
-        }
+        // must be fabric8 project
+        return isFabric8Project(getSelectedProjectOrNull(context));
     }
 
     @Override

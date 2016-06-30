@@ -18,6 +18,7 @@ package io.fabric8.forge.devops;
 import io.fabric8.devops.ProjectConfig;
 import io.fabric8.devops.ProjectConfigs;
 import io.fabric8.forge.addon.utils.CommandHelpers;
+import io.fabric8.forge.addon.utils.MavenHelpers;
 import io.fabric8.forge.addon.utils.ProfilesProjectHelper;
 import io.fabric8.forge.devops.dto.PipelineDTO;
 import io.fabric8.forge.devops.dto.ProjectOverviewDTO;
@@ -32,6 +33,7 @@ import io.fabric8.utils.Strings;
 import io.fabric8.utils.TablePrinter;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Scm;
+import org.jboss.forge.addon.maven.plugins.MavenPlugin;
 import org.jboss.forge.addon.maven.projects.MavenFacet;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.ProjectFactory;
@@ -78,9 +80,6 @@ public abstract class AbstractDevOpsCommand extends AbstractProjectCommand imple
     @Inject
     private ProjectFactory projectFactory;
 
-    /*
-        @Inject
-    */
     UIProvider uiProvider;
 
     @Inject
@@ -135,6 +134,21 @@ public abstract class AbstractDevOpsCommand extends AbstractProjectCommand imple
 
     public void setUiProvider(UIProvider uiProvider) {
         this.uiProvider = uiProvider;
+    }
+
+    protected Project getSelectedProjectOrNull(UIContext context) {
+        return Projects.getSelectedProject(this.getProjectFactory(), context);
+    }
+
+    protected boolean isFabric8Project(Project project) {
+        if (project == null) {
+            // must have a project
+            return false;
+        } else {
+            // must be fabric8 project, eg have fabric8-maven-plugin
+            MavenPlugin plugin = MavenHelpers.findPlugin(project, "io.fabric8", "fabric8-maven-plugin");
+            return plugin != null;
+        }
     }
 
     @Override
