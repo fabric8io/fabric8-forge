@@ -245,7 +245,7 @@ public class NewIntegrationTestClassCommand extends AbstractDevOpsCommand {
 
         facet.saveTestJavaSource(javaClass);
 
-        return Results.success("Created new class " + generateClassName);
+        return Results.success("Created Integration Test class: " + generateClassName);
     }
 
 }
