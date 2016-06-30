@@ -282,6 +282,10 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
     }
 
     protected FileResource getXmlResourceFile(Project project, String xmlResourceName) {
+        if (xmlResourceName == null) {
+            return null;
+        }
+
         ResourcesFacet facet = null;
         WebResourcesFacet webResourcesFacet = null;
         if (project.hasFacet(ResourcesFacet.class)) {
@@ -385,8 +389,12 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
 
     protected Element getSelectedCamelElementNode(Project project, String xmlResourceName, String key) throws Exception {
         FileResource file = getXmlResourceFile(project, xmlResourceName);
-        InputStream resourceInputStream = file.getResourceInputStream();
-        return CamelXmlHelper.getSelectedCamelElementNode(key, resourceInputStream);
+        if (file != null) {
+            InputStream resourceInputStream = file.getResourceInputStream();
+            return CamelXmlHelper.getSelectedCamelElementNode(key, resourceInputStream);
+        } else {
+            return null;
+        }
     }
 
     protected String getSelectedFile(UIContext context) {

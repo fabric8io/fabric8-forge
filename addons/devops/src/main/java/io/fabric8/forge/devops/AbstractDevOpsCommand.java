@@ -119,8 +119,8 @@ public abstract class AbstractDevOpsCommand extends AbstractProjectCommand imple
         this.kubernetes = kubernetes;
     }
 
-    public boolean isGUI() {
-        return getUiProvider().isGUI();
+    protected boolean isRunningInGui(UIContext context) {
+        return context.getProvider().isGUI();
     }
 
     public UIOutput getOutput() {
