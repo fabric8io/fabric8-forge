@@ -63,7 +63,6 @@ import org.jboss.forge.addon.ui.result.NavigationResult;
 import org.jboss.forge.addon.ui.result.Result;
 import org.jboss.forge.addon.ui.result.Results;
 import org.jboss.forge.addon.ui.result.navigation.NavigationResultBuilder;
-import org.jboss.forge.addon.ui.result.navigation.NavigationResultTransformer;
 import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
 import org.jboss.forge.addon.ui.wizard.UIWizardStep;
@@ -93,7 +92,7 @@ import static io.fabric8.forge.devops.setup.SetupProjectHelper.findCamelArtifact
 import static io.fabric8.forge.devops.setup.SetupProjectHelper.isFunktionParentPom;
 
 @FacetConstraint({MavenFacet.class, MavenPluginFacet.class, ResourcesFacet.class})
-public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UIWizardStep, NavigationResultTransformer {
+public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UIWizardStep {
     private static final transient Logger LOG = LoggerFactory.getLogger(Fabric8SetupStep.class);
 
     public static final String EXTENSION_DAV_GROUP_ID = "org.apache.maven.wagon";
@@ -177,27 +176,11 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
 
     @Override
     public NavigationResult next(UINavigationContext context) throws Exception {
-        return null;
-    }
-
-    @Override
-    public boolean handles(UINavigationContext context) {
-        return context.getCurrentCommand() instanceof Fabric8SetupStep;
-    }
-
-    @Override
-    public NavigationResult transform(UINavigationContext context, NavigationResult original) {
-        // TODO: what if the user turn this off
-        if (integrationTest.getValue()) {
-            return NavigationResultBuilder.create(original).add(NewIntegrationTestClassCommand.class).build();
-        } else {
-            return NavigationResultBuilder.create(original).build();
+        Boolean value = integrationTest.getValue();
+        if (value != null && value) {
+            return NavigationResultBuilder.create().add(NewIntegrationTestClassCommand.class).build();
         }
-    }
-
-    @Override
-    public int priority() {
-        return 100;
+        return null;
     }
 
     @Override
