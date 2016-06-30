@@ -23,7 +23,6 @@ import io.fabric8.utils.Strings;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Profile;
 import org.jboss.forge.addon.dependencies.Coordinate;
-import org.jboss.forge.addon.dependencies.DependencyResolver;
 import org.jboss.forge.addon.maven.plugins.ConfigurationBuilder;
 import org.jboss.forge.addon.maven.plugins.MavenPlugin;
 import org.jboss.forge.addon.maven.plugins.MavenPluginBuilder;
@@ -89,9 +88,6 @@ public class NewIntegrationTestClassCommand extends AbstractDevOpsCommand {
 
     @Inject
     private DependencyInstaller dependencyInstaller;
-
-    @Inject
-    private DependencyResolver dependencyResolver;
 
     @Override
     public UICommandMetadata getMetadata(UIContext context) {
@@ -192,8 +188,8 @@ public class NewIntegrationTestClassCommand extends AbstractDevOpsCommand {
             generateClassName = generatePackageName + "." + generateClassName;
         }
         javaClass.addImport("io.fabric8.arquillian.kubernetes.Session");
-        javaClass.addImport("io.fabric8.kubernetes.api.KubernetesClient");
         javaClass.addImport("io.fabric8.kubernetes.api.model.Pod");
+        javaClass.addImport("io.fabric8.kubernetes.client.KubernetesClient");
         javaClass.addImport("org.assertj.core.api.Condition");
         javaClass.addImport("org.jboss.arquillian.junit.Arquillian");
         javaClass.addImport("org.jboss.arquillian.test.api.ArquillianResource");

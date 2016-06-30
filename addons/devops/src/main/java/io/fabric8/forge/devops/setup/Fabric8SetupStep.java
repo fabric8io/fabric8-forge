@@ -18,6 +18,7 @@ package io.fabric8.forge.devops.setup;
 import io.fabric8.forge.addon.utils.MavenHelpers;
 import io.fabric8.forge.addon.utils.VersionHelper;
 import io.fabric8.forge.addon.utils.validator.ClassNameOrMavenPropertyValidator;
+import io.fabric8.forge.devops.NewIntegrationTestClassCommand;
 import io.fabric8.utils.Objects;
 import io.fabric8.utils.Strings;
 import org.apache.maven.model.Build;
@@ -61,6 +62,8 @@ import org.jboss.forge.addon.ui.metadata.WithAttributes;
 import org.jboss.forge.addon.ui.result.NavigationResult;
 import org.jboss.forge.addon.ui.result.Result;
 import org.jboss.forge.addon.ui.result.Results;
+import org.jboss.forge.addon.ui.result.navigation.NavigationResultBuilder;
+import org.jboss.forge.addon.ui.result.navigation.NavigationResultTransformer;
 import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
 import org.jboss.forge.addon.ui.wizard.UIWizardStep;
@@ -90,7 +93,7 @@ import static io.fabric8.forge.devops.setup.SetupProjectHelper.findCamelArtifact
 import static io.fabric8.forge.devops.setup.SetupProjectHelper.isFunktionParentPom;
 
 @FacetConstraint({MavenFacet.class, MavenPluginFacet.class, ResourcesFacet.class})
-public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UIWizardStep {
+public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UIWizardStep, NavigationResultTransformer {
     private static final transient Logger LOG = LoggerFactory.getLogger(Fabric8SetupStep.class);
 
     public static final String EXTENSION_DAV_GROUP_ID = "org.apache.maven.wagon";
@@ -144,6 +147,10 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
     private UIInput<Boolean> profiles;
 
     @Inject
+    @WithAttributes(label = "Integration Test", required = false, defaultValue = "true", description = "Whether to create Kubernetes integration test")
+    private UIInput<Boolean> integrationTest;
+
+    @Inject
     private DependencyInstaller dependencyInstaller;
 
     @Inject
@@ -171,6 +178,26 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
     @Override
     public NavigationResult next(UINavigationContext context) throws Exception {
         return null;
+    }
+
+    @Override
+    public boolean handles(UINavigationContext context) {
+        return context.getCurrentCommand() instanceof Fabric8SetupStep;
+    }
+
+    @Override
+    public NavigationResult transform(UINavigationContext context, NavigationResult original) {
+        // TODO: what if the user turn this off
+        if (integrationTest.getValue()) {
+            return NavigationResultBuilder.create(original).add(NewIntegrationTestClassCommand.class).build();
+        } else {
+            return NavigationResultBuilder.create(original).build();
+        }
+    }
+
+    @Override
+    public int priority() {
+        return 100;
     }
 
     @Override
@@ -326,7 +353,7 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
             }
         });
 
-        builder.add(profiles).add(icon).add(group).add(container);
+        builder.add(profiles).add(icon).add(group).add(container).add(integrationTest);
     }
 
     @Override
