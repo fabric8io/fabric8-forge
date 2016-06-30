@@ -18,8 +18,10 @@ package io.fabric8.forge.devops.setup;
 import java.io.PrintStream;
 import javax.inject.Inject;
 
+import io.fabric8.forge.addon.utils.MavenHelpers;
 import org.jboss.forge.addon.dependencies.Coordinate;
 import org.jboss.forge.addon.dependencies.builder.CoordinateBuilder;
+import org.jboss.forge.addon.maven.plugins.MavenPlugin;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.ProjectFactory;
 import org.jboss.forge.addon.projects.Projects;
@@ -68,6 +70,17 @@ public abstract class AbstractFabricProjectCommand extends AbstractProjectComman
         }
 
         return builder;
+    }
+
+    protected boolean isFabric8Project(Project project) {
+        if (project == null) {
+            // must have a project
+            return false;
+        } else {
+            // must be fabric8 project, eg have fabric8-maven-plugin
+            MavenPlugin plugin = MavenHelpers.findPlugin(project, "io.fabric8", "fabric8-maven-plugin");
+            return plugin != null;
+        }
     }
 
 }

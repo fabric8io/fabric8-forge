@@ -87,23 +87,23 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
     private String jenkinsFilePrefix = "workflows/";
 
     @Inject
-    @WithAttributes(label = "pipeline", required = false, description = "The Jenkinsfile used to define the Continous Delivery pipeline")
+    @WithAttributes(label = "Pipeline", required = false, description = "The Jenkinsfile used to define the Continous Delivery pipeline")
     private UIInput<PipelineDTO> pipeline;
 
     @Inject
-    @WithAttributes(label = "copyPipelineToProject", required = false, description = "Should we copy the pipeline definition (in the Jenkinsfile) into the project source code")
+    @WithAttributes(label = "Copy pipeline to project", required = false, description = "Should we copy the pipeline definition (in the Jenkinsfile) into the project source code")
     private UIInput<Boolean> copyPipelineToProject;
 
     @Inject
-    @WithAttributes(label = "chatRoom", required = false, description = "Name of chat room to use for this project")
+    @WithAttributes(label = "Chat room", required = false, description = "Name of chat room to use for this project")
     private UIInput<String> chatRoom;
 
     @Inject
-    @WithAttributes(label = "issueProjectName", required = false, description = "Name of the issue tracker project")
+    @WithAttributes(label = "IssueTracker Project name", required = false, description = "Name of the issue tracker project")
     private UIInput<String> issueProjectName;
 
     @Inject
-    @WithAttributes(label = "codeReview", required = false, description = "Enable code review of all commits")
+    @WithAttributes(label = "Code review", required = false, description = "Enable code review of all commits")
     private UIInput<Boolean> codeReview;
 
     private String namespace = KubernetesHelper.defaultNamespace();

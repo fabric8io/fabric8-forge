@@ -91,6 +91,12 @@ public class NewIntegrationTestClassCommand extends AbstractDevOpsCommand {
     private DependencyInstaller dependencyInstaller;
 
     @Override
+    public boolean isEnabled(UIContext context) {
+        // must be fabric8 project
+        return isFabric8Project(getSelectedProjectOrNull(context));
+    }
+
+    @Override
     public UICommandMetadata getMetadata(UIContext context) {
         return Metadata.from(super.getMetadata(context), getClass())
                 .category(Categories.create(CATEGORY))

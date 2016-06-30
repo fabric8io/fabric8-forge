@@ -69,14 +69,8 @@ public class ServiceSetupCommand extends AbstractFabricProjectCommand {
 
     @Override
     public boolean isEnabled(UIContext context) {
-        Project project = getSelectedProjectOrNull(context);
-        // only enable if we do not have Camel yet
-        if (project == null) {
-            // must have a project
-            return false;
-        } else {
-            return true;
-        }
+        // must be fabric8 project
+        return isFabric8Project(getSelectedProjectOrNull(context));
     }
 
     @Override
