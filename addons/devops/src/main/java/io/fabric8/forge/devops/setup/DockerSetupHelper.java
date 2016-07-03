@@ -42,9 +42,9 @@ public class DockerSetupHelper {
     private static final transient Logger LOG = LoggerFactory.getLogger(DockerSetupHelper.class);
 
     public static final String DEFAULT_KARAF_IMAGE = "fabric8/karaf-2.4";
-    public static final String DEFAULT_TOMCAT_IMAGE = "fabric8/tomcat-8.0";
+    public static final String DEFAULT_TOMCAT_IMAGE = "fabric8/tomcat-8";
     public static final String DEFAULT_WILDFLY_IMAGE = "jboss/wildfly:9.0.2.Final";
-    public static final String DEFAULT_JAVA_IMAGE = "fabric8/java-jboss-openjdk8-jdk:1.1.4";
+    public static final String DEFAULT_JAVA_IMAGE = "fabric8/java-jboss-openjdk8-jdk:1.1.5";
     public static final String S2I_JAVA_IMAGE = "fabric8/s2i-java:1.2.9";
 
     // see https://github.com/fabric8io/fabric8/issues/4160
