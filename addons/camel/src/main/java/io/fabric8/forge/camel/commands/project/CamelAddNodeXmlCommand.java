@@ -84,6 +84,7 @@ public class CamelAddNodeXmlCommand extends AbstractCamelProjectCommand implemen
 
     @Override
     public boolean isEnabled(UIContext context) {
+        // TODO: Allow to add in GUI from current cursor position
         boolean enabled = super.isEnabled(context);
         if (enabled) {
             // we should only be enabled in non gui
