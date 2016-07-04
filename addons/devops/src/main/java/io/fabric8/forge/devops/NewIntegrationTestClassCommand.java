@@ -194,10 +194,7 @@ public class NewIntegrationTestClassCommand extends AbstractDevOpsCommand {
             javaClass.setPackage(generatePackageName);
             generateClassName = generatePackageName + "." + generateClassName;
         }
-        javaClass.addImport("io.fabric8.arquillian.kubernetes.Session");
-        javaClass.addImport("io.fabric8.kubernetes.api.model.Pod");
         javaClass.addImport("io.fabric8.kubernetes.client.KubernetesClient");
-        javaClass.addImport("org.assertj.core.api.Condition");
         javaClass.addImport("org.jboss.arquillian.junit.Arquillian");
         javaClass.addImport("org.jboss.arquillian.test.api.ArquillianResource");
         javaClass.addImport("org.junit.Test");
@@ -219,26 +216,12 @@ public class NewIntegrationTestClassCommand extends AbstractDevOpsCommand {
                 setName("kubernetes").
                 addAnnotation("ArquillianResource");
 
-        javaClass.addField().
-                setProtected().
-                setType("Session").
-                setName("session").
-                addAnnotation("ArquillianResource");
-
-        String testBody = "assertThat(kubernetes).pods()\n" +
-                "        .runningStatus()\n" +
-                "        .filterNamespace(session.getNamespace())\n" +
-                "        .haveAtLeast(1, new Condition<Pod>() {\n" +
-                "            @Override\n" +
-                "            public boolean matches(Pod pod) {\n" +
-                "                return true;\n" +
-                "            }\n" +
-                "        });";
+        String testBody = "assertThat(kubernetes).deployments().pods().isPodReadyForPeriod();\n";
 
         javaClass.addMethod().
                 setPublic().
                 setReturnTypeVoid().
-                setName("testKubernetesProvisionsAtLeastOnePod").
+                setName("testRunningPodStaysUp").
                 setBody(testBody).
                 addThrows("Exception").
                 addAnnotation("Test");
