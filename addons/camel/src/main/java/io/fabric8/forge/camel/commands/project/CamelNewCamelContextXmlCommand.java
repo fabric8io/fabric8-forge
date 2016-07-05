@@ -60,7 +60,7 @@ import static io.fabric8.forge.camel.commands.project.helper.CollectionHelper.fi
 public class CamelNewCamelContextXmlCommand extends AbstractCamelProjectCommand {
 
     @Inject
-    @WithAttributes(label = "Directory", required = false, description = "The directory name where this type will be created")
+    @WithAttributes(label = "Directory", required = true, description = "The directory name where this type will be created")
     private UIInput<String> directory;
 
     @Inject

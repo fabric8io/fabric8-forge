@@ -50,7 +50,7 @@ import static io.fabric8.forge.camel.commands.project.helper.CollectionHelper.fi
 public class CamelNewRouteBuilderCommand extends AbstractCamelProjectCommand {
 
     @Inject
-    @WithAttributes(label = "Target Package", required = false, description = "The package name where this type will be created")
+    @WithAttributes(label = "Target Package", required = true, description = "The package name where this type will be created")
     private UIInput<String> targetPackage;
 
     @Inject
