@@ -376,6 +376,13 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
     }
 
     private void expressionOptions(String k, ExpressionDefinition exp, Map<String, String> options) {
+        // special for aggregate as it has naming clash
+        if ("completionSizeExpression".equals(k)) {
+            k = "completionSize";
+        } else if ("completionTimeoutExpression".equals(k)) {
+            k = "completionTimeout";
+        }
+
         String text = exp.getExpression();
         String lan = exp.getLanguage();
         options.put(k, lan);
