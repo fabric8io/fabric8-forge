@@ -649,13 +649,13 @@ public final class CamelCommandsHelper {
                             }
 
                             if ("expression".equals(kind) && currentValue != null) {
-                                // these 3 languages do not have a value and should therefore not be required
-                                if ("method".equals(currentValue) || "tokenize".equals(currentValue) || "xtokenize".equals(currentValue)) {
-                                    required = "false";
-                                }
                                 // fix current value from bean to method because that is the oneOf choices
                                 if ("bean".equals(currentValue)) {
                                     currentValue = "method";
+                                }
+                                // these 3 languages do not have a value and should therefore not be required
+                                if ("method".equals(currentValue) || "tokenize".equals(currentValue) || "xtokenize".equals(currentValue)) {
+                                    required = "false";
                                 }
                             }
 

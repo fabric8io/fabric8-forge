@@ -53,7 +53,7 @@ import static io.fabric8.forge.camel.commands.project.helper.CamelXmlHelper.dump
 
 public abstract class ConfigureEipPropertiesStep extends AbstractCamelProjectCommand implements UIWizardStep {
 
-    private static final PoorMansLogger LOG = new PoorMansLogger(false);
+    private static final PoorMansLogger LOG = new PoorMansLogger(true);
 
     private final CamelCatalog camelCatalog;
 
