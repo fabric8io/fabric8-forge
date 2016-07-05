@@ -31,6 +31,7 @@ import io.fabric8.forge.camel.commands.project.model.CamelEndpointDetails;
 import io.fabric8.forge.camel.commands.project.model.InputOptionByGroup;
 import org.apache.camel.catalog.CamelCatalog;
 import org.apache.camel.catalog.JSonSchemaHelper;
+import org.apache.camel.model.ExpressionSubElementDefinition;
 import org.apache.camel.model.language.ExpressionDefinition;
 import org.apache.camel.util.CollectionStringBuffer;
 import org.apache.camel.util.IntrospectionSupport;
@@ -313,6 +314,7 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
 
             // xml -> pojo
             Object model = xmlAsModel(selectedElement, cl);
+            LOG.info("Pojo model of node: " + model);
 
             // extra options from model
             Map<String, Object> temp = new LinkedHashMap<>();
@@ -321,8 +323,12 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
                 String k = entry.getKey();
                 Object v = entry.getValue();
 
-                // special for expression
-                if (v instanceof ExpressionDefinition) {
+                // special for expressions
+                if (v instanceof ExpressionSubElementDefinition) {
+                    ExpressionSubElementDefinition sub = (ExpressionSubElementDefinition) v;
+                    ExpressionDefinition exp = sub.getExpressionType();
+                    expressionOptions(k, exp, options);
+                } else if (v instanceof ExpressionDefinition) {
                     ExpressionDefinition exp = (ExpressionDefinition) v;
                     expressionOptions(k, exp, options);
                 } else {
@@ -338,6 +344,7 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
             // ignore
         }
 
+        LOG.info("Creating UIInputs with options: " + options);
 
         UIContext ui = context.getUIContext();
         List<InputOptionByGroup> groups = createUIInputsForCamelEIP(nodeName, MAX_OPTIONS,

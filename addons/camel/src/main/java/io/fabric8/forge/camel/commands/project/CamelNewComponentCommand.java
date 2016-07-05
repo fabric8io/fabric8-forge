@@ -70,11 +70,11 @@ public class CamelNewComponentCommand extends AbstractCamelProjectCommand implem
     private UIInput<String> instanceName;
 
     @Inject
-    @WithAttributes(label = "Target Package", required = false, description = "The package name where this type will be created")
+    @WithAttributes(label = "Target Package", required = true, description = "The package name where this type will be created")
     private UIInput<String> targetPackage;
 
     @Inject
-    @WithAttributes(label = "Class Name", required = false, description = "The class name to create")
+    @WithAttributes(label = "Class Name", required = true, description = "The class name to create")
     private UIInput<String> className;
 
     @Inject
