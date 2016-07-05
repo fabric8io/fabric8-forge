@@ -323,6 +323,11 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
                 String k = entry.getKey();
                 Object v = entry.getValue();
 
+                // skip some we do not want like getOutputs
+                if ("outputs".equals(k)) {
+                    continue;
+                }
+
                 // special for expressions
                 if (v instanceof ExpressionSubElementDefinition) {
                     ExpressionSubElementDefinition sub = (ExpressionSubElementDefinition) v;
