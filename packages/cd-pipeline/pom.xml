@@ -58,13 +58,6 @@
     </dependency>
     <dependency>
       <groupId>io.fabric8.devops.apps</groupId>
-      <artifactId>content-repository</artifactId>
-      <version>${fabric8.devops.version}</version>
-      <classifier>kubernetes</classifier>
-      <type>json</type>
-    </dependency>
-    <dependency>
-      <groupId>io.fabric8.devops.apps</groupId>
       <artifactId>jenkins</artifactId>
       <version>${fabric8.devops.version}</version>
       <classifier>kubernetes</classifier>
