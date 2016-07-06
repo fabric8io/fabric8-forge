@@ -43,7 +43,7 @@ public class CamelProjectAddDataFormatCommand extends AbstractCamelProjectComman
 
     @Inject
     @WithAttributes(label = "Name", required = true, description = "Name of dataformat to add")
-    private UISelectOne<DataFormatDto> name;
+    private UISelectOne<DataFormatDto> dataformatName;
 
     @Inject
     private DependencyInstaller dependencyInstaller;
@@ -59,29 +59,29 @@ public class CamelProjectAddDataFormatCommand extends AbstractCamelProjectComman
     public void initializeUI(UIBuilder builder) throws Exception {
         Project project = getSelectedProject(builder);
         // use value choices instead of completer as that works better in web console
-        name.setValueChoices(new CamelDataFormatsCompleter(project, getCamelCatalog()).getValueChoices());
+        dataformatName.setValueChoices(new CamelDataFormatsCompleter(project, getCamelCatalog()).getValueChoices());
         // include converter from string->dto
-        name.setValueConverter(new Converter<String, DataFormatDto>() {
+        dataformatName.setValueConverter(new Converter<String, DataFormatDto>() {
             @Override
             public DataFormatDto convert(String text) {
                 return createDataFormatDto(getCamelCatalog(), text);
             }
         });
         // show note about the chosen data format
-        name.addValueChangeListener(new ValueChangeListener() {
+        dataformatName.addValueChangeListener(new ValueChangeListener() {
             @Override
             public void valueChanged(ValueChangeEvent event) {
                 DataFormatDto dataFormat = (DataFormatDto) event.getNewValue();
                 if (dataFormat != null) {
                     String description = dataFormat.getDescription();
-                    name.setNote(description != null ? description : "");
+                    dataformatName.setNote(description != null ? description : "");
                 } else {
-                    name.setNote("");
+                    dataformatName.setNote("");
                 }
             }
         });
 
-        builder.add(name);
+        builder.add(dataformatName);
     }
 
     @Override
@@ -94,7 +94,7 @@ public class CamelProjectAddDataFormatCommand extends AbstractCamelProjectComman
             return Results.fail("The project does not include camel-core");
         }
 
-        DataFormatDto dto = name.getValue();
+        DataFormatDto dto = dataformatName.getValue();
         if (dto != null) {
 
             // we want to use same version as camel-core

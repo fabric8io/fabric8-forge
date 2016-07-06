@@ -43,7 +43,7 @@ public class CamelProjectAddLanguageCommand extends AbstractCamelProjectCommand 
 
     @Inject
     @WithAttributes(label = "Name", required = true, description = "Name of language to add")
-    private UISelectOne<LanguageDto> name;
+    private UISelectOne<LanguageDto> languageName;
 
     @Inject
     private DependencyInstaller dependencyInstaller;
@@ -59,29 +59,29 @@ public class CamelProjectAddLanguageCommand extends AbstractCamelProjectCommand 
     public void initializeUI(UIBuilder builder) throws Exception {
         Project project = getSelectedProject(builder);
         // use value choices instead of completer as that works better in web console
-        name.setValueChoices(new CamelLanguagesCompleter(project, getCamelCatalog()).getValueChoices());
+        languageName.setValueChoices(new CamelLanguagesCompleter(project, getCamelCatalog()).getValueChoices());
         // include converter from string->dto
-        name.setValueConverter(new Converter<String, LanguageDto>() {
+        languageName.setValueConverter(new Converter<String, LanguageDto>() {
             @Override
             public LanguageDto convert(String text) {
                 return createLanguageDto(getCamelCatalog(), text);
             }
         });
         // show note about the chosen language
-        name.addValueChangeListener(new ValueChangeListener() {
+        languageName.addValueChangeListener(new ValueChangeListener() {
             @Override
             public void valueChanged(ValueChangeEvent event) {
                 LanguageDto language = (LanguageDto) event.getNewValue();
                 if (language != null) {
                     String description = language.getDescription();
-                    name.setNote(description != null ? description : "");
+                    languageName.setNote(description != null ? description : "");
                 } else {
-                    name.setNote("");
+                    languageName.setNote("");
                 }
             }
         });
 
-        builder.add(name);
+        builder.add(languageName);
     }
 
     @Override
@@ -94,7 +94,7 @@ public class CamelProjectAddLanguageCommand extends AbstractCamelProjectCommand 
             return Results.fail("The project does not include camel-core");
         }
 
-        LanguageDto dto = name.getValue();
+        LanguageDto dto = languageName.getValue();
         if (dto != null) {
 
             // we want to use same version as camel-core
