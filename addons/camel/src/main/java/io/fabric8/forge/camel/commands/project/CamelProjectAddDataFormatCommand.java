@@ -15,11 +15,12 @@
  */
 package io.fabric8.forge.camel.commands.project;
 
+import java.util.ArrayList;
+import java.util.List;
 import javax.inject.Inject;
 
 import io.fabric8.forge.camel.commands.project.completer.CamelDataFormatsCompleter;
 import io.fabric8.forge.camel.commands.project.dto.DataFormatDto;
-import org.jboss.forge.addon.convert.Converter;
 import org.jboss.forge.addon.dependencies.Dependency;
 import org.jboss.forge.addon.dependencies.builder.DependencyBuilder;
 import org.jboss.forge.addon.projects.Project;
@@ -28,8 +29,6 @@ import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
 import org.jboss.forge.addon.ui.input.UISelectOne;
-import org.jboss.forge.addon.ui.input.ValueChangeListener;
-import org.jboss.forge.addon.ui.input.events.ValueChangeEvent;
 import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
 import org.jboss.forge.addon.ui.metadata.WithAttributes;
 import org.jboss.forge.addon.ui.result.Result;
@@ -37,13 +36,13 @@ import org.jboss.forge.addon.ui.result.Results;
 import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
 
-import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.createDataFormatDto;
-
 public class CamelProjectAddDataFormatCommand extends AbstractCamelProjectCommand {
 
     @Inject
     @WithAttributes(label = "Name", required = true, description = "Name of dataformat to add")
-    private UISelectOne<DataFormatDto> name;
+    private UISelectOne<String> dataformatName;
+    // use plain String in UISelectOne as the DTOs do not work on the web (that requires a special picker like for component picker)
+    private Iterable<DataFormatDto> dtos;
 
     @Inject
     private DependencyInstaller dependencyInstaller;
@@ -58,30 +57,15 @@ public class CamelProjectAddDataFormatCommand extends AbstractCamelProjectComman
     @Override
     public void initializeUI(UIBuilder builder) throws Exception {
         Project project = getSelectedProject(builder);
-        // use value choices instead of completer as that works better in web console
-        name.setValueChoices(new CamelDataFormatsCompleter(project, getCamelCatalog()).getValueChoices());
-        // include converter from string->dto
-        name.setValueConverter(new Converter<String, DataFormatDto>() {
-            @Override
-            public DataFormatDto convert(String text) {
-                return createDataFormatDto(getCamelCatalog(), text);
-            }
-        });
-        // show note about the chosen data format
-        name.addValueChangeListener(new ValueChangeListener() {
-            @Override
-            public void valueChanged(ValueChangeEvent event) {
-                DataFormatDto dataFormat = (DataFormatDto) event.getNewValue();
-                if (dataFormat != null) {
-                    String description = dataFormat.getDescription();
-                    name.setNote(description != null ? description : "");
-                } else {
-                    name.setNote("");
-                }
-            }
-        });
 
-        builder.add(name);
+        dtos = new CamelDataFormatsCompleter(project, getCamelCatalog()).getValueChoices();
+        List<String> names = new ArrayList<>();
+        for (DataFormatDto dto : dtos) {
+            names.add(dto.getName());
+        }
+        dataformatName.setValueChoices(names);
+
+        builder.add(dataformatName);
     }
 
     @Override
@@ -94,19 +78,38 @@ public class CamelProjectAddDataFormatCommand extends AbstractCamelProjectComman
             return Results.fail("The project does not include camel-core");
         }
 
-        DataFormatDto dto = name.getValue();
+        String name = dataformatName.getValue();
+        DataFormatDto dto = findDataFormatDto(name);
+
         if (dto != null) {
 
-            // we want to use same version as camel-core
-            DependencyBuilder component = DependencyBuilder.create().setGroupId(dto.getGroupId())
-                    .setArtifactId(dto.getArtifactId()).setVersion(core.getCoordinate().getVersion());
+            // we want to use same version as camel-core if its a camel component
+            // otherwise use the version from the dto
+            String version;
+            if ("org.apache.camel".equals(dto.getGroupId())) {
+                version = core.getCoordinate().getVersion();
+            } else {
+                version = dto.getVersion();
+            }
+            DependencyBuilder dependency = DependencyBuilder.create().setGroupId(dto.getGroupId())
+                    .setArtifactId(dto.getArtifactId()).setVersion(version);
 
             // install the component
-            dependencyInstaller.install(project, component);
+            dependencyInstaller.install(project, dependency);
 
             return Results.success("Added Camel dataformat " + dto.getName() + " (" + dto.getArtifactId() + ") to the project");
         } else {
             return Results.fail("Unknown Camel dataformat");
         }
     }
+
+    private DataFormatDto findDataFormatDto(String name) {
+        for (DataFormatDto dto : dtos) {
+            if (dto.getName().equals(name)) {
+                return dto;
+            }
+        }
+        return null;
+    }
+
 }

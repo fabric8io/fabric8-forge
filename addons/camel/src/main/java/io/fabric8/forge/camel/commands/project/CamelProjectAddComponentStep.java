@@ -21,7 +21,6 @@ import java.util.Map;
 import io.fabric8.forge.camel.commands.project.dto.ComponentDto;
 import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
 import org.apache.camel.catalog.CamelCatalog;
-import org.jboss.forge.addon.convert.Converter;
 import org.jboss.forge.addon.dependencies.Dependency;
 import org.jboss.forge.addon.dependencies.builder.DependencyBuilder;
 import org.jboss.forge.addon.projects.Project;
@@ -31,8 +30,6 @@ import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
 import org.jboss.forge.addon.ui.input.UISelectOne;
-import org.jboss.forge.addon.ui.input.ValueChangeListener;
-import org.jboss.forge.addon.ui.input.events.ValueChangeEvent;
 import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
 import org.jboss.forge.addon.ui.result.Result;
 import org.jboss.forge.addon.ui.result.Results;
@@ -76,25 +73,8 @@ public class CamelProjectAddComponentStep extends AbstractCamelProjectCommand im
 
         componentName.setValueChoices(components.values());
         // include converter from string->dto
-        componentName.setValueConverter(new Converter<String, ComponentDto>() {
-            @Override
-            public ComponentDto convert(String text) {
-                return components.get(text);
-            }
-        });
-        // show note about the chosen component
-        componentName.addValueChangeListener(new ValueChangeListener() {
-            @Override
-            public void valueChanged(ValueChangeEvent event) {
-                ComponentDto component = (ComponentDto) event.getNewValue();
-                if (component != null) {
-                    String description = component.getDescription();
-                    componentName.setNote(description != null ? description : "");
-                } else {
-                    componentName.setNote("");
-                }
-            }
-        });
+        componentName.setValueConverter(components::get);
+
         builder.add(componentName);
     }
 
@@ -119,11 +99,11 @@ public class CamelProjectAddComponentStep extends AbstractCamelProjectCommand im
             } else {
                 version = dto.getVersion();
             }
-            DependencyBuilder component = DependencyBuilder.create().setGroupId(dto.getGroupId())
+            DependencyBuilder dependency = DependencyBuilder.create().setGroupId(dto.getGroupId())
                     .setArtifactId(dto.getArtifactId()).setVersion(version);
 
             // install the component
-            dependencyInstaller.install(project, component);
+            dependencyInstaller.install(project, dependency);
 
             return Results.success("Added Camel component " + dto.getScheme() + " (" + dto.getArtifactId() + ") to the project");
         } else {

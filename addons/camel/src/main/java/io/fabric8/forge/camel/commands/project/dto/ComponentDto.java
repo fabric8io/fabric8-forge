@@ -33,6 +33,7 @@ public class ComponentDto {
     private String version;
 
     public String getLabel() {
+        // use schema as label otherwise the web console uses label as the name
         return scheme;
     }
 

@@ -576,7 +576,10 @@ public final class CamelCatalogHelper {
             } else if (row.get("description") != null) {
                 dto.setDescription(row.get("description"));
             } else if (row.get("label") != null) {
-                dto.setLabel(row.get("label"));
+                String labelText = row.get("label");
+                if (Strings.isNotBlank(labelText)) {
+                    dto.setTags(labelText.split(","));
+                }
             } else if (row.get("javaType") != null) {
                 dto.setJavaType(row.get("javaType"));
             } else if (row.get("modelJavaType") != null) {
@@ -617,7 +620,10 @@ public final class CamelCatalogHelper {
             } else if (row.get("description") != null) {
                 dto.setDescription(row.get("description"));
             } else if (row.get("label") != null) {
-                dto.setLabel(row.get("label"));
+                String labelText = row.get("label");
+                if (Strings.isNotBlank(labelText)) {
+                    dto.setTags(labelText.split(","));
+                }
             } else if (row.get("javaType") != null) {
                 dto.setJavaType(row.get("javaType"));
             } else if (row.get("modelJavaType") != null) {

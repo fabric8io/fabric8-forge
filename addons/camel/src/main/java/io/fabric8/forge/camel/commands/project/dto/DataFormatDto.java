@@ -24,12 +24,17 @@ public class DataFormatDto {
     private String modelName;
     private String title;
     private String description;
-    private String label;
+    private String[] tags;
     private String javaType;
     private String modelJavaType;
     private String groupId;
     private String artifactId;
     private String version;
+
+    public String getLabel() {
+        // use name as label otherwise the web console uses label as the name
+        return name;
+    }
 
     public String getName() {
         return name;
@@ -63,12 +68,12 @@ public class DataFormatDto {
         this.description = description;
     }
 
-    public String getLabel() {
-        return label;
+    public String[] getTags() {
+        return tags;
     }
 
-    public void setLabel(String label) {
-        this.label = label;
+    public void setTags(String[] tags) {
+        this.tags = tags;
     }
 
     public String getJavaType() {

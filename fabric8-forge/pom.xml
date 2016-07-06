@@ -31,7 +31,7 @@
     <fabric8.service.type>LoadBalancer</fabric8.service.type>
     <fabric8.serviceAccount>fabric8</fabric8.serviceAccount>
     <guava.version>15.0</guava.version>
-    <wildfly.swarm.version>1.0.0.CR1</wildfly.swarm.version>
+    <wildfly.swarm.version>1.0.0.Final</wildfly.swarm.version>
   </properties>
   <dependencyManagement>
     <dependencies>
