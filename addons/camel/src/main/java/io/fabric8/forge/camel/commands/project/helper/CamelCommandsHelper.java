@@ -56,6 +56,8 @@ import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.
 
 public final class CamelCommandsHelper {
 
+    private static final PoorMansLogger LOG = new PoorMansLogger(false);
+
     public static Iterable<String> createComponentLabelValues(Project project, CamelCatalog camelCatalog) {
         return new CamelComponentsLabelCompleter(project, camelCatalog).getValueChoices();
     }
@@ -649,18 +651,20 @@ public final class CamelCommandsHelper {
                             }
 
                             if ("expression".equals(kind) && currentValue != null) {
-                                // these 3 languages do not have a value and should therefore not be required
-                                if ("method".equals(currentValue) || "tokenize".equals(currentValue) || "xtokenize".equals(currentValue)) {
-                                    required = "false";
-                                }
                                 // fix current value from bean to method because that is the oneOf choices
                                 if ("bean".equals(currentValue)) {
                                     currentValue = "method";
+                                }
+                                // these 3 languages do not have a value and should therefore not be required
+                                if ("method".equals(currentValue) || "tokenize".equals(currentValue) || "xtokenize".equals(currentValue)) {
+                                    required = "false";
                                 }
                             }
 
                             // we cannot have both enum and oneOf at the same time
                             String enumsOrOneOfs = enums != null ? enums : oneOf;
+
+                            LOG.info("CreateUIInput[kind=" + kind + ", eip=" + eip + ", name=" + name + ", required=" + required + ", currentValue=" + currentValue + ", defaultValue=" + defaultValue + "]");
 
                             InputComponent input = createUIInput(ui.getProvider(), componentFactory, converterFactory, eip, name, inputClazz, required, currentValue, defaultValue, enumsOrOneOfs, description, promptInInteractiveMode, false, null);
 
@@ -670,6 +674,7 @@ public final class CamelCommandsHelper {
                                 // if its an expression then we need to add an input for the actual value and another for extra values
                                 if ("expression".equals(kind)) {
                                     currentValue = currentValues != null ? currentValues.get(name + "_value") : null;
+                                    LOG.info("\texpression extra[name=" + name + "_value, currentValue=" + currentValue + "]");
                                     InputComponent input2 = createUIInput(ui.getProvider(), componentFactory, converterFactory, eip, name + "_value", String.class, required, currentValue, null, null, description, promptInInteractiveMode, false, null);
                                     if (input2 != null) {
                                         inputs.add(input2);
@@ -685,6 +690,7 @@ public final class CamelCommandsHelper {
                                         });
                                     }
                                     String extra = currentValues != null ? currentValues.get(name + "_extra") : null;
+                                    LOG.info("\texpression extra[name=" + name + "_extra, currentValue=" + extra + "]");
                                     InputComponent input3 = createUIInput(ui.getProvider(), componentFactory, converterFactory, eip, name + "_extra", String.class, "false", extra, null, null, description, promptInInteractiveMode, true, "");
                                     if (input3 != null) {
                                         inputs.add(input3);
