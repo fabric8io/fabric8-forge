@@ -15,8 +15,8 @@
  */
 package io.fabric8.forge.camel.commands.project;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import javax.inject.Inject;
 
 import io.fabric8.forge.camel.commands.project.completer.CamelLanguagesCompleter;
@@ -36,13 +36,13 @@ import org.jboss.forge.addon.ui.result.Results;
 import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
 
-import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.createLanguageDto;
-
 public class CamelProjectAddLanguageCommand extends AbstractCamelProjectCommand {
 
     @Inject
     @WithAttributes(label = "Name", required = true, description = "Name of language to add")
-    private UISelectOne<LanguageDto> languageName;
+    private UISelectOne<String> languageName;
+    // use plain String in UISelectOne as the DTOs do not work on the web (that requires a special picker like for component picker)
+    private Iterable<LanguageDto> dtos;
 
     @Inject
     private DependencyInstaller dependencyInstaller;
@@ -58,17 +58,12 @@ public class CamelProjectAddLanguageCommand extends AbstractCamelProjectCommand 
     public void initializeUI(UIBuilder builder) throws Exception {
         Project project = getSelectedProject(builder);
 
-        Iterable<LanguageDto> it = new CamelLanguagesCompleter(project, getCamelCatalog()).getValueChoices();
-        // flattern the choices to a map so the UI is more responsive, as we can do a direct lookup
-        // in the map from the value converter
-        final Map<String, LanguageDto> languages = new LinkedHashMap<>();
-        for (LanguageDto dto : it) {
-            languages.put(dto.getName(), dto);
+        dtos = new CamelLanguagesCompleter(project, getCamelCatalog()).getValueChoices();
+        List<String> names = new ArrayList<>();
+        for (LanguageDto dto : dtos) {
+            names.add(dto.getName());
         }
-
-        languageName.setValueChoices(it);
-        // include converter from string->dto
-        languageName.setValueConverter(languages::get);
+        languageName.setValueChoices(names);
 
         builder.add(languageName);
     }
@@ -83,7 +78,9 @@ public class CamelProjectAddLanguageCommand extends AbstractCamelProjectCommand 
             return Results.fail("The project does not include camel-core");
         }
 
-        LanguageDto dto = languageName.getValue();
+        String name = languageName.getValue();
+        LanguageDto dto = findLanguateDto(name);
+
         if (dto != null) {
 
             // we want to use same version as camel-core if its a camel component
@@ -105,4 +102,14 @@ public class CamelProjectAddLanguageCommand extends AbstractCamelProjectCommand 
             return Results.fail("Unknown Camel language");
         }
     }
+
+    private LanguageDto findLanguateDto(String name) {
+        for (LanguageDto dto : dtos) {
+            if (dto.getName().equals(name)) {
+                return dto;
+            }
+        }
+        return null;
+    }
+
 }

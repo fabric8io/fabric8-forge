@@ -15,8 +15,8 @@
  */
 package io.fabric8.forge.camel.commands.project;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import javax.inject.Inject;
 
 import io.fabric8.forge.camel.commands.project.completer.CamelDataFormatsCompleter;
@@ -36,13 +36,13 @@ import org.jboss.forge.addon.ui.result.Results;
 import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
 
-import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.createDataFormatDto;
-
 public class CamelProjectAddDataFormatCommand extends AbstractCamelProjectCommand {
 
     @Inject
     @WithAttributes(label = "Name", required = true, description = "Name of dataformat to add")
-    private UISelectOne<DataFormatDto> dataformatName;
+    private UISelectOne<String> dataformatName;
+    // use plain String in UISelectOne as the DTOs do not work on the web (that requires a special picker like for component picker)
+    private Iterable<DataFormatDto> dtos;
 
     @Inject
     private DependencyInstaller dependencyInstaller;
@@ -58,17 +58,12 @@ public class CamelProjectAddDataFormatCommand extends AbstractCamelProjectComman
     public void initializeUI(UIBuilder builder) throws Exception {
         Project project = getSelectedProject(builder);
 
-        Iterable<DataFormatDto> it = new CamelDataFormatsCompleter(project, getCamelCatalog()).getValueChoices();
-        // flattern the choices to a map so the UI is more responsive, as we can do a direct lookup
-        // in the map from the value converter
-        final Map<String, DataFormatDto> dataformats = new LinkedHashMap<>();
-        for (DataFormatDto dto : it) {
-            dataformats.put(dto.getName(), dto);
+        dtos = new CamelDataFormatsCompleter(project, getCamelCatalog()).getValueChoices();
+        List<String> names = new ArrayList<>();
+        for (DataFormatDto dto : dtos) {
+            names.add(dto.getName());
         }
-
-        dataformatName.setValueChoices(it);
-        // include converter from string->dto
-        dataformatName.setValueConverter(dataformats::get);
+        dataformatName.setValueChoices(names);
 
         builder.add(dataformatName);
     }
@@ -83,7 +78,9 @@ public class CamelProjectAddDataFormatCommand extends AbstractCamelProjectComman
             return Results.fail("The project does not include camel-core");
         }
 
-        DataFormatDto dto = dataformatName.getValue();
+        String name = dataformatName.getValue();
+        DataFormatDto dto = findDataFormatDto(name);
+
         if (dto != null) {
 
             // we want to use same version as camel-core if its a camel component
@@ -105,4 +102,14 @@ public class CamelProjectAddDataFormatCommand extends AbstractCamelProjectComman
             return Results.fail("Unknown Camel dataformat");
         }
     }
+
+    private DataFormatDto findDataFormatDto(String name) {
+        for (DataFormatDto dto : dtos) {
+            if (dto.getName().equals(name)) {
+                return dto;
+            }
+        }
+        return null;
+    }
+
 }
