@@ -15,11 +15,12 @@
  */
 package io.fabric8.forge.camel.commands.project;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import javax.inject.Inject;
 
 import io.fabric8.forge.camel.commands.project.completer.CamelLanguagesCompleter;
 import io.fabric8.forge.camel.commands.project.dto.LanguageDto;
-import org.jboss.forge.addon.convert.Converter;
 import org.jboss.forge.addon.dependencies.Dependency;
 import org.jboss.forge.addon.dependencies.builder.DependencyBuilder;
 import org.jboss.forge.addon.projects.Project;
@@ -28,8 +29,6 @@ import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
 import org.jboss.forge.addon.ui.input.UISelectOne;
-import org.jboss.forge.addon.ui.input.ValueChangeListener;
-import org.jboss.forge.addon.ui.input.events.ValueChangeEvent;
 import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
 import org.jboss.forge.addon.ui.metadata.WithAttributes;
 import org.jboss.forge.addon.ui.result.Result;
@@ -58,28 +57,18 @@ public class CamelProjectAddLanguageCommand extends AbstractCamelProjectCommand 
     @Override
     public void initializeUI(UIBuilder builder) throws Exception {
         Project project = getSelectedProject(builder);
-        // use value choices instead of completer as that works better in web console
-        languageName.setValueChoices(new CamelLanguagesCompleter(project, getCamelCatalog()).getValueChoices());
+
+        Iterable<LanguageDto> it = new CamelLanguagesCompleter(project, getCamelCatalog()).getValueChoices();
+        // flattern the choices to a map so the UI is more responsive, as we can do a direct lookup
+        // in the map from the value converter
+        final Map<String, LanguageDto> languages = new LinkedHashMap<>();
+        for (LanguageDto dto : it) {
+            languages.put(dto.getName(), dto);
+        }
+
+        languageName.setValueChoices(it);
         // include converter from string->dto
-        languageName.setValueConverter(new Converter<String, LanguageDto>() {
-            @Override
-            public LanguageDto convert(String text) {
-                return createLanguageDto(getCamelCatalog(), text);
-            }
-        });
-        // show note about the chosen language
-        languageName.addValueChangeListener(new ValueChangeListener() {
-            @Override
-            public void valueChanged(ValueChangeEvent event) {
-                LanguageDto language = (LanguageDto) event.getNewValue();
-                if (language != null) {
-                    String description = language.getDescription();
-                    languageName.setNote(description != null ? description : "");
-                } else {
-                    languageName.setNote("");
-                }
-            }
-        });
+        languageName.setValueConverter(languages::get);
 
         builder.add(languageName);
     }
@@ -97,12 +86,19 @@ public class CamelProjectAddLanguageCommand extends AbstractCamelProjectCommand 
         LanguageDto dto = languageName.getValue();
         if (dto != null) {
 
-            // we want to use same version as camel-core
-            DependencyBuilder component = DependencyBuilder.create().setGroupId(dto.getGroupId())
-                    .setArtifactId(dto.getArtifactId()).setVersion(core.getCoordinate().getVersion());
+            // we want to use same version as camel-core if its a camel component
+            // otherwise use the version from the dto
+            String version;
+            if ("org.apache.camel".equals(dto.getGroupId())) {
+                version = core.getCoordinate().getVersion();
+            } else {
+                version = dto.getVersion();
+            }
+            DependencyBuilder dependency = DependencyBuilder.create().setGroupId(dto.getGroupId())
+                    .setArtifactId(dto.getArtifactId()).setVersion(version);
 
             // install the component
-            dependencyInstaller.install(project, component);
+            dependencyInstaller.install(project, dependency);
 
             return Results.success("Added Camel language " + dto.getName() + " (" + dto.getArtifactId() + ") to the project");
         } else {
