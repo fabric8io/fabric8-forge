@@ -56,7 +56,7 @@ import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.
 
 public final class CamelCommandsHelper {
 
-    private static final PoorMansLogger LOG = new PoorMansLogger(true);
+    private static final PoorMansLogger LOG = new PoorMansLogger(false);
 
     public static Iterable<String> createComponentLabelValues(Project project, CamelCatalog camelCatalog) {
         return new CamelComponentsLabelCompleter(project, camelCatalog).getValueChoices();

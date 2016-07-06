@@ -35,7 +35,7 @@ import org.jboss.forge.addon.ui.util.Metadata;
  */
 public class EditNodeXmlStep extends ConfigureEipPropertiesStep {
 
-    private static final PoorMansLogger LOG = new PoorMansLogger(true);
+    private static final PoorMansLogger LOG = new PoorMansLogger(false);
 
     public EditNodeXmlStep(ProjectFactory projectFactory, CamelCatalog camelCatalog, String eipName, String group, List<InputComponent> allInputs, List<InputComponent> inputs,
                            boolean last, int index, int total) {
