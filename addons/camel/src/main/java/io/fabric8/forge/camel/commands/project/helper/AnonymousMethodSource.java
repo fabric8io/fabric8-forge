@@ -412,4 +412,14 @@ public class AnonymousMethodSource implements MethodSource<JavaClassSource> {
     public int getLineNumber() {
         return 0;
     }
+
+    @Override
+    public boolean hasTypeVariable(String arg0) {
+        return false;
+    }
+
+    @Override
+    public MethodSource<JavaClassSource> setReturnType(Type<?> arg0) {
+        return null;
+    }
 }
