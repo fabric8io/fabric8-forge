@@ -70,7 +70,7 @@ import static io.fabric8.forge.camel.commands.project.helper.CamelXmlHelper.xmlA
  */
 public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand implements UIWizard {
 
-    private static final PoorMansLogger LOG = new PoorMansLogger(true);
+    private static final PoorMansLogger LOG = new PoorMansLogger(false);
 
     @Inject
     @WithAttributes(label = "XML File", required = true, description = "The XML file to use (either Spring or Blueprint)")
