@@ -128,6 +128,10 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
     protected List<NodeDto> configureXmlNodes(final UIContext context, final Project project, final String selected,
                                               final UISelectOne<String> xml, final UISelectOne<String> node) throws Exception {
 
+
+        // because the UISelectOne must be unique we need to use a running number
+        int index = 1;
+
         List<NodeDto> nodes;
 
         String xmlResourceName = xml.getValue();
@@ -139,7 +143,7 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
             nodes = NodeDtos.toNodeList(camelContexts);
             // if there is one CamelContext then pre-select the first node (which is the route)
             if (camelContexts.size() == 1 && nodes.size() > 1) {
-                node.setDefaultValue(nodes.get(1).getLabel());
+                node.setDefaultValue("1 " + nodes.get(1).getLabel());
             }
         } else {
             nodes = Collections.EMPTY_LIST;
@@ -149,14 +153,19 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
 
         List<String> choices = new ArrayList<>();
         for (NodeDto dto : nodes) {
-            choices.add(dto.getLabel());
+            choices.add(index + " " + dto.getLabel());
+            index++;
         }
         node.setValueChoices(choices);
-        // to convert from key to label
+        // to convert from key to label (with number)
+        // this converter is needed for the web console as it uses the key to select which node to edit
+        // and we need to be able to convert from the key to the correct node in the list
         node.setValueConverter(s -> {
-            for (NodeDto dto : answer) {
+            for (int i = 0; i < answer.size(); i++) {
+                NodeDto dto = answer.get(i);
                 if (dto.getKey().equals(s)) {
-                    return dto.getLabel();
+                    int number = i + 1;
+                    return number + " " + dto.getLabel();
                 }
             }
             return s;
