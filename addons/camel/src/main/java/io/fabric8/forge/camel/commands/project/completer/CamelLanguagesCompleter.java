@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import io.fabric8.forge.addon.utils.CamelProjectHelper;
 import io.fabric8.forge.camel.commands.project.dto.LanguageDto;
@@ -110,6 +111,23 @@ public class CamelLanguagesCompleter implements UICompleter<LanguageDto> {
         }
 
         return answer;
+    }
+
+    public Set<String> getLanguageNamesFromClasspath() {
+        if (core == null) {
+            return null;
+        }
+
+        Set<String> names = new TreeSet<>();
+
+        // only include existing languages we already have on classpath
+        Set<Dependency> artifacts = findCamelArtifacts(project);
+        for (Dependency dep : artifacts) {
+            Set<String> languages = languagesFromArtifact(camelCatalog, dep.getCoordinate().getArtifactId());
+            names.addAll(languages);
+        }
+
+        return names;
     }
 
     private static String findArtifactId(String json) {

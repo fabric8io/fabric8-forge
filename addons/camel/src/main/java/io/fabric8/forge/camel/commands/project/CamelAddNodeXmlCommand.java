@@ -18,9 +18,11 @@ package io.fabric8.forge.camel.commands.project;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.inject.Inject;
 
 import io.fabric8.forge.addon.utils.XmlLineNumberParser;
+import io.fabric8.forge.camel.commands.project.completer.CamelLanguagesCompleter;
 import io.fabric8.forge.camel.commands.project.dto.EipDto;
 import io.fabric8.forge.camel.commands.project.dto.NodeDto;
 import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
@@ -171,8 +173,9 @@ public class CamelAddNodeXmlCommand extends AbstractCamelProjectCommand implemen
         attributeMap.put("lineNumberEnd", lineNumberEnd);
 
         UIContext ui = context.getUIContext();
+        Set<String> possibleLanguageNames = new CamelLanguagesCompleter(project, getCamelCatalog()).getLanguageNamesFromClasspath();
         List<InputOptionByGroup> groups = createUIInputsForCamelEIP(nodeName, MAX_OPTIONS,
-                null, getCamelCatalog(), componentFactory, converterFactory, ui);
+                null, possibleLanguageNames, getCamelCatalog(), componentFactory, converterFactory, ui);
 
         // need all inputs in a list as well
         List<InputComponent> allInputs = new ArrayList<>();
