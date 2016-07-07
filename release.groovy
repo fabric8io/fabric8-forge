@@ -6,7 +6,6 @@ def updateDependencies(source){
   properties << ['<docker.maven.plugin.version>','io/fabric8/docker-maven-plugin']
   properties << ['<fabric8.devops.version>','io/fabric8/devops/apps/jenkins']
   properties << ['<fabric8.archetypes.release.version>','io/fabric8/archetypes/archetypes-catalog']
-  properties << ['<gitective.version>','io/fabric8/gitective-core']
 
   updatePropertyVersion{
     updates = properties
