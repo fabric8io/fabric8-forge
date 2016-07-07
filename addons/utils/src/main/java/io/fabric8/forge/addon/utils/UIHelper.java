@@ -55,7 +55,7 @@ public final class UIHelper {
             List<String> enumValues = new ArrayList<>();
             String[] values = enums.split(",");
             for (String v : values) {
-                enumValues.add(v);
+                enumValues.add(v.trim());
             }
             ui.setValueChoices(enumValues);
             if (defaultValue != null) {

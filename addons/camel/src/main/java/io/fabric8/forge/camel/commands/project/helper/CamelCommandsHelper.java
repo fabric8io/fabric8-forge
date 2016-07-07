@@ -34,6 +34,7 @@ import io.fabric8.forge.camel.commands.project.dto.EipDto;
 import io.fabric8.forge.camel.commands.project.model.CamelComponentDetails;
 import io.fabric8.forge.camel.commands.project.model.InputOptionByGroup;
 import org.apache.camel.catalog.CamelCatalog;
+import org.apache.camel.catalog.CollectionStringBuffer;
 import org.apache.camel.catalog.JSonSchemaHelper;
 import org.jboss.forge.addon.convert.ConverterFactory;
 import org.jboss.forge.addon.dependencies.Dependency;
@@ -56,7 +57,7 @@ import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.
 
 public final class CamelCommandsHelper {
 
-    private static final PoorMansLogger LOG = new PoorMansLogger(false);
+    private static final PoorMansLogger LOG = new PoorMansLogger(true);
 
     public static Iterable<String> createComponentLabelValues(Project project, CamelCatalog camelCatalog) {
         return new CamelComponentsLabelCompleter(project, camelCatalog).getValueChoices();
@@ -556,7 +557,7 @@ public final class CamelCommandsHelper {
         return answer;
     }
 
-    public static List<InputOptionByGroup> createUIInputsForCamelEIP(String eip, int maxOptionsPerPage, Map<String, String> currentValues,
+    public static List<InputOptionByGroup> createUIInputsForCamelEIP(String eip, int maxOptionsPerPage, Map<String, String> currentValues, Set<String> languagesOnClasspath,
                                                                      CamelCatalog camelCatalog, InputComponentFactory componentFactory, ConverterFactory converterFactory, UIContext ui) throws Exception {
         List<InputOptionByGroup> answer = new ArrayList<>();
 
@@ -649,7 +650,6 @@ public final class CamelCommandsHelper {
                                     }
                                 }
                             }
-
                             if ("expression".equals(kind) && currentValue != null) {
                                 // fix current value from bean to method because that is the oneOf choices
                                 if ("bean".equals(currentValue)) {
@@ -659,6 +659,12 @@ public final class CamelCommandsHelper {
                                 if ("method".equals(currentValue) || "tokenize".equals(currentValue) || "xtokenize".equals(currentValue)) {
                                     required = "false";
                                 }
+                            }
+
+                            // filter oneOf to only include possible values we have on the classpath
+                            if (oneOf != null && languagesOnClasspath != null) {
+                                oneOf = filterOneOf(oneOf, languagesOnClasspath, currentValue);
+                                LOG.info("Filtered oneOf: " + oneOf);
                             }
 
                             // we cannot have both enum and oneOf at the same time
@@ -729,6 +735,36 @@ public final class CamelCommandsHelper {
         }
 
         return answer;
+    }
+
+    private static String filterOneOf(String oneOf, Set<String> languagesOnClasspath, String currentValue) {
+        if (languagesOnClasspath == null || oneOf == null) {
+            return oneOf;
+        }
+
+        CollectionStringBuffer csb = new CollectionStringBuffer();
+        if (currentValue != null) {
+            csb.append(currentValue);
+        }
+        if (oneOf.startsWith("none")) {
+            csb.append("none");
+        }
+
+        for (String name : languagesOnClasspath) {
+            // special for bean/method
+            if ("bean".equals(name)) {
+                name = "method";
+            }
+            if (name.equals(currentValue)) {
+                // we have already added current value
+                continue;
+            }
+            if (oneOf.contains(name)) {
+                csb.append(name);
+            }
+        }
+
+        return csb.toString();
     }
 
 }
