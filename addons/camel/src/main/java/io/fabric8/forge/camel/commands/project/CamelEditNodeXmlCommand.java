@@ -70,7 +70,7 @@ import static io.fabric8.forge.camel.commands.project.helper.CamelXmlHelper.xmlA
  */
 public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand implements UIWizard {
 
-    private static final PoorMansLogger LOG = new PoorMansLogger(false);
+    private static final PoorMansLogger LOG = new PoorMansLogger(true);
 
     @Inject
     @WithAttributes(label = "XML File", required = true, description = "The XML file to use (either Spring or Blueprint)")
@@ -181,6 +181,8 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
         attributeMap.put("xml", xmlResourceName);
         attributeMap.put("mode", "edit");
         attributeMap.put("kind", "xml");
+
+        LOG.info("Edit selected index: " + node.getSelectedIndex());
 
         NodeDto editNode = preSelectedNode;
         if (editNode == null && node != null) {
