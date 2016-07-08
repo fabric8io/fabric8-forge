@@ -51,9 +51,8 @@ import java.util.regex.Pattern;
 import static io.fabric8.forge.rest.dto.UIMessageDTO.toDtoList;
 import static org.jboss.forge.furnace.util.Strings.capitalize;
 
-/**
- */
 public class UICommands {
+
     public static CommandInfoDTO createCommandInfoDTO(RestUIContext context, UICommand command) {
         CommandInfoDTO answer;
         UICommandMetadata metadata = command.getMetadata(context);
@@ -66,7 +65,6 @@ public class UICommands {
         answer = new CommandInfoDTO(id, metadataName, description, category, docLocation, enabled);
         return answer;
     }
-
 
     public static CommandInputDTO createCommandInputDTO(RestUIContext context, UICommand command, CommandController controller) throws Exception {
         CommandInfoDTO info = createCommandInfoDTO(context, command);
@@ -265,7 +263,7 @@ public class UICommands {
                         } else {
                             String text = annotation.toString();
                             // because of the Forge proxying we can't just use the actual class here...
-                            if (text.indexOf("com.fasterxml.jackson.") >= 0) {
+                            if (text.contains("com.fasterxml.jackson.")) {
                                 return true;
                             }
                         }
@@ -282,14 +280,10 @@ public class UICommands {
 
     /**
      * "Shellifies" a name (that is, makes the name shell-friendly) by replacing spaces with "-" and removing colons
-     *
-     * @param name
-     * @return
      */
     public static String shellifyName(String name) {
        return COLONS.matcher(WHITESPACES.matcher(name.trim()).replaceAll("-")).replaceAll("").toLowerCase();
     }
-
 
     /**
      * A name of the form "foo-bar-whatnot" is turned into "Foo: Bar Whatnot"
@@ -329,10 +323,6 @@ public class UICommands {
                 if (value instanceof String || value instanceof Number || value instanceof Date) {
                     textValue = value.toString();
                 }
-/*
-                String textValue = requestedInputs.get(key);
-                Object value = textValue;
-*/
                 if (component != null && textValue != null) {
                     Converter<String, ?> valueConverter = component.getValueConverter();
                     if (valueConverter != null) {
@@ -348,8 +338,6 @@ public class UICommands {
                 } else {
                     controller.setValueFor(key, value);
                 }
-
-                Object actual = controller.getValueFor(key);
             }
         }
     }
