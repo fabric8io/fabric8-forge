@@ -18,20 +18,20 @@
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
   <modelVersion>4.0.0</modelVersion>
+
   <parent>
     <groupId>io.fabric8.forge</groupId>
     <artifactId>forge-parent</artifactId>
     <version>2.3-SNAPSHOT</version>
   </parent>
+
   <artifactId>fabric8-forge-swarm</artifactId>
   <packaging>war</packaging>
   <name>Fabric8 :: Forge :: WildFly Swarm</name>
 
   <properties>
-    <!-- enable to be able to run the sample -->
-    <sample>false</sample>
-    <addon.repository>${project.build.directory}/addon-repository</addon.repository>
     <version.wildfly.swarm>1.0.0.Final</version.wildfly.swarm>
     <failOnMissingWebXml>false</failOnMissingWebXml>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -78,27 +78,17 @@
       <artifactId>jaxrs-cdi</artifactId>
     </dependency>
 
+    <!-- fabric8-forge -->
     <dependency>
       <groupId>io.fabric8.forge</groupId>
       <artifactId>fabric8-forge-core</artifactId>
       <version>${project.version}</version>
     </dependency>
 
-    <dependency>
-      <groupId>org.eclipse.jgit</groupId>
-      <artifactId>org.eclipse.jgit</artifactId>
-    </dependency>
-
-    <!-- forge stuff -->
-    <dependency>
-      <groupId>org.jboss.forge.addon</groupId>
-      <artifactId>ui-api</artifactId>
-    </dependency>
-
   </dependencies>
 
   <build>
-    <finalName>forge-web</finalName>
+    <finalName>fabric8-forge-swarm</finalName>
     <plugins>
       <plugin>
         <groupId>org.wildfly.swarm</groupId>
@@ -116,6 +106,7 @@
   </build>
 
   <repositories>
+    <!-- jboss repo needed for some JARs for swarm -->
     <repository>
       <id>jboss-public-repository-group</id>
       <name>JBoss Public Repository Group</name>
