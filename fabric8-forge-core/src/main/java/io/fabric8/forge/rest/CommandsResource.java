@@ -58,6 +58,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -80,6 +81,7 @@ import java.util.Set;
 
 import static io.fabric8.forge.rest.Constants.*;
 
+@Singleton
 @Path("/api/forge")
 @Stateless
 public class CommandsResource {
