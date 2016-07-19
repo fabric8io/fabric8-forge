@@ -370,6 +370,28 @@ public abstract class AbstractDevOpsCommand extends AbstractProjectCommand imple
                        }
                    }
         );
+        answer.add(new GetOverviewCommand.FileProcessor() {
+                       @Override
+                       public boolean processes(ProjectOverviewDTO overview, File file, String name, String extension, int level) {
+                           if (java.util.Objects.equals(extension, "php")) {
+                               overview.addBuilder("php");
+                               return true;
+                           }
+                           return false;
+                       }
+                   }
+        );
+        answer.add(new GetOverviewCommand.FileProcessor() {
+                       @Override
+                       public boolean processes(ProjectOverviewDTO overview, File file, String name, String extension, int level) {
+                           if (java.util.Objects.equals(extension, "cs")) {
+                               overview.addBuilder("dotnet");
+                               return true;
+                           }
+                           return false;
+                       }
+                   }
+        );
         return answer;
     }
 
