@@ -348,11 +348,12 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
             return Results.fail("No pom.xml available so cannot edit the project!");
         }
 
-        // setup docker-maven-plugin and fabric8-maven-plugin
-        setupDocker(project, organization.getValue(), from.getValue(), main.getValue());
-        LOG.debug("docker-maven-plugin now setup");
+        // setup fabric8-maven-plugin
         setupFabricMavenPlugin(project);
         LOG.debug("fabric8-maven-plugin now setup");
+
+        setupDocker(project, organization.getValue(), from.getValue(), main.getValue());
+        LOG.debug("docker configuration now setup");
 
         MavenFacet maven = project.getFacet(MavenFacet.class);
         Model pom = maven.getModel();
@@ -363,13 +364,7 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
         LOG.debug("setting up fabric8 properties");
         setupFabricProperties(project, maven);
 
-        LOG.debug("setting up fabric8 maven profiles");
-        boolean f8profiles = setupFabricMavenProfiles(project, maven);
-
-        String msg = "Added Fabric8 Maven support with base Docker image: " + from.getValue();
-        if (f8profiles) {
-            msg += ". Added the following Maven profiles [f8-build, f8-deploy, f8-local-deploy] to make building the project easier, e.g. mvn -Pf8-local-deploy";
-        }
+        String msg = "Added Fabric8 Maven support";
         return Results.success(msg);
     }
 
@@ -393,9 +388,8 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
             LOG.info("Adding fabric8-maven-plugin");
             // add fabric8 plugin
             pluginBuilder = MavenPluginBuilder.create()
-                    .setCoordinate(MavenHelpers.createCoordinate("io.fabric8", "fabric8-maven-plugin", VersionHelper.fabric8Version()))
-                    .addExecution(ExecutionBuilder.create().setId("json").setPhase("generate-resources").addGoal("json"))
-                    .addExecution(ExecutionBuilder.create().setId("attach").setPhase("package").addGoal("attach"));
+                    .setCoordinate(MavenHelpers.createCoordinate("io.fabric8", "fabric8-maven-plugin", VersionHelper.fabric8MavenPluginVersion()))
+                    .addExecution(ExecutionBuilder.create().addGoal("resource").addGoal("build"));
         }
 
         if (pluginBuilder != null) {
@@ -530,124 +524,9 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
     }
 
     public static void setupFabric8Properties(Project project, MavenFacet maven, Boolean isService, Boolean isReadinessProbe, String group, String containerName, String icon) {
-        // update properties section in pom.xml
-        boolean updated = false;
-
-        // re-load maven after we have changed it in the previous steps (so the pom is up to date)
-        Model pom = maven.getModelResource().getCurrentModel();
-
-        Properties properties = pom.getProperties();
-        updated = MavenHelpers.updatePomProperty(properties, "fabric8.label.container", containerName, updated);
-        String iconValue = icon;
-        if (Strings.isNotBlank(iconValue)) {
-            updated = MavenHelpers.updatePomProperty(properties, "fabric8.iconRef", "icons/" + iconValue, updated);
-        }
-        updated = MavenHelpers.updatePomProperty(properties, "fabric8.label.group", group, updated);
-
-        // kubernetes service
-        if (isService) {
-            String servicePort = getDefaultServicePort(project);
-            if (servicePort != null) {
-                String name = pom.getArtifactId();
-                // there is a max 24 chars limit in OpenShift/Kubernetes
-                if (name.length() > 24) {
-                    // print a warning
-                    String msg = "The fabric8.service.name: " + name + " is being limited to max 24 chars as that is required by Kubernetes/Openshift."
-                            + " You can change the name of the service in the <properties> section of the Maven pom file.";
-                    // log and print to system out as the latter is what is seen in the CLI
-                    LOG.warn(msg);
-                    System.out.println(msg);
-                    // clip the name at max 24 chars
-                    name = name.substring(0, 24);
-                }
-                updated = MavenHelpers.updatePomProperty(properties, "fabric8.service.containerPort", servicePort, updated);
-                updated = MavenHelpers.updatePomProperty(properties, "fabric8.service.port", "80", updated);
-                updated = MavenHelpers.updatePomProperty(properties, "fabric8.service.name", name, updated);
-                updated = MavenHelpers.updatePomProperty(properties, "fabric8.service.type", "LoadBalancer", updated);
-            }
-        }
-
-        // kubernetes readiness probe
-        if (isReadinessProbe) {
-            String servicePort = getDefaultServicePort(project);
-            if (servicePort != null) {
-
-                String path;
-                if (hasSpringBoot(project)) {
-                    path = "/health";
-                } else {
-                    path = "/";
-                }
-
-                updated = MavenHelpers.updatePomProperty(properties, "fabric8.readinessProbe.httpGet.port", servicePort, updated);
-                updated = MavenHelpers.updatePomProperty(properties, "fabric8.readinessProbe.httpGet.path", path, updated);
-                updated = MavenHelpers.updatePomProperty(properties, "fabric8.readinessProbe.timeoutSeconds", "30", updated);
-                updated = MavenHelpers.updatePomProperty(properties, "fabric8.readinessProbe.initialDelaySeconds", "5", updated);
-            }
-        }
-
-        // to save then set the model
-        if (updated) {
-            maven.setModel(pom);
-            LOG.debug("updated pom.xml");
-        }
+        // TODO optionally generate a YAML file for service/readiness probes?
     }
 
-    private boolean setupFabricMavenProfiles(Project project, MavenFacet maven) {
-        if (profiles.getValue() == null || !profiles.getValue()) {
-            return false;
-        }
-
-        // re-load maven after we have changed it in the previous steps (so the pom is up to date)
-        Model pom = maven.getModelResource().getCurrentModel();
-
-        boolean updated = false;
-        Profile profile = MavenHelpers.findProfile(pom, "f8-build");
-        if (profile == null) {
-            profile = new Profile();
-            profile.setId("f8-build");
-            Build build = new Build();
-            build.setDefaultGoal("clean install docker:build fabric8:json");
-            profile.setBuild(build);
-            pom.addProfile(profile);
-            updated = true;
-        }
-        profile = MavenHelpers.findProfile(pom, "f8-deploy");
-        if (profile == null) {
-            profile = new Profile();
-            profile.setId("f8-deploy");
-            Properties prop = new Properties();
-            prop.setProperty("fabric8.imagePullPolicySnapshot", "Always");
-            prop.setProperty("fabric8.recreate", "true");
-            profile.setProperties(prop);
-            Build build = new Build();
-            build.setDefaultGoal("clean install docker:build docker:push fabric8:json fabric8:apply");
-            profile.setBuild(build);
-            pom.addProfile(profile);
-            updated = true;
-        }
-        profile = MavenHelpers.findProfile(pom, "f8-local-deploy");
-        if (profile == null) {
-            profile = new Profile();
-            profile.setId("f8-local-deploy");
-            Properties prop = new Properties();
-            prop.setProperty("fabric8.recreate", "true");
-            profile.setProperties(prop);
-            Build build = new Build();
-            build.setDefaultGoal("clean install docker:build fabric8:json fabric8:apply");
-            profile.setBuild(build);
-            pom.addProfile(profile);
-            updated = true;
-        }
-
-        // to save then set the model
-        if (updated) {
-            maven.setModel(pom);
-            LOG.debug("updated pom.xml");
-        }
-
-        return true;
-    }
 
     /**
      * Try to determine the default service port.
