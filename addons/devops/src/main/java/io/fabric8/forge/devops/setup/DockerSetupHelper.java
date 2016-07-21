@@ -87,33 +87,11 @@ public class DockerSetupHelper {
 
         MavenPluginBuilder pluginBuilder;
         ConfigurationBuilder configurationBuilder;
-        MavenPlugin plugin = MavenHelpers.findPlugin(project, "io.fabric8", "docker-maven-plugin");
-        if (plugin != null) {
-            // if there is an existing then leave it as-is
-            LOG.info("Found existing docker-maven-plugin");
-            pluginBuilder = null;
-            configurationBuilder = null;
-        } else {
-            LOG.info("Adding docker-maven-plugin");
-            pluginBuilder = MavenPluginBuilder.create()
-                    .setCoordinate(MavenHelpers.createCoordinate("io.fabric8", "docker-maven-plugin", VersionHelper.dockerVersion()));
-            configurationBuilder = ConfigurationBuilder.create(pluginBuilder);
-            pluginBuilder.setConfiguration(configurationBuilder);
-        }
+        MavenPlugin plugin = MavenHelpers.findPlugin(project, "io.fabric8", "fabric8-maven-plugin");
 
-        // if we are adding then we need to include some configurations as well
-        if (pluginBuilder != null) {
-            String commandShell = null;
-            if (bundle) {
-                commandShell = "/usr/bin/deploy-and-start";
-            }
-            setupDockerConfiguration(configurationBuilder, envs, commandShell, springBoot, wildflySwarm, war, bundle, jar);
 
-            MavenPluginFacet pluginFacet = project.getFacet(MavenPluginFacet.class);
-            pluginFacet.addPlugin(pluginBuilder);
-        }
-
-        setupDockerProperties(project, organization, fromImage);
+        // TODO customise the base image etc!
+        // setupDockerProperties(project, organization, fromImage);
     }
 
     protected static void setupDockerConfiguration(ConfigurationBuilder config, Map<String, String> envs, String commandShell,

@@ -35,6 +35,13 @@ public final class VersionHelper {
     }
 
     /**
+     * Retrieves the version of fabric8 maven plugin to use
+     */
+    public static String fabric8MavenPluginVersion() {
+        return MavenHelpers.getVersion("io.fabric8", "fabric8-maven-plugin");
+    }
+
+    /**
      * Returns the version to use for the fabric8 archetypes
      */
     public static String fabric8ArchetypesVersion() {
