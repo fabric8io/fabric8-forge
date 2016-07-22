@@ -209,7 +209,7 @@ public class RepositoriesResource {
                     }
                     userDetails.setSshPrivateKey(privateKeyFile);
                     if (privateKeyFile != null) {
-                        privateKeyFile.setReadable(false, true);
+                        privateKeyFile.setReadable(true, true);
                     }
                     File publicKeyFile = createSshKeyFile(namespace, sourceSecretName, SSH_PUBLIC_KEY_DATA_KEY, data.get(SSH_PUBLIC_KEY_DATA_KEY));
                     if (publicKeyFile == null) {
