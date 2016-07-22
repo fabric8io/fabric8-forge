@@ -15,11 +15,6 @@
  */
 package io.fabric8.forge.devops.setup;
 
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
-
 import io.fabric8.forge.addon.utils.MavenHelpers;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Parent;
@@ -27,14 +22,16 @@ import org.jboss.forge.addon.dependencies.Coordinate;
 import org.jboss.forge.addon.dependencies.Dependency;
 import org.jboss.forge.addon.maven.plugins.MavenPlugin;
 import org.jboss.forge.addon.maven.projects.MavenFacet;
-import org.jboss.forge.addon.maven.projects.MavenPluginFacet;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.facets.DependencyFacet;
 
-import static io.fabric8.forge.devops.setup.DockerSetupHelper.DEFAULT_JAVA_IMAGE;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+
 import static io.fabric8.forge.devops.setup.DockerSetupHelper.hasSpringBoot;
 import static io.fabric8.forge.devops.setup.DockerSetupHelper.hasWildlySwarm;
-import static io.fabric8.forge.devops.setup.Fabric8SetupStep.setupFabric8Properties;
 import static io.fabric8.forge.devops.setup.Fabric8SetupStep.setupFabricMavenPlugin;
 
 public class SetupProjectHelper {
@@ -96,18 +93,10 @@ public class SetupProjectHelper {
         boolean springBoot = hasSpringBoot(project);
         boolean wildlySwarm = hasWildlySwarm(project);
         if (springBoot || wildlySwarm) {
-            String organisation = "fabric8";
-            String fromImage = DEFAULT_JAVA_IMAGE;
+            String fromImage = null;
             String main = null;
-            DockerSetupHelper.setupDocker(project, organisation, fromImage, main);
+            DockerSetupHelper.setupDocker(project, fromImage, main);
 
-            boolean isService = true;
-            boolean isReadinessProbe = false;
-            MavenFacet maven = project.getFacet(MavenFacet.class);
-            String group = null;
-            String containerName = null;
-            String icon =  wildlySwarm ? "wildfly" : "spring-boot";
-            setupFabric8Properties(project, maven, isService, isReadinessProbe, group, containerName, icon);
             setupFabricMavenPlugin(project);
             plugin = MavenHelpers.findPlugin(project, "io.fabric8", "fabric8-maven-plugin");
             if (plugin != null) {

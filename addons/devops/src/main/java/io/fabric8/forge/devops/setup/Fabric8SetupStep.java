@@ -1,17 +1,17 @@
 /**
- *  Copyright 2005-2015 Red Hat, Inc.
- *
- *  Red Hat licenses this file to you under the Apache License, version
- *  2.0 (the "License"); you may not use this file except in compliance
- *  with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
- *  implied.  See the License for the specific language governing
- *  permissions and limitations under the License.
+ * Copyright 2005-2015 Red Hat, Inc.
+ * <p>
+ * Red Hat licenses this file to you under the Apache License, version
+ * 2.0 (the "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+ * implied.  See the License for the specific language governing
+ * permissions and limitations under the License.
  */
 package io.fabric8.forge.devops.setup;
 
@@ -26,7 +26,6 @@ import org.apache.maven.model.DistributionManagement;
 import org.apache.maven.model.Extension;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Parent;
-import org.apache.maven.model.Profile;
 import org.apache.maven.model.ReportPlugin;
 import org.apache.maven.model.Reporting;
 import org.apache.maven.model.Site;
@@ -54,7 +53,6 @@ import org.jboss.forge.addon.ui.context.UINavigationContext;
 import org.jboss.forge.addon.ui.input.InputComponent;
 import org.jboss.forge.addon.ui.input.UICompleter;
 import org.jboss.forge.addon.ui.input.UIInput;
-import org.jboss.forge.addon.ui.input.UISelectOne;
 import org.jboss.forge.addon.ui.input.ValueChangeListener;
 import org.jboss.forge.addon.ui.input.events.ValueChangeEvent;
 import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
@@ -72,23 +70,15 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.concurrent.Callable;
 
 import static io.fabric8.forge.addon.utils.MavenHelpers.getVersion;
 import static io.fabric8.forge.devops.setup.DockerSetupHelper.getDockerFromImage;
-import static io.fabric8.forge.devops.setup.DockerSetupHelper.hasFunktion;
 import static io.fabric8.forge.devops.setup.DockerSetupHelper.hasSpringBoot;
 import static io.fabric8.forge.devops.setup.DockerSetupHelper.hasSpringBootWeb;
-import static io.fabric8.forge.devops.setup.DockerSetupHelper.hasVertx;
 import static io.fabric8.forge.devops.setup.DockerSetupHelper.hasWildlySwarm;
 import static io.fabric8.forge.devops.setup.DockerSetupHelper.setupDocker;
-import static io.fabric8.forge.devops.setup.SetupProjectHelper.findCamelArtifacts;
 import static io.fabric8.forge.devops.setup.SetupProjectHelper.isFunktionParentPom;
 
 @FacetConstraint({MavenFacet.class, MavenPluginFacet.class, ResourcesFacet.class})
@@ -105,45 +95,17 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
     public static final String PLUGIN_JAVADOC_VERSION =
             getVersion(PLUGIN_JAVADOC_GROUP_ID, PLUGIN_JAVADOC_ARTIFACT_ID, "2.10.3");
 
-    private String[] jarImages = new String[]{DockerSetupHelper.DEFAULT_JAVA_IMAGE, DockerSetupHelper.S2I_JAVA_IMAGE};
+    private String[] jarImages = new String[]{};
     private String[] bundleImages = new String[]{DockerSetupHelper.DEFAULT_KARAF_IMAGE};
     private String[] warImages = new String[]{DockerSetupHelper.DEFAULT_TOMCAT_IMAGE, DockerSetupHelper.DEFAULT_WILDFLY_IMAGE};
-
-    @Inject
-    @WithAttributes(label = "Docker Organization", required = true, description = "The Docker organization/company")
-    private UIInput<String> organization;
 
     @Inject
     @WithAttributes(label = "Docker Image From", required = true, description = "The Docker image to use as base line")
     private UIInput<String> from;
 
     @Inject
-    @WithAttributes(label = "Container label", required = false, description = "Container label to use for the app")
-    private UIInput<String> container;
-
-    @Inject
-    @WithAttributes(label = "Group label", required = false, description = "Group label to use for the app")
-    private UIInput<String> group;
-
-    @Inject
-    @WithAttributes(label = "Icon", required = false, description = "Icon to use for the app")
-    private UISelectOne<String> icon;
-
-    @Inject
     @WithAttributes(label = "Main class", required = false, description = "Main class to use for Java standalone")
     private UIInput<String> main;
-
-    @Inject
-    @WithAttributes(label = "Kubernetes Service", required = false, defaultValue = "true", description = "Whether to create Kubernetes service if applicable")
-    private UIInput<Boolean> service;
-
-    @Inject
-    @WithAttributes(label = "Kubernetes Readiness Probe", required = false, defaultValue = "true", description = "Whether to create Kubernetes readiness probe if applicable")
-    private UIInput<Boolean> readinessProbe;
-
-    @Inject
-    @WithAttributes(label = "Maven Fabric8 Profiles", required = false, defaultValue = "true", description = "Include Maven fabric8 profiles for easily building and deploying")
-    private UIInput<Boolean> profiles;
 
     @Inject
     @WithAttributes(label = "Integration Test", required = false, defaultValue = "true", description = "Whether to create Kubernetes integration test")
@@ -185,9 +147,6 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
 
     @Override
     public void initializeUI(final UIBuilder builder) throws Exception {
-        organization.setDefaultValue("fabric8");
-        builder.add(organization);
-
         final Project project = getSelectedProject(builder.getUIContext());
 
         String packaging = getProjectPackaging(project);
@@ -261,82 +220,7 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
             builder.add(main);
         }
 
-        container.setDefaultValue(new Callable<String>() {
-            @Override
-            public String call() throws Exception {
-                String from = (String) builder.getUIContext().getAttributeMap().get("docker.from");
-                if (from != null) {
-                    return asContainer(from);
-                }
-                return null;
-            }
-        });
-
-        // the from image values
-        icon.setValueChoices(new Iterable<String>() {
-            @Override
-            public Iterator<String> iterator() {
-                Set<String> choices = new LinkedHashSet<String>();
-                choices.add("activemq");
-                choices.add("camel");
-                choices.add("java");
-                choices.add("jetty");
-                choices.add("karaf");
-                choices.add("mule");
-                choices.add("spring-boot");
-                choices.add("tomcat");
-                choices.add("tomee");
-                choices.add("vertx");
-                choices.add("weld");
-                choices.add("wildfly");
-                return choices.iterator();
-            }
-        });
-        icon.setDefaultValue(new Callable<String>() {
-            @Override
-            public String call() throws Exception {
-                if (hasFunktion(project)) {
-                    return "funktion";
-                }
-
-                // favor Camel if there is a Camel dependency
-                if (!findCamelArtifacts(project).isEmpty()) {
-                    return "camel";
-                }
-
-                // popular containers
-                boolean springBoot = hasSpringBoot(project);
-                if (springBoot) {
-                    return "spring-boot";
-                }
-                boolean vertx = hasVertx(project);
-                if (vertx) {
-                    return "vertx";
-                }
-
-                // match by docker container name
-                if (container.getValue() != null) {
-                    for (String choice : icon.getValueChoices()) {
-                        if (choice.equals(container.getValue())) {
-                            return choice;
-                        }
-                    }
-                }
-
-                // use java by default
-                return "java";
-            }
-        });
-
-        group.setDefaultValue(new Callable<String>() {
-            @Override
-            public String call() throws Exception {
-                // use the project name as default value
-                return null;
-            }
-        });
-
-        builder.add(profiles).add(icon).add(group).add(container).add(integrationTest);
+        builder.add(integrationTest);
     }
 
     @Override
@@ -352,7 +236,7 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
         setupFabricMavenPlugin(project);
         LOG.debug("fabric8-maven-plugin now setup");
 
-        setupDocker(project, organization.getValue(), from.getValue(), main.getValue());
+        setupDocker(project, from.getValue(), main.getValue());
         LOG.debug("docker configuration now setup");
 
         MavenFacet maven = project.getFacet(MavenFacet.class);
@@ -377,7 +261,7 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
         }
     }
 
-    public static void setupFabricMavenPlugin(Project project) {
+    public static MavenPluginBuilder setupFabricMavenPlugin(Project project) {
         MavenPluginBuilder pluginBuilder;
         MavenPlugin plugin = MavenHelpers.findPlugin(project, "io.fabric8", "fabric8-maven-plugin");
         if (plugin != null) {
@@ -396,6 +280,7 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
             MavenPluginFacet pluginFacet = project.getFacet(MavenPluginFacet.class);
             pluginFacet.addPlugin(pluginBuilder);
         }
+        return pluginBuilder;
     }
 
     public static void setupSitePlugin(Project project) {
@@ -506,25 +391,10 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
     }
 
     private void setupFabricProperties(Project project, MavenFacet maven) {
-        // must install the dependency before re-loading maven model
-        Boolean isService = service.getValue();
-        Boolean isReadinessProbe = readinessProbe.getValue();
-        String group = this.group.getValue();
-        String containerName = container.getValue();
-        String icon = this.icon.getValue();
-
-        if (isReadinessProbe) {
-            String servicePort = getDefaultServicePort(project);
-            if (servicePort != null && hasSpringBoot(project)) {
-                MavenHelpers.ensureMavenDependencyAdded(project, dependencyInstaller, "org.springframework.boot", "spring-boot-starter-actuator", null);
-            }
+        String servicePort = getDefaultServicePort(project);
+        if (servicePort != null && hasSpringBoot(project)) {
+            MavenHelpers.ensureMavenDependencyAdded(project, dependencyInstaller, "org.springframework.boot", "spring-boot-starter-actuator", null);
         }
-
-        setupFabric8Properties(project, maven, isService, isReadinessProbe, group, containerName, icon);
-    }
-
-    public static void setupFabric8Properties(Project project, MavenFacet maven, Boolean isService, Boolean isReadinessProbe, String group, String containerName, String icon) {
-        // TODO optionally generate a YAML file for service/readiness probes?
     }
 
 

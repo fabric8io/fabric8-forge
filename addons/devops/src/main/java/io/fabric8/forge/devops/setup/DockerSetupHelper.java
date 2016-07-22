@@ -17,7 +17,6 @@ package io.fabric8.forge.devops.setup;
 
 import io.fabric8.forge.addon.utils.CamelProjectHelper;
 import io.fabric8.forge.addon.utils.MavenHelpers;
-import io.fabric8.forge.addon.utils.VersionHelper;
 import io.fabric8.utils.Strings;
 import org.apache.maven.model.Model;
 import org.jboss.forge.addon.dependencies.Coordinate;
@@ -44,13 +43,12 @@ public class DockerSetupHelper {
     public static final String DEFAULT_KARAF_IMAGE = "fabric8/karaf-2.4";
     public static final String DEFAULT_TOMCAT_IMAGE = "fabric8/tomcat-8";
     public static final String DEFAULT_WILDFLY_IMAGE = "jboss/wildfly:9.0.2.Final";
-    public static final String DEFAULT_JAVA_IMAGE = "fabric8/java-jboss-openjdk8-jdk:1.1.5";
     public static final String S2I_JAVA_IMAGE = "fabric8/s2i-java:1.2.9";
 
     // see https://github.com/fabric8io/fabric8/issues/4160
     private static String dockerFromImagePrefix = "docker.io/";
 
-    private static String[] jarImages = new String[]{DEFAULT_JAVA_IMAGE}; // s2i is not yet supported
+    private static String[] jarImages = new String[]{}; // s2i is not yet supported
     private static String[] bundleImages = new String[]{DEFAULT_KARAF_IMAGE};
     private static String[] warImages = new String[]{DEFAULT_TOMCAT_IMAGE, DEFAULT_WILDFLY_IMAGE};
 
@@ -61,7 +59,7 @@ public class DockerSetupHelper {
         return true;
     }
 
-    public static void setupDocker(Project project, String organization, String fromImage, String main) {
+    public static void setupDocker(Project project, String fromImage, String main) {
         MavenFacet maven = project.getFacet(MavenFacet.class);
         Model pom = maven.getModel();
 
@@ -85,34 +83,57 @@ public class DockerSetupHelper {
             envs.put("JAVA_MAIN_CLASS", main);
         }
 
-        MavenPluginBuilder pluginBuilder;
-        ConfigurationBuilder configurationBuilder;
         MavenPlugin plugin = MavenHelpers.findPlugin(project, "io.fabric8", "fabric8-maven-plugin");
+        if (plugin != null) {
+            MavenPluginBuilder pluginBuilder = MavenPluginBuilder.create(plugin);
+            //Configuration config = plugin.getConfig();
+            Configuration config = ConfigurationBuilder.create(pluginBuilder);
+            boolean updated = false;
+            if (Strings.isNotBlank(main)) {
+                setDockerJavaMain(config, main);
+                updated = true;
+            }
+            if (Strings.isNotBlank(fromImage)) {
+                setDockerFromImage(config, fromImage);
+                updated = true;
+            }
+            if (updated) {
+                pluginBuilder.setConfiguration(config);
+                MavenPluginFacet pluginFacet = project.getFacet(MavenPluginFacet.class);
+                pluginFacet.updatePlugin(pluginBuilder);
+            }
 
-
-        // TODO customise the base image etc!
-        // setupDockerProperties(project, organization, fromImage);
+        } else {
+            LOG.warn("No fabric8 maven plugin found!!");
+        }
     }
 
-    protected static void setupDockerConfiguration(ConfigurationBuilder config, Map<String, String> envs, String commandShell,
-                                                   boolean springBoot, boolean wildflySwarm, boolean war, boolean bundle, boolean jar) {
+    protected static void setDockerJavaMain(Configuration config, String mainClass) {
+        ConfigurationElement customizer = MavenHelpers.getOrCreateElement(config, "customizer");
+        ConfigurationElementBuilder javaAppMainClass = MavenHelpers.getOrCreateElementBuilder(customizer, "java.app.mainClass");
+        javaAppMainClass.setText(mainClass);
+    }
+
+
+    protected static void setDockerFromImage(Configuration config, String fromImage) {
         ConfigurationElement images = MavenHelpers.getOrCreateElement(config, "images");
         // images/image
         ConfigurationElement image = MavenHelpers.getOrCreateElement(images, "image");
         // images/image/name
         ConfigurationElementBuilder name = MavenHelpers.getOrCreateElementBuilder(image, "name");
         if (Strings.isNullOrBlank(name.getText())) {
-            name.setText("${docker.image}");
+            name.setText("${project.artifactId}:${project.version}");
         }
         // images/image/build
         ConfigurationElement build = MavenHelpers.getOrCreateElement(image, "build");
         // images/image/build/from
         ConfigurationElementBuilder from = MavenHelpers.getOrCreateElementBuilder(build, "from");
         if (Strings.isNullOrBlank(from.getText())) {
-            from.setText("${docker.from}");
+            from.setText(fromImage);
         }
+
         // images/image/build/assembly
-        ConfigurationElementBuilder assembly = MavenHelpers.getOrCreateElementBuilder(build, "assembly");
+/*        ConfigurationElementBuilder assembly = MavenHelpers.getOrCreateElementBuilder(build, "assembly");
         if (springBoot || wildflySwarm || jar) {
             if (!assembly.hasChildByName("basedir")) {
                 ConfigurationElementBuilder baseDir = MavenHelpers.getOrCreateElementBuilder(assembly, "basedir");
@@ -153,60 +174,7 @@ public class DockerSetupHelper {
             if (Strings.isNullOrBlank(shell.getText())) {
                 MavenHelpers.asConfigurationElementBuilder(shell).setText(commandShell);
             }
-        }
-    }
-
-    public static void setupDockerProperties(Project project, String organization, String fromImage) {
-        String packaging = getProjectPackaging(project);
-
-        boolean springBoot = hasSpringBoot(project);
-        boolean wildflySwarm = hasWildlySwarm(project);
-        boolean war = packaging != null && packaging.equals("war");
-        boolean bundle = packaging != null && packaging.equals("bundle");
-        boolean jar = packaging != null && packaging.equals("jar");
-
-        // update properties section in pom.xml
-        MavenFacet maven = project.getFacet(MavenFacet.class);
-        Model pom = maven.getModel();
-        Properties properties = pom.getProperties();
-        boolean updated = false;
-        if (Strings.isNotBlank(fromImage)) {
-            String fullDockerFromName = fromImage;
-            if (!fromImage.startsWith(dockerFromImagePrefix) || fromImage.split("/").length <= 2) {
-                fullDockerFromName = dockerFromImagePrefix + fromImage;
-            }
-            updated = MavenHelpers.updatePomProperty(properties, "docker.from", fullDockerFromName, updated);
-        }
-        String imageName = "${project.artifactId}:${project.version}";
-        if (Strings.isNotBlank(organization)) {
-            imageName = organization + "/${project.artifactId}:${project.version}";
-        }
-        updated = MavenHelpers.updatePomProperty(properties, "docker.image", imageName, updated);
-        // jolokia is exposed on our docker images on port 8778
-        updated = MavenHelpers.updatePomProperty(properties, "docker.port.container.jolokia", "8778", updated);
-
-        if (springBoot) {
-            // spring-boot is packaged as war but runs as fat WARs
-            updated = MavenHelpers.updatePomProperty(properties, "docker.assemblyDescriptorRef", "artifact", updated);
-            updated = MavenHelpers.updatePomProperty(properties, "docker.port.container.http", "8080", updated);
-        } else if (wildflySwarm) {
-            updated = MavenHelpers.updatePomProperty(properties, "docker.port.container.http", "8080", updated);
-        } else if (war) {
-            // tomcat/jetty on port 8080
-            updated = MavenHelpers.updatePomProperty(properties, "docker.assemblyDescriptorRef", "rootWar", updated);
-            updated = MavenHelpers.updatePomProperty(properties, "docker.port.container.http", "8080", updated);
-        } else if (bundle) {
-            // karaf
-            updated = MavenHelpers.updatePomProperty(properties, "docker.assemblyDescriptorRef", "artifact-with-dependencies", updated);
-            updated = MavenHelpers.updatePomProperty(properties, "docker.port.container.http", "8181", updated);
-        } else {
-            updated = MavenHelpers.updatePomProperty(properties, "docker.assemblyDescriptorRef", "artifact-with-dependencies", updated);
-        }
-
-        // to save then set the model
-        if (updated) {
-            maven.setModel(pom);
-        }
+        }*/
     }
 
     public static String getDockerFromImage(Project project) {
