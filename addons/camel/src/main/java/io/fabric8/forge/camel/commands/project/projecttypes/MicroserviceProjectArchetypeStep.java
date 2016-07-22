@@ -21,6 +21,6 @@ import io.fabric8.forge.camel.commands.project.archetype.Fabric8ArchetypeCatalog
  */
 public class MicroserviceProjectArchetypeStep extends Fabric8ArchetypeCatalogStep {
     public MicroserviceProjectArchetypeStep() {
-        setArchetypeArtifactId("spring-boot-ribbon-archetype");
+        setArchetypeArtifactId("spring-boot-webmvc-archetype");
     }
 }
