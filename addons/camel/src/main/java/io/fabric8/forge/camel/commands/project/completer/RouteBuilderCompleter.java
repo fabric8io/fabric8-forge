@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.apache.camel.builder.RouteBuilder;
 import org.jboss.forge.addon.parser.java.facets.JavaSourceFacet;
 import org.jboss.forge.addon.parser.java.resources.JavaResource;
 import org.jboss.forge.addon.parser.java.resources.JavaResourceVisitor;
@@ -44,7 +43,7 @@ public class RouteBuilderCompleter implements UICompleter<String> {
                 try {
                     JavaClass clazz = javaResource.getJavaType();
                     String superType = clazz.getSuperType();
-                    if (superType != null && RouteBuilder.class.getName().equals(superType)) {
+                    if (superType != null && isRouteBuilder(superType)) {
                         routeBuilders.add(clazz.getQualifiedName());
                         packages.add(clazz.getPackage());
                     }
@@ -53,6 +52,10 @@ public class RouteBuilderCompleter implements UICompleter<String> {
                 }
             }
         });
+    }
+
+    private boolean isRouteBuilder(String superType) {
+        return "org.apache.camel.builder.RouteBuilder".equals(superType) || "org.apache.camel.spring.boot.FatJarRouter".equals(superType);
     }
 
     public Set<String> getPackages() {

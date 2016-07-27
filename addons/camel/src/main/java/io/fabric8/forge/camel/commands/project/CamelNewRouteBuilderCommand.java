@@ -21,6 +21,7 @@ import io.fabric8.forge.addon.utils.completer.PackageNameCompleter;
 import io.fabric8.forge.addon.utils.validator.ClassNameValidator;
 import io.fabric8.forge.addon.utils.validator.PackageNameValidator;
 import io.fabric8.forge.camel.commands.project.completer.RouteBuilderCompleter;
+import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
 import org.jboss.forge.addon.dependencies.Dependency;
 import org.jboss.forge.addon.facets.constraints.FacetConstraint;
 import org.jboss.forge.addon.parser.java.facets.JavaSourceFacet;
@@ -111,6 +112,15 @@ public class CamelNewRouteBuilderCommand extends AbstractCamelProjectCommand {
         }
         javaClass.setSuperType("RouteBuilder");
         javaClass.addImport("org.apache.camel.builder.RouteBuilder");
+
+        boolean cdi = CamelCommandsHelper.isCdiProject(getSelectedProject(context));
+        boolean spring = CamelCommandsHelper.isSpringProject(getSelectedProject(context));
+
+        if (cdi) {
+            javaClass.addAnnotation("javax.inject.Singleton");
+        } else if (spring) {
+            javaClass.addAnnotation("org.springframework.stereotype.Component");
+        }
 
         javaClass.addMethod()
                 .setPublic()
