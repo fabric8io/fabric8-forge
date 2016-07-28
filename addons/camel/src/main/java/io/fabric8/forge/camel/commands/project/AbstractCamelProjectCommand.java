@@ -377,7 +377,7 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
     protected void configureComponentName(Project project, final UISelectOne<ComponentDto> componentName, boolean consumerOnly, boolean producerOnly) throws Exception {
 
         // filter the list of components based on consumer and producer only
-        Iterable<ComponentDto> it = CamelCommandsHelper.createComponentDtoValues(project, getCamelCatalog(), null, false, consumerOnly, producerOnly).call();
+        Iterable<ComponentDto> it = CamelCommandsHelper.createComponentDtoValues(project, getCamelCatalog(), null, false, consumerOnly, producerOnly, false).call();
         final Map<String, ComponentDto> components = new LinkedHashMap<>();
         for (ComponentDto dto : it) {
             components.put(dto.getScheme(), dto);

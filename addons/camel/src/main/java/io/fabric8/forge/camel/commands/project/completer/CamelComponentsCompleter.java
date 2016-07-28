@@ -46,11 +46,12 @@ public class CamelComponentsCompleter implements UICompleter<ComponentDto> {
     private final boolean includeCatalogComponents;
     private final boolean consumerOnly;
     private final boolean producerOnly;
+    private final boolean mustHaveOptions;
     private final Dependency core;
 
     public CamelComponentsCompleter(Project project, CamelCatalog camelCatalog, UIInput<String> filter,
                                     boolean excludeComponentsOnClasspath, boolean includeCatalogComponents,
-                                    boolean consumerOnly, boolean producerOnly) {
+                                    boolean consumerOnly, boolean producerOnly, boolean mustHasOptions) {
         this.project = project;
         this.camelCatalog = camelCatalog;
         this.filter = filter;
@@ -58,6 +59,7 @@ public class CamelComponentsCompleter implements UICompleter<ComponentDto> {
         this.includeCatalogComponents = includeCatalogComponents;
         this.consumerOnly = consumerOnly;
         this.producerOnly = producerOnly;
+        this.mustHaveOptions = mustHasOptions;
 
         // need to find camel-core so we known the camel version
         core = CamelProjectHelper.findCamelCoreDependency(project);
@@ -84,6 +86,9 @@ public class CamelComponentsCompleter implements UICompleter<ComponentDto> {
         }
         if (producerOnly) {
             filtered = filterByProducerOnly(filtered);
+        }
+        if (mustHaveOptions) {
+            filtered = filterByMustHaveOptions(filtered);
         }
 
         filtered = filterByName(filtered);
@@ -116,6 +121,9 @@ public class CamelComponentsCompleter implements UICompleter<ComponentDto> {
         if (producerOnly) {
             names = filterByProducerOnly(names);
         }
+        if (mustHaveOptions) {
+            names = filterByMustHaveOptions(names);
+        }
 
         List<ComponentDto> answer = new ArrayList<>();
         for (String filter : names) {
@@ -143,6 +151,9 @@ public class CamelComponentsCompleter implements UICompleter<ComponentDto> {
         }
         if (producerOnly) {
             names = filterByProducerOnly(names);
+        }
+        if (mustHaveOptions) {
+            names = filterByMustHaveOptions(names);
         }
 
         return names;
@@ -205,6 +216,21 @@ public class CamelComponentsCompleter implements UICompleter<ComponentDto> {
                 continue;
             }
             answer.add(name);
+        }
+
+        return answer;
+    }
+
+    private List<String> filterByMustHaveOptions(List<String> choices) {
+        List<String> answer = new ArrayList<String>();
+
+        for (String name : choices) {
+            String json = camelCatalog.componentJSonSchema(name);
+            // must have at least one component option
+            List<Map<String, String>> data = JSonSchemaHelper.parseJsonSchema("componentProperties", json, true);
+            if (!data.isEmpty()) {
+                answer.add(name);
+            }
         }
 
         return answer;

@@ -96,8 +96,7 @@ public class CamelEditComponentCommand extends AbstractCamelProjectCommand imple
         attributeMap.remove("navigationResult");
 
         // find all components in project (and filter out components without options)
-        // TODO: filter out components that cannot be configured (no options)
-        Iterable<ComponentDto> it = CamelCommandsHelper.createComponentDtoValues(project, getCamelCatalog(), null, false).call();
+        Iterable<ComponentDto> it = CamelCommandsHelper.createComponentDtoValues(project, getCamelCatalog(), null, false, false, false, true).call();
         componentName.setValueChoices(it);
 
         builder.add(componentName);

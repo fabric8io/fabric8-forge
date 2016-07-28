@@ -75,7 +75,7 @@ public final class CamelCommandsHelper {
             @Override
             public Iterable<ComponentDto> call() throws Exception {
                 String label = componentCategoryFilter.getValue();
-                return new CamelComponentsCompleter(project, camelCatalog, null, excludeComponentsOnClasspath, true, false, false).getValueChoices(label);
+                return new CamelComponentsCompleter(project, camelCatalog, null, excludeComponentsOnClasspath, true, false, false, false).getValueChoices(label);
             }
         };
     }
@@ -88,7 +88,7 @@ public final class CamelCommandsHelper {
             @Override
             public Iterable<ComponentDto> call() throws Exception {
                 String label = componentCategoryFilter != null ? componentCategoryFilter.getValue() : null;
-                return new CamelComponentsCompleter(project, camelCatalog, null, excludeComponentsOnClasspath, false, false, false).getValueChoices(label);
+                return new CamelComponentsCompleter(project, camelCatalog, null, excludeComponentsOnClasspath, false, false, false, false).getValueChoices(label);
             }
         };
     }
@@ -96,13 +96,14 @@ public final class CamelCommandsHelper {
     public static Callable<Iterable<ComponentDto>> createComponentDtoValues(final Project project, final CamelCatalog camelCatalog,
                                                                             final UISelectOne<String> componentCategoryFilter,
                                                                             final boolean excludeComponentsOnClasspath,
-                                                                            final boolean consumerOnly, final boolean producerOnly) {
+                                                                            final boolean consumerOnly, final boolean producerOnly,
+                                                                            final boolean mustHaveOptions) {
         // use callable so we can live update the filter
         return new Callable<Iterable<ComponentDto>>() {
             @Override
             public Iterable<ComponentDto> call() throws Exception {
                 String label = componentCategoryFilter != null ? componentCategoryFilter.getValue() : null;
-                return new CamelComponentsCompleter(project, camelCatalog, null, excludeComponentsOnClasspath, false, consumerOnly, producerOnly).getValueChoices(label);
+                return new CamelComponentsCompleter(project, camelCatalog, null, excludeComponentsOnClasspath, false, consumerOnly, producerOnly, mustHaveOptions).getValueChoices(label);
             }
         };
     }
