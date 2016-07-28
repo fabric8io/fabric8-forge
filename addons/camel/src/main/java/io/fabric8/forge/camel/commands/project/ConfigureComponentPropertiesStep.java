@@ -23,6 +23,7 @@ import java.util.Set;
 
 import io.fabric8.forge.addon.utils.CamelProjectHelper;
 import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
+import io.fabric8.forge.camel.commands.project.helper.PoorMansLogger;
 import io.fabric8.forge.camel.commands.project.model.CamelComponentDetails;
 import org.apache.camel.catalog.CamelCatalog;
 import org.jboss.forge.addon.dependencies.Dependency;
@@ -55,6 +56,8 @@ import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper
 
 public class ConfigureComponentPropertiesStep extends AbstractCamelProjectCommand implements UIWizardStep {
 
+    private static final PoorMansLogger LOG = new PoorMansLogger(true);
+
     private final DependencyInstaller dependencyInstaller;
     private final CamelCatalog camelCatalog;
 
@@ -65,6 +68,8 @@ public class ConfigureComponentPropertiesStep extends AbstractCamelProjectComman
     private final boolean last;
     private final int index;
     private final int total;
+
+    // TODO: add support for spring boot application.yaml/properties
 
     public ConfigureComponentPropertiesStep(ProjectFactory projectFactory,
                                             DependencyInstaller dependencyInstaller,
@@ -124,13 +129,20 @@ public class ConfigureComponentPropertiesStep extends AbstractCamelProjectComman
     public Result execute(UIExecutionContext context) throws Exception {
         // only execute if we are last
         if (last) {
-            return doExecute(context);
+            Map<Object, Object> attributeMap = context.getUIContext().getAttributeMap();
+            String kind = mandatoryAttributeValue(attributeMap, "kind");
+
+            if ("springboot".equals(kind)) {
+                return doExecuteSpringBoot(context);
+            } else {
+                return doExecuteJava(context);
+            }
         } else {
             return null;
         }
     }
 
-    private Result doExecute(UIExecutionContext context) throws Exception {
+    private Result doExecuteJava(UIExecutionContext context) throws Exception {
         Map<Object, Object> attributeMap = context.getUIContext().getAttributeMap();
         try {
             String camelComponentName = mandatoryAttributeValue(attributeMap, "componentName");
@@ -257,6 +269,67 @@ public class ConfigureComponentPropertiesStep extends AbstractCamelProjectComman
             }
 
             return Results.success("Created new class " + generateClassName);
+
+        } catch (Exception e) {
+            return Results.fail(e.getMessage());
+        }
+    }
+
+    private Result doExecuteSpringBoot(UIExecutionContext context) throws Exception {
+        Map<Object, Object> attributeMap = context.getUIContext().getAttributeMap();
+        try {
+            String camelComponentName = mandatoryAttributeValue(attributeMap, "componentName");
+
+            Project project = getSelectedProject(context);
+            JavaSourceFacet facet = project.getFacet(JavaSourceFacet.class);
+
+            // does the project already have camel?
+            Dependency core = CamelProjectHelper.findCamelCoreDependency(project);
+            if (core == null) {
+                return Results.fail("The project does not include camel-core");
+            }
+
+            // collect all the options that was set
+            Map<String, Object> options = new LinkedHashMap<>();
+            for (InputComponent input : allInputs) {
+                String key = input.getName();
+                // only use the value if a value was set (and the value is not the same as the default value)
+                if (input.hasValue()) {
+                    Object value = input.getValue();
+                    String text = input.getValue().toString();
+                    if (text != null) {
+                        boolean matchDefault = isDefaultValueComponent(camelCatalog, camelComponentName, key, text);
+                        if ("none".equals(text)) {
+                            // special for enum that may have a none as dummy placeholder which we should not add
+                            boolean nonePlaceholder = isNonePlaceholderEnumValueComponent(camelCatalog, camelComponentName, key);
+                            if (!matchDefault && !nonePlaceholder) {
+                                options.put(key, value);
+                            }
+                        } else if (!matchDefault) {
+                            options.put(key, value);
+                        }
+                    }
+                } else if (input.isRequired() && input.hasDefaultValue()) {
+                    // if its required then we need to grab the value
+                    Object value = input.getValue();
+                    if (value != null) {
+                        options.put(key, value);
+                    }
+                }
+            }
+
+            StringBuilder buffer = new StringBuilder();
+            for (Map.Entry<String, Object> option : options.entrySet()) {
+                String key = option.getKey();
+                Object value = option.getValue();
+
+                String prefix = "camel.component." + camelComponentName;
+                String line = prefix + "." + key + "=" + value;
+
+                LOG.info(line);
+            }
+
+            return Results.success("Edited Camel component " + camelComponentName);
 
         } catch (Exception e) {
             return Results.fail(e.getMessage());
