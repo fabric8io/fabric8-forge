@@ -128,7 +128,12 @@ public class CamelNewRouteBuilderCommand extends AbstractCamelProjectCommand {
                 .setName("configure")
                 .addThrows(Exception.class).setBody("");
 
-        facet.saveJavaSource(javaClass);
+        JavaResource javaResource = facet.saveJavaSource(javaClass);
+
+        // if we are in an GUI editor then open the file
+        if (isRunningInGui(context.getUIContext())) {
+            context.getUIContext().setSelection(javaResource);
+        }
 
         return Results.success("Created new RouteBuilder class " + name.getValue());
     }

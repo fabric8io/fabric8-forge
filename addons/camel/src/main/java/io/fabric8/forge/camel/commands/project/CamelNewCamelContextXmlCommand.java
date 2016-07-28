@@ -191,6 +191,11 @@ public class CamelNewCamelContextXmlCommand extends AbstractCamelProjectCommand 
         fileResource.createNewFile();
         fileResource.setContents(output);
 
+        // if we are in an GUI editor then open the file
+        if (isRunningInGui(context.getUIContext())) {
+            context.getUIContext().setSelection(fileResource);
+        }
+
         return Results.success("Created new XML file " + fullName);
     }
 

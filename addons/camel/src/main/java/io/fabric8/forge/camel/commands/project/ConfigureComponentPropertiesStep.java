@@ -249,7 +249,13 @@ public class ConfigureComponentPropertiesStep extends AbstractCamelProjectComman
                 CamelCommandsHelper.createJavaComponentFactoryClass(javaClass, details, camelComponentName, componentInstanceName, configurationCode, extraJavaImports);
             }
 
-            facet.saveJavaSource(javaClass);
+            JavaResource javaResource = facet.saveJavaSource(javaClass);
+
+            // if we are in an GUI editor then open the file
+            if (isRunningInGui(context.getUIContext())) {
+                context.getUIContext().setSelection(javaResource);
+            }
+
             return Results.success("Created new class " + generateClassName);
 
         } catch (Exception e) {
