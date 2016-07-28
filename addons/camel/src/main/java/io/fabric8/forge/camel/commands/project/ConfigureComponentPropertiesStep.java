@@ -15,6 +15,8 @@
  */
 package io.fabric8.forge.camel.commands.project;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -24,6 +26,7 @@ import java.util.Set;
 import io.fabric8.forge.addon.utils.CamelProjectHelper;
 import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
 import io.fabric8.forge.camel.commands.project.helper.PoorMansLogger;
+import io.fabric8.forge.camel.commands.project.helper.StringHelper;
 import io.fabric8.forge.camel.commands.project.model.CamelComponentDetails;
 import org.apache.camel.catalog.CamelCatalog;
 import org.jboss.forge.addon.dependencies.Dependency;
@@ -32,6 +35,8 @@ import org.jboss.forge.addon.parser.java.resources.JavaResource;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.ProjectFactory;
 import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
+import org.jboss.forge.addon.projects.facets.ResourcesFacet;
+import org.jboss.forge.addon.resource.FileResource;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
@@ -281,7 +286,7 @@ public class ConfigureComponentPropertiesStep extends AbstractCamelProjectComman
             String camelComponentName = mandatoryAttributeValue(attributeMap, "componentName");
 
             Project project = getSelectedProject(context);
-            JavaSourceFacet facet = project.getFacet(JavaSourceFacet.class);
+            ResourcesFacet facet = getSelectedProject(context).getFacet(ResourcesFacet.class);
 
             // does the project already have camel?
             Dependency core = CamelProjectHelper.findCamelCoreDependency(project);
@@ -322,29 +327,63 @@ public class ConfigureComponentPropertiesStep extends AbstractCamelProjectComman
 
             // load content of file (properties or yaml)
 
+            boolean yaml = applicationFile.endsWith(".yaml") || applicationFile.endsWith(".yml");
+            boolean properties = applicationFile.endsWith(".properties");
 
-            StringBuilder buffer = new StringBuilder();
-            for (Map.Entry<String, Object> option : options.entrySet()) {
-                String key = option.getKey();
-                Object value = option.getValue();
+            if (properties) {
+                // and do a search/replace or insert
+                FileResource fr = facet.getResource(applicationFile);
+                String data = fr.getContents();
 
-                // TODO: if lookup option then add # as prefix if missing
+                String[] rows = data.split("\n");
+                List<String> lines = new ArrayList<>();
+                Collections.addAll(lines, rows);
 
-                String prefix = "camel.component." + camelComponentName;
-                String line = prefix + "." + key + "=" + value;
+                for (Map.Entry<String, Object> option : options.entrySet()) {
+                    String key = option.getKey();
+                    String key2 = StringHelper.camelCaseToDash(key);
+                    Object value = option.getValue();
+                    String prefix = "camel.component." + camelComponentName;
 
-                LOG.info(line);
+                    final String line = prefix + "." + key + "=" + value;
+                    final String line2 = prefix + "." + key2 + "=" + value;
+                    LOG.info(line2);
 
-                buffer.append(line).append("\n");
+                    if (!replace(lines, key, line) && !replace(lines, key2, line2)) {
+                        // did not replace any existing so append using the dash style
+                        lines.add(line2);
+                    }
+                }
+
+                // store back
+                StringBuilder sb = new StringBuilder();
+                for (String line : lines) {
+                    sb.append(line).append("\n");
+                }
+                data = sb.toString();
+                fr.setContents(data);
+
+            } else {
+
+                // TODO: support yaml
             }
-
-
 
             return Results.success("Edited Camel component " + camelComponentName);
 
         } catch (Exception e) {
             return Results.fail(e.getMessage());
         }
+    }
+
+    private static boolean replace(List<String> lines, String key, String replace) {
+        for (int i = 0; i < lines.size(); i++) {
+            String line = lines.get(i);
+            if (line.startsWith(key)) {
+                lines.set(i, replace);
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

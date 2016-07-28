@@ -29,6 +29,7 @@ import io.fabric8.forge.camel.commands.project.completer.SpringBootConfiguration
 import io.fabric8.forge.camel.commands.project.dto.ComponentDto;
 import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
 import io.fabric8.forge.camel.commands.project.helper.PoorMansLogger;
+import io.fabric8.forge.camel.commands.project.helper.StringHelper;
 import io.fabric8.forge.camel.commands.project.model.InputOptionByGroup;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
@@ -166,7 +167,7 @@ public class CamelEditComponentCommand extends AbstractCamelProjectCommand imple
                     String value = prop.getProperty(key);
 
                     // the key must be without dash and in camelCase
-                    key = dashToCamelCase(key);
+                    key = StringHelper.dashToCamelCase(key);
 
                     if (key.startsWith(prefix)) {
                         key = key.substring(prefix.length());
@@ -212,22 +213,4 @@ public class CamelEditComponentCommand extends AbstractCamelProjectCommand imple
         return null;
     }
 
-    public static String dashToCamelCase(String value) {
-        StringBuilder sb = new StringBuilder(value.length());
-        boolean upper = false;
-
-        for (char c : value.toCharArray()) {
-            if (c == '-') {
-                upper = true;
-                continue;
-            }
-            if (upper) {
-                sb.append(Character.toUpperCase(c));
-            } else {
-                sb.append(c);
-            }
-            upper = false;
-        }
-        return sb.toString();
-    }
 }
