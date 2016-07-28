@@ -37,6 +37,10 @@ public class CamelProjectHelper {
         return findCamelArtifactDependency(project, "camel-spring");
     }
 
+    public static Dependency findCamelSpringBootDependency(Project project) {
+        return findCamelArtifactDependency(project, "camel-spring-boot");
+    }
+
     public static Dependency findCamelCDIDependency(Project project) {
         return findCamelArtifactDependency(project, "camel-cdi");
     }

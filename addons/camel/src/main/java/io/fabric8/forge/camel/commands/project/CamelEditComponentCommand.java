@@ -53,6 +53,8 @@ import org.jboss.forge.addon.ui.util.Metadata;
 import org.jboss.forge.addon.ui.wizard.UIWizard;
 
 import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.createUIInputsForCamelComponent;
+import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.isSpringBootProject;
+import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.isSpringProject;
 import static io.fabric8.forge.camel.commands.project.helper.CollectionHelper.first;
 
 public class CamelEditComponentCommand extends AbstractCamelProjectCommand implements UIWizard {
@@ -82,8 +84,9 @@ public class CamelEditComponentCommand extends AbstractCamelProjectCommand imple
     public boolean isEnabled(UIContext context) {
         boolean answer = super.isEnabled(context);
         if (answer) {
-            // TODO: require Spring Boot currently
-
+            // must be spring boot project
+            Project project = getSelectedProject(context);
+            answer = isSpringBootProject(project);
         }
         return answer;
     }

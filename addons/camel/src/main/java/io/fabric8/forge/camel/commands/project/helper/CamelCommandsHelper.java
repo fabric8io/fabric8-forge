@@ -185,6 +185,10 @@ public final class CamelCommandsHelper {
         return CamelProjectHelper.findCamelSpringDependency(project) != null;
     }
 
+    public static boolean isSpringBootProject(Project project) {
+        return CamelProjectHelper.findCamelSpringBootDependency(project) != null;
+    }
+
     public static boolean isBlueprintProject(Project project) {
         return CamelProjectHelper.findCamelBlueprintDependency(project) != null;
     }
