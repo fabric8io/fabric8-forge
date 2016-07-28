@@ -84,4 +84,41 @@ public final class StringHelper {
         return s;
     }
 
+    public static String camelCaseToDash(String value) {
+        StringBuilder sb = new StringBuilder(value.length());
+        boolean dash = false;
+
+        for (char c : value.toCharArray()) {
+            if (Character.isUpperCase(c)) {
+                dash = true;
+            }
+            if (dash) {
+                sb.append('-');
+                sb.append(Character.toLowerCase(c));
+            } else {
+                sb.append(c);
+            }
+            dash = false;
+        }
+        return sb.toString();
+    }
+
+    public static String dashToCamelCase(String value) {
+        StringBuilder sb = new StringBuilder(value.length());
+        boolean upper = false;
+
+        for (char c : value.toCharArray()) {
+            if (c == '-') {
+                upper = true;
+                continue;
+            }
+            if (upper) {
+                sb.append(Character.toUpperCase(c));
+            } else {
+                sb.append(c);
+            }
+            upper = false;
+        }
+        return sb.toString();
+    }
 }

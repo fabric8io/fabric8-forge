@@ -32,6 +32,7 @@ import io.fabric8.forge.addon.utils.CamelProjectHelper;
 import io.fabric8.forge.camel.commands.project.completer.CurrentLineCompleter;
 import io.fabric8.forge.camel.commands.project.completer.RouteBuilderCompleter;
 import io.fabric8.forge.camel.commands.project.completer.RouteBuilderEndpointsCompleter;
+import io.fabric8.forge.camel.commands.project.completer.SpringBootConfigurationFileCompleter;
 import io.fabric8.forge.camel.commands.project.completer.XmlEndpointsCompleter;
 import io.fabric8.forge.camel.commands.project.completer.XmlFileCompleter;
 import io.fabric8.forge.camel.commands.project.converter.NodeDtoConverter;
@@ -270,6 +271,15 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
         return createXmlFileCompleter(project, filter);
     }
 
+    protected SpringBootConfigurationFileCompleter createSpringBootConfigurationFileCompleter(UIContext context, Function<String, Boolean> filter) {
+        Project project = getSelectedProject(context);
+        ResourcesFacet resourcesFacet = null;
+        if (project.hasFacet(ResourcesFacet.class)) {
+            resourcesFacet = project.getFacet(ResourcesFacet.class);
+        }
+        return new SpringBootConfigurationFileCompleter(resourcesFacet, filter);
+    }
+
     protected CurrentLineCompleter createCurrentLineCompleter(int lineNumber, String file, UIContext context) throws Exception {
         Project project = getSelectedProject(context);
 
@@ -367,7 +377,7 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
     protected void configureComponentName(Project project, final UISelectOne<ComponentDto> componentName, boolean consumerOnly, boolean producerOnly) throws Exception {
 
         // filter the list of components based on consumer and producer only
-        Iterable<ComponentDto> it = CamelCommandsHelper.createComponentDtoValues(project, getCamelCatalog(), null, false, consumerOnly, producerOnly).call();
+        Iterable<ComponentDto> it = CamelCommandsHelper.createComponentDtoValues(project, getCamelCatalog(), null, false, consumerOnly, producerOnly, false).call();
         final Map<String, ComponentDto> components = new LinkedHashMap<>();
         for (ComponentDto dto : it) {
             components.put(dto.getScheme(), dto);

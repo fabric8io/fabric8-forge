@@ -15,6 +15,8 @@
  */
 package io.fabric8.forge.camel.commands.project;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -23,6 +25,8 @@ import java.util.Set;
 
 import io.fabric8.forge.addon.utils.CamelProjectHelper;
 import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
+import io.fabric8.forge.camel.commands.project.helper.PoorMansLogger;
+import io.fabric8.forge.camel.commands.project.helper.StringHelper;
 import io.fabric8.forge.camel.commands.project.model.CamelComponentDetails;
 import org.apache.camel.catalog.CamelCatalog;
 import org.jboss.forge.addon.dependencies.Dependency;
@@ -31,6 +35,8 @@ import org.jboss.forge.addon.parser.java.resources.JavaResource;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.ProjectFactory;
 import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
+import org.jboss.forge.addon.projects.facets.ResourcesFacet;
+import org.jboss.forge.addon.resource.FileResource;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
@@ -54,6 +60,8 @@ import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper
 import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.loadCamelComponentDetails;
 
 public class ConfigureComponentPropertiesStep extends AbstractCamelProjectCommand implements UIWizardStep {
+
+    private static final PoorMansLogger LOG = new PoorMansLogger(false);
 
     private final DependencyInstaller dependencyInstaller;
     private final CamelCatalog camelCatalog;
@@ -124,13 +132,20 @@ public class ConfigureComponentPropertiesStep extends AbstractCamelProjectComman
     public Result execute(UIExecutionContext context) throws Exception {
         // only execute if we are last
         if (last) {
-            return doExecute(context);
+            Map<Object, Object> attributeMap = context.getUIContext().getAttributeMap();
+            String kind = mandatoryAttributeValue(attributeMap, "kind");
+
+            if ("springboot".equals(kind)) {
+                return doExecuteSpringBoot(context);
+            } else {
+                return doExecuteJava(context);
+            }
         } else {
             return null;
         }
     }
 
-    private Result doExecute(UIExecutionContext context) throws Exception {
+    private Result doExecuteJava(UIExecutionContext context) throws Exception {
         Map<Object, Object> attributeMap = context.getUIContext().getAttributeMap();
         try {
             String camelComponentName = mandatoryAttributeValue(attributeMap, "componentName");
@@ -261,6 +276,122 @@ public class ConfigureComponentPropertiesStep extends AbstractCamelProjectComman
         } catch (Exception e) {
             return Results.fail(e.getMessage());
         }
+    }
+
+    private Result doExecuteSpringBoot(UIExecutionContext context) throws Exception {
+        Map<Object, Object> attributeMap = context.getUIContext().getAttributeMap();
+        try {
+            String camelComponentName = mandatoryAttributeValue(attributeMap, "componentName");
+
+            Project project = getSelectedProject(context);
+            ResourcesFacet facet = getSelectedProject(context).getFacet(ResourcesFacet.class);
+
+            // does the project already have camel?
+            Dependency core = CamelProjectHelper.findCamelCoreDependency(project);
+            if (core == null) {
+                return Results.fail("The project does not include camel-core");
+            }
+
+            // collect all the options that was set
+            Map<String, Object> options = new LinkedHashMap<>();
+            for (InputComponent input : allInputs) {
+                String key = input.getName();
+                // only use the value if a value was set (and the value is not the same as the default value)
+                if (input.hasValue()) {
+                    Object value = input.getValue();
+                    String text = input.getValue().toString();
+                    if (text != null) {
+                        boolean matchDefault = isDefaultValueComponent(camelCatalog, camelComponentName, key, text);
+                        if ("none".equals(text)) {
+                            // special for enum that may have a none as dummy placeholder which we should not add
+                            boolean nonePlaceholder = isNonePlaceholderEnumValueComponent(camelCatalog, camelComponentName, key);
+                            if (!matchDefault && !nonePlaceholder) {
+                                options.put(key, value);
+                            }
+                        } else if (!matchDefault) {
+                            options.put(key, value);
+                        }
+                    }
+                } else if (input.isRequired() && input.hasDefaultValue()) {
+                    // if its required then we need to grab the value
+                    Object value = input.getValue();
+                    if (value != null) {
+                        options.put(key, value);
+                    }
+                }
+            }
+
+            String applicationFile = mandatoryAttributeValue(attributeMap, "applicationFile");
+
+            // load content of file (properties or yaml)
+
+            boolean yaml = applicationFile.endsWith(".yaml") || applicationFile.endsWith(".yml");
+            boolean properties = applicationFile.endsWith(".properties");
+
+            FileResource fr = facet.getResource(applicationFile);
+            if (!fr.exists()) {
+                // create missing file
+                fr.createNewFile();
+            }
+
+            if (properties) {
+                // and do a search/replace or insert
+                String data = fr.getContents();
+                if (data == null) {
+                    data = "";
+                }
+
+                String[] rows = data.split("\n");
+                List<String> lines = new ArrayList<>();
+                Collections.addAll(lines, rows);
+
+                for (Map.Entry<String, Object> option : options.entrySet()) {
+                    String prefix = "camel.component." + camelComponentName + ".";
+                    String key = prefix + option.getKey();
+                    String key2 = prefix + StringHelper.camelCaseToDash(option.getKey());
+                    Object value = option.getValue();
+
+                    final String line = key + "=" + value;
+                    final String line2 = key2 + "=" + value;
+                    LOG.info(line2);
+
+                    if (!replace(lines, key, line) && !replace(lines, key2, line2)) {
+                        // did not replace any existing so append using the dash style
+                        LOG.info("Appending line: " + line2);
+                        lines.add(line2);
+                    }
+                }
+
+                // store back
+                StringBuilder sb = new StringBuilder();
+                for (String line : lines) {
+                    sb.append(line).append("\n");
+                }
+                data = sb.toString();
+                fr.setContents(data);
+
+            } else {
+
+                // TODO: support yaml
+            }
+
+            return Results.success("Edited Camel component " + camelComponentName);
+
+        } catch (Exception e) {
+            return Results.fail(e.getMessage());
+        }
+    }
+
+    private static boolean replace(List<String> lines, String key, String replace) {
+        for (int i = 0; i < lines.size(); i++) {
+            String line = lines.get(i);
+            if (line.startsWith(key)) {
+                lines.set(i, replace);
+                LOG.info("Replacing line at #" + i + " -> " + replace);
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

@@ -16,6 +16,7 @@
 package io.fabric8.forge.camel.commands.project;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -150,7 +151,7 @@ public class CamelNewComponentCommand extends AbstractCamelProjectCommand implem
 
         // we need to figure out how many options there is so we can as many steps we need
         UIContext ui = context.getUIContext();
-        List<InputOptionByGroup> groups = createUIInputsForCamelComponent(camelComponentName, MAX_OPTIONS,
+        List<InputOptionByGroup> groups = createUIInputsForCamelComponent(camelComponentName, Collections.EMPTY_MAP, MAX_OPTIONS,
                 getCamelCatalog(), componentFactory, converterFactory, ui);
 
         // need all inputs in a list as well

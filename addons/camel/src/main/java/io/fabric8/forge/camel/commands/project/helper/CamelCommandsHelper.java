@@ -75,7 +75,7 @@ public final class CamelCommandsHelper {
             @Override
             public Iterable<ComponentDto> call() throws Exception {
                 String label = componentCategoryFilter.getValue();
-                return new CamelComponentsCompleter(project, camelCatalog, null, excludeComponentsOnClasspath, true, false, false).getValueChoices(label);
+                return new CamelComponentsCompleter(project, camelCatalog, null, excludeComponentsOnClasspath, true, false, false, false).getValueChoices(label);
             }
         };
     }
@@ -88,7 +88,7 @@ public final class CamelCommandsHelper {
             @Override
             public Iterable<ComponentDto> call() throws Exception {
                 String label = componentCategoryFilter != null ? componentCategoryFilter.getValue() : null;
-                return new CamelComponentsCompleter(project, camelCatalog, null, excludeComponentsOnClasspath, false, false, false).getValueChoices(label);
+                return new CamelComponentsCompleter(project, camelCatalog, null, excludeComponentsOnClasspath, false, false, false, false).getValueChoices(label);
             }
         };
     }
@@ -96,13 +96,14 @@ public final class CamelCommandsHelper {
     public static Callable<Iterable<ComponentDto>> createComponentDtoValues(final Project project, final CamelCatalog camelCatalog,
                                                                             final UISelectOne<String> componentCategoryFilter,
                                                                             final boolean excludeComponentsOnClasspath,
-                                                                            final boolean consumerOnly, final boolean producerOnly) {
+                                                                            final boolean consumerOnly, final boolean producerOnly,
+                                                                            final boolean mustHaveOptions) {
         // use callable so we can live update the filter
         return new Callable<Iterable<ComponentDto>>() {
             @Override
             public Iterable<ComponentDto> call() throws Exception {
                 String label = componentCategoryFilter != null ? componentCategoryFilter.getValue() : null;
-                return new CamelComponentsCompleter(project, camelCatalog, null, excludeComponentsOnClasspath, false, consumerOnly, producerOnly).getValueChoices(label);
+                return new CamelComponentsCompleter(project, camelCatalog, null, excludeComponentsOnClasspath, false, consumerOnly, producerOnly, mustHaveOptions).getValueChoices(label);
             }
         };
     }
@@ -182,6 +183,10 @@ public final class CamelCommandsHelper {
 
     public static boolean isSpringProject(Project project) {
         return CamelProjectHelper.findCamelSpringDependency(project) != null;
+    }
+
+    public static boolean isSpringBootProject(Project project) {
+        return CamelProjectHelper.findCamelSpringBootDependency(project) != null;
     }
 
     public static boolean isBlueprintProject(Project project) {
@@ -396,24 +401,25 @@ public final class CamelCommandsHelper {
         return null;
     }
 
-    public static List<InputOptionByGroup> createUIInputsForCamelComponent(String camelComponentName, int maxOptionsPerPage,
+    public static List<InputOptionByGroup> createUIInputsForCamelComponent(String camelComponentName, Map<String, String> currentValues, int maxOptionsPerPage,
                                                                           CamelCatalog camelCatalog, InputComponentFactory componentFactory, ConverterFactory converterFactory, UIContext ui) throws Exception {
-        return doCreateUIInputsForCamel(camelComponentName, null, maxOptionsPerPage, false, false, camelCatalog, componentFactory, converterFactory, ui, false);
+        return doCreateUIInputsForCamel(camelComponentName, currentValues, maxOptionsPerPage, false, false, camelCatalog, componentFactory, converterFactory, ui, false);
     }
 
     public static List<InputOptionByGroup> createUIInputsForCamelEndpoint(String camelComponentName, String uri, int maxOptionsPerPage, boolean consumerOnly, boolean producerOnly,
                                                                           CamelCatalog camelCatalog, InputComponentFactory componentFactory, ConverterFactory converterFactory, UIContext ui) throws Exception {
-        return doCreateUIInputsForCamel(camelComponentName, uri, maxOptionsPerPage, consumerOnly, producerOnly, camelCatalog, componentFactory, converterFactory, ui, true);
-    }
-
-    private static List<InputOptionByGroup> doCreateUIInputsForCamel(String camelComponentName, String uri, int maxOptionsPerPage, boolean consumerOnly, boolean producerOnly,
-        CamelCatalog camelCatalog, InputComponentFactory componentFactory, ConverterFactory converterFactory, UIContext ui, boolean endpoint) throws Exception {
-
-        List<InputOptionByGroup> answer = new ArrayList<>();
 
         if (camelComponentName == null && uri != null) {
             camelComponentName = endpointComponentName(uri);
         }
+        Map<String, String> currentValues = uri != null ? camelCatalog.endpointProperties(uri) : Collections.EMPTY_MAP;
+        return doCreateUIInputsForCamel(camelComponentName, currentValues, maxOptionsPerPage, consumerOnly, producerOnly, camelCatalog, componentFactory, converterFactory, ui, true);
+    }
+
+    private static List<InputOptionByGroup> doCreateUIInputsForCamel(String camelComponentName, Map<String, String> currentValues, int maxOptionsPerPage, boolean consumerOnly, boolean producerOnly,
+        CamelCatalog camelCatalog, InputComponentFactory componentFactory, ConverterFactory converterFactory, UIContext ui, boolean endpoint) throws Exception {
+
+        List<InputOptionByGroup> answer = new ArrayList<>();
 
         String json = camelCatalog.componentJSonSchema(camelComponentName);
         if (json == null) {
@@ -436,8 +442,6 @@ public final class CamelCommandsHelper {
         } else {
             data = JSonSchemaHelper.parseJsonSchema("componentProperties", json, true);
         }
-
-        Map<String, String> currentValues = uri != null ? camelCatalog.endpointProperties(uri) : Collections.EMPTY_MAP;
 
         if (data != null) {
 
