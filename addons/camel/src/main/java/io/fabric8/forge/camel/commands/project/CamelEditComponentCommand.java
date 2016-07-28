@@ -1,32 +1,39 @@
 /**
- *  Copyright 2005-2015 Red Hat, Inc.
- *
- *  Red Hat licenses this file to you under the Apache License, version
- *  2.0 (the "License"); you may not use this file except in compliance
- *  with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
- *  implied.  See the License for the specific language governing
- *  permissions and limitations under the License.
+ * Copyright 2005-2015 Red Hat, Inc.
+ * <p/>
+ * Red Hat licenses this file to you under the Apache License, version
+ * 2.0 (the "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+ * implied.  See the License for the specific language governing
+ * permissions and limitations under the License.
  */
 package io.fabric8.forge.camel.commands.project;
 
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 import javax.inject.Inject;
 
+import io.fabric8.forge.camel.commands.project.completer.SpringBootConfigurationFileCompleter;
 import io.fabric8.forge.camel.commands.project.dto.ComponentDto;
 import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
 import io.fabric8.forge.camel.commands.project.helper.PoorMansLogger;
 import io.fabric8.forge.camel.commands.project.model.InputOptionByGroup;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
+import org.jboss.forge.addon.projects.facets.ResourcesFacet;
+import org.jboss.forge.addon.resource.FileResource;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
@@ -45,10 +52,11 @@ import org.jboss.forge.addon.ui.util.Metadata;
 import org.jboss.forge.addon.ui.wizard.UIWizard;
 
 import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper.createUIInputsForCamelComponent;
+import static io.fabric8.forge.camel.commands.project.helper.CollectionHelper.first;
 
 public class CamelEditComponentCommand extends AbstractCamelProjectCommand implements UIWizard {
 
-    private static final PoorMansLogger LOG = new PoorMansLogger(false);
+    private static final PoorMansLogger LOG = new PoorMansLogger(true);
 
     private static final int MAX_OPTIONS = 20;
 
@@ -130,6 +138,48 @@ public class CamelEditComponentCommand extends AbstractCamelProjectCommand imple
         // TODO: read the current values from spring-boot config file
         Map<String, String> currentValues = Collections.EMPTY_MAP;
 
+        SpringBootConfigurationFileCompleter xmlFileCompleter = createSpringBootConfigurationFileCompleter(context.getUIContext(), null);
+        Set<String> files = xmlFileCompleter.getFiles();
+        if (files.size() >= 1) {
+            String file = first(files);
+            attributeMap.put("applicationFile", file);
+
+            LOG.info("Application configuration file: " + file);
+
+            ResourcesFacet facet = getSelectedProject(context).getFacet(ResourcesFacet.class);
+            FileResource fr = facet.getResource(file);
+            String data = fr.getContents();
+
+            boolean yaml = file.endsWith(".yaml") || file.endsWith(".yml");
+            boolean properties = file.endsWith(".properties");
+            String prefix = "camel.component." + selectedComponent.getScheme() + ".";
+
+            if (yaml) {
+                // TODO: support parsing yaml
+
+            } else if (properties) {
+                Properties prop = new Properties();
+                prop.load(new StringReader(data));
+
+                currentValues = new LinkedHashMap<>();
+                for (String key : prop.stringPropertyNames()) {
+                    String value = prop.getProperty(key);
+
+                    // the key must be without dash and in camelCase
+                    key = dashToCamelCase(key);
+
+                    if (key.startsWith(prefix)) {
+                        key = key.substring(prefix.length());
+                        currentValues.put(key, value);
+                        LOG.info("Current value " + key + "=" + value);
+                    }
+                }
+            }
+        } else {
+            // need to create file manually
+
+        }
+
         UIContext ui = context.getUIContext();
         List<InputOptionByGroup> groups = createUIInputsForCamelComponent(selectedComponent.getScheme(), currentValues, MAX_OPTIONS,
                 getCamelCatalog(), componentFactory, converterFactory, ui);
@@ -162,4 +212,22 @@ public class CamelEditComponentCommand extends AbstractCamelProjectCommand imple
         return null;
     }
 
+    public static String dashToCamelCase(String value) {
+        StringBuilder sb = new StringBuilder(value.length());
+        boolean upper = false;
+
+        for (char c : value.toCharArray()) {
+            if (c == '-') {
+                upper = true;
+                continue;
+            }
+            if (upper) {
+                sb.append(Character.toUpperCase(c));
+            } else {
+                sb.append(c);
+            }
+            upper = false;
+        }
+        return sb.toString();
+    }
 }

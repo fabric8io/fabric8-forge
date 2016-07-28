@@ -32,6 +32,7 @@ import io.fabric8.forge.addon.utils.CamelProjectHelper;
 import io.fabric8.forge.camel.commands.project.completer.CurrentLineCompleter;
 import io.fabric8.forge.camel.commands.project.completer.RouteBuilderCompleter;
 import io.fabric8.forge.camel.commands.project.completer.RouteBuilderEndpointsCompleter;
+import io.fabric8.forge.camel.commands.project.completer.SpringBootConfigurationFileCompleter;
 import io.fabric8.forge.camel.commands.project.completer.XmlEndpointsCompleter;
 import io.fabric8.forge.camel.commands.project.completer.XmlFileCompleter;
 import io.fabric8.forge.camel.commands.project.converter.NodeDtoConverter;
@@ -268,6 +269,15 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
     protected XmlFileCompleter createXmlFileCompleter(UIContext context, Function<String, Boolean> filter) {
         Project project = getSelectedProject(context);
         return createXmlFileCompleter(project, filter);
+    }
+
+    protected SpringBootConfigurationFileCompleter createSpringBootConfigurationFileCompleter(UIContext context, Function<String, Boolean> filter) {
+        Project project = getSelectedProject(context);
+        ResourcesFacet resourcesFacet = null;
+        if (project.hasFacet(ResourcesFacet.class)) {
+            resourcesFacet = project.getFacet(ResourcesFacet.class);
+        }
+        return new SpringBootConfigurationFileCompleter(resourcesFacet, filter);
     }
 
     protected CurrentLineCompleter createCurrentLineCompleter(int lineNumber, String file, UIContext context) throws Exception {

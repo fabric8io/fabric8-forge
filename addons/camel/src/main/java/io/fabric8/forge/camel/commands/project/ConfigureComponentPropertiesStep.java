@@ -318,16 +318,27 @@ public class ConfigureComponentPropertiesStep extends AbstractCamelProjectComman
                 }
             }
 
+            String applicationFile = mandatoryAttributeValue(attributeMap, "applicationFile");
+
+            // load content of file (properties or yaml)
+
+
             StringBuilder buffer = new StringBuilder();
             for (Map.Entry<String, Object> option : options.entrySet()) {
                 String key = option.getKey();
                 Object value = option.getValue();
 
+                // TODO: if lookup option then add # as prefix if missing
+
                 String prefix = "camel.component." + camelComponentName;
                 String line = prefix + "." + key + "=" + value;
 
                 LOG.info(line);
+
+                buffer.append(line).append("\n");
             }
+
+
 
             return Results.success("Edited Camel component " + camelComponentName);
 
