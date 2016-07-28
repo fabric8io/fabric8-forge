@@ -61,7 +61,7 @@ import static io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper
 
 public class ConfigureComponentPropertiesStep extends AbstractCamelProjectCommand implements UIWizardStep {
 
-    private static final PoorMansLogger LOG = new PoorMansLogger(true);
+    private static final PoorMansLogger LOG = new PoorMansLogger(false);
 
     private final DependencyInstaller dependencyInstaller;
     private final CamelCatalog camelCatalog;
