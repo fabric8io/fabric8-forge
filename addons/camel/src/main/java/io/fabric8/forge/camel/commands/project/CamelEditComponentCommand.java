@@ -136,9 +136,9 @@ public class CamelEditComponentCommand extends AbstractCamelProjectCommand imple
         attributeMap.put("mode", "edit");
         attributeMap.put("kind", "springboot");
 
-        // TODO: read the current values from spring-boot config file
         Map<String, String> currentValues = Collections.EMPTY_MAP;
 
+        // read current values from spring-boot application configuration file
         SpringBootConfigurationFileCompleter xmlFileCompleter = createSpringBootConfigurationFileCompleter(context.getUIContext(), null);
         Set<String> files = xmlFileCompleter.getFiles();
         if (files.size() >= 1) {
@@ -177,8 +177,8 @@ public class CamelEditComponentCommand extends AbstractCamelProjectCommand imple
                 }
             }
         } else {
-            // need to create file manually
-
+            // no file so we create a file manually in the wizard
+            attributeMap.put("applicationFile", "application.properties");
         }
 
         UIContext ui = context.getUIContext();

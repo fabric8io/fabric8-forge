@@ -74,8 +74,6 @@ public class ConfigureComponentPropertiesStep extends AbstractCamelProjectComman
     private final int index;
     private final int total;
 
-    // TODO: add support for spring boot application.yaml/properties
-
     public ConfigureComponentPropertiesStep(ProjectFactory projectFactory,
                                             DependencyInstaller dependencyInstaller,
                                             CamelCatalog camelCatalog,
@@ -330,27 +328,36 @@ public class ConfigureComponentPropertiesStep extends AbstractCamelProjectComman
             boolean yaml = applicationFile.endsWith(".yaml") || applicationFile.endsWith(".yml");
             boolean properties = applicationFile.endsWith(".properties");
 
+            FileResource fr = facet.getResource(applicationFile);
+            if (!fr.exists()) {
+                // create missing file
+                fr.createNewFile();
+            }
+
             if (properties) {
                 // and do a search/replace or insert
-                FileResource fr = facet.getResource(applicationFile);
                 String data = fr.getContents();
+                if (data == null) {
+                    data = "";
+                }
 
                 String[] rows = data.split("\n");
                 List<String> lines = new ArrayList<>();
                 Collections.addAll(lines, rows);
 
                 for (Map.Entry<String, Object> option : options.entrySet()) {
-                    String key = option.getKey();
-                    String key2 = StringHelper.camelCaseToDash(key);
+                    String prefix = "camel.component." + camelComponentName + ".";
+                    String key = prefix + option.getKey();
+                    String key2 = prefix + StringHelper.camelCaseToDash(option.getKey());
                     Object value = option.getValue();
-                    String prefix = "camel.component." + camelComponentName;
 
-                    final String line = prefix + "." + key + "=" + value;
-                    final String line2 = prefix + "." + key2 + "=" + value;
+                    final String line = key + "=" + value;
+                    final String line2 = key2 + "=" + value;
                     LOG.info(line2);
 
                     if (!replace(lines, key, line) && !replace(lines, key2, line2)) {
                         // did not replace any existing so append using the dash style
+                        LOG.info("Appending line: " + line2);
                         lines.add(line2);
                     }
                 }
@@ -380,6 +387,7 @@ public class ConfigureComponentPropertiesStep extends AbstractCamelProjectComman
             String line = lines.get(i);
             if (line.startsWith(key)) {
                 lines.set(i, replace);
+                LOG.info("Replacing line at #" + i + " -> " + replace);
                 return true;
             }
         }
