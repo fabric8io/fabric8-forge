@@ -396,24 +396,25 @@ public final class CamelCommandsHelper {
         return null;
     }
 
-    public static List<InputOptionByGroup> createUIInputsForCamelComponent(String camelComponentName, int maxOptionsPerPage,
+    public static List<InputOptionByGroup> createUIInputsForCamelComponent(String camelComponentName, Map<String, String> currentValues, int maxOptionsPerPage,
                                                                           CamelCatalog camelCatalog, InputComponentFactory componentFactory, ConverterFactory converterFactory, UIContext ui) throws Exception {
-        return doCreateUIInputsForCamel(camelComponentName, null, maxOptionsPerPage, false, false, camelCatalog, componentFactory, converterFactory, ui, false);
+        return doCreateUIInputsForCamel(camelComponentName, currentValues, maxOptionsPerPage, false, false, camelCatalog, componentFactory, converterFactory, ui, false);
     }
 
     public static List<InputOptionByGroup> createUIInputsForCamelEndpoint(String camelComponentName, String uri, int maxOptionsPerPage, boolean consumerOnly, boolean producerOnly,
                                                                           CamelCatalog camelCatalog, InputComponentFactory componentFactory, ConverterFactory converterFactory, UIContext ui) throws Exception {
-        return doCreateUIInputsForCamel(camelComponentName, uri, maxOptionsPerPage, consumerOnly, producerOnly, camelCatalog, componentFactory, converterFactory, ui, true);
-    }
-
-    private static List<InputOptionByGroup> doCreateUIInputsForCamel(String camelComponentName, String uri, int maxOptionsPerPage, boolean consumerOnly, boolean producerOnly,
-        CamelCatalog camelCatalog, InputComponentFactory componentFactory, ConverterFactory converterFactory, UIContext ui, boolean endpoint) throws Exception {
-
-        List<InputOptionByGroup> answer = new ArrayList<>();
 
         if (camelComponentName == null && uri != null) {
             camelComponentName = endpointComponentName(uri);
         }
+        Map<String, String> currentValues = uri != null ? camelCatalog.endpointProperties(uri) : Collections.EMPTY_MAP;
+        return doCreateUIInputsForCamel(camelComponentName, currentValues, maxOptionsPerPage, consumerOnly, producerOnly, camelCatalog, componentFactory, converterFactory, ui, true);
+    }
+
+    private static List<InputOptionByGroup> doCreateUIInputsForCamel(String camelComponentName, Map<String, String> currentValues, int maxOptionsPerPage, boolean consumerOnly, boolean producerOnly,
+        CamelCatalog camelCatalog, InputComponentFactory componentFactory, ConverterFactory converterFactory, UIContext ui, boolean endpoint) throws Exception {
+
+        List<InputOptionByGroup> answer = new ArrayList<>();
 
         String json = camelCatalog.componentJSonSchema(camelComponentName);
         if (json == null) {
@@ -436,8 +437,6 @@ public final class CamelCommandsHelper {
         } else {
             data = JSonSchemaHelper.parseJsonSchema("componentProperties", json, true);
         }
-
-        Map<String, String> currentValues = uri != null ? camelCatalog.endpointProperties(uri) : Collections.EMPTY_MAP;
 
         if (data != null) {
 

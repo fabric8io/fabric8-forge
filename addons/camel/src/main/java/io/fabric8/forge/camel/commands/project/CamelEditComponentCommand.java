@@ -16,6 +16,7 @@
 package io.fabric8.forge.camel.commands.project;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
@@ -126,8 +127,11 @@ public class CamelEditComponentCommand extends AbstractCamelProjectCommand imple
         attributeMap.put("mode", "edit");
         attributeMap.put("kind", "springboot");
 
+        // TODO: read the current values from spring-boot config file
+        Map<String, String> currentValues = Collections.EMPTY_MAP;
+
         UIContext ui = context.getUIContext();
-        List<InputOptionByGroup> groups = createUIInputsForCamelComponent(selectedComponent.getScheme(), MAX_OPTIONS,
+        List<InputOptionByGroup> groups = createUIInputsForCamelComponent(selectedComponent.getScheme(), currentValues, MAX_OPTIONS,
                 getCamelCatalog(), componentFactory, converterFactory, ui);
 
         // need all inputs in a list as well
