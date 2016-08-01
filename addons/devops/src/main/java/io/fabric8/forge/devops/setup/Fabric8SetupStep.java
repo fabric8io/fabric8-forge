@@ -100,7 +100,7 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
     private String[] warImages = new String[]{DockerSetupHelper.DEFAULT_TOMCAT_IMAGE, DockerSetupHelper.DEFAULT_WILDFLY_IMAGE};
 
     @Inject
-    @WithAttributes(label = "Docker Image From", required = true, description = "The Docker image to use as base line")
+    @WithAttributes(label = "Docker Image From", required = false, description = "The Docker image to use as base line")
     private UIInput<String> from;
 
     @Inject
