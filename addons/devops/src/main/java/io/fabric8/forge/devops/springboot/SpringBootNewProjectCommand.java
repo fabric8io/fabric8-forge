@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,7 @@ import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
 import org.jboss.forge.addon.ui.context.UINavigationContext;
 import org.jboss.forge.addon.ui.input.UISelectMany;
+import org.jboss.forge.addon.ui.input.UISelectOne;
 import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
 import org.jboss.forge.addon.ui.metadata.WithAttributes;
 import org.jboss.forge.addon.ui.result.NavigationResult;
@@ -47,6 +49,8 @@ import org.jboss.forge.addon.ui.result.Results;
 import org.jboss.forge.addon.ui.util.Metadata;
 import org.jboss.forge.addon.ui.wizard.UIWizard;
 import org.jboss.forge.furnace.util.Strings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
 import static io.fabric8.forge.devops.springboot.IOHelper.close;
@@ -57,11 +61,21 @@ import static io.fabric8.utils.Files.recursiveDelete;
 
 public class SpringBootNewProjectCommand extends AbstractDevOpsCommand implements UIWizard {
 
+    private static final transient Logger LOG = LoggerFactory.getLogger(SpringBootNewProjectCommand.class);
+
+    // lets use 1.3.x which currently fabric8 works best with
+    private static final String SPRING_BOOT_DEFAULT_VERSION = "1.3.7";
+    private static final String[] SPRING_BOOT_VERSIONS = new String[]{"1.3.7", "1.4.0"};
+
     private static final String STARTER_URL = "https://start.spring.io/starter.zip";
 
     // fabric8 only dependencies which we should not pass on to start.spring.io
     private static final String[] fabric8Deps = new String[]{"spring-cloud-kubernetes", "kubeflix-ribbon-discovery",
             "kubeflix-turbine-discovery", "kubeflix-turbine-server", "camel-zipkin-starter"};
+
+    @Inject
+    @WithAttributes(label = "Spring Boot Version", required = true, description = "Spring Boot Version to use")
+    private UISelectOne<String> springBootVersion;
 
     private List<SpringBootDependencyDTO> choices;
 
@@ -79,6 +93,9 @@ public class SpringBootNewProjectCommand extends AbstractDevOpsCommand implement
 
     @Override
     public void initializeUI(UIBuilder builder) throws Exception {
+        springBootVersion.setValueChoices(Arrays.asList(SPRING_BOOT_VERSIONS));
+        springBootVersion.setDefaultValue(SPRING_BOOT_DEFAULT_VERSION);
+
         try {
             choices = initDependencies();
         } catch (Exception e) {
@@ -88,7 +105,7 @@ public class SpringBootNewProjectCommand extends AbstractDevOpsCommand implement
         dependencies.setValueChoices(choices);
         dependencies.setItemLabelConverter(SpringBootDependencyDTO::getGroupAndName);
 
-        builder.add(dependencies);
+        builder.add(springBootVersion).add(dependencies);
     }
 
     private List<SpringBootDependencyDTO> initDependencies() {
@@ -169,20 +186,21 @@ public class SpringBootNewProjectCommand extends AbstractDevOpsCommand implement
         }
         String springBootDeps = csbSpringBoot.toString();
         String fabric8Deps = csbFabric8.toString();
+        // boot version need the RELEASE suffix
+        String bootVersion = springBootVersion.getValue() + ".RELEASE";
 
-        String url = String.format("%s?groupId=%s&artifactId=%s&version=%s&packageName=%s&dependencies=%s", STARTER_URL, groupId, projectName, version, groupId, springBootDeps);
+        String url = String.format("%s?bootVersion=%s&groupId=%s&artifactId=%s&version=%s&packageName=%s&dependencies=%s",
+                STARTER_URL, bootVersion, groupId, projectName, version, groupId, springBootDeps);
 
-        System.out.println("About to query url: " + url);
+        LOG.info("About to query url: " + url);
 
         // use http client to call start.spring.io that creates the project
         OkHttpClient client = createOkHttpClient();
 
-        Request request = new Request.Builder()
-                .url(url).build();
+        Request request = new Request.Builder().url(url).build();
 
         Response response = client.newCall(request).execute();
         InputStream is = response.body().byteStream();
-
 
         // some archetypes might not use maven or use the maven source layout so lets remove
         // the pom.xml and src folder if its already been pre-created
@@ -208,7 +226,7 @@ public class SpringBootNewProjectCommand extends AbstractDevOpsCommand implement
         // unzip the download from spring starter
         unzip(name, folder);
 
-        System.out.println("Unzipped file to folder : " + folder.getAbsolutePath());
+        LOG.info("Unzipped file to folder: {}", folder.getAbsolutePath());
 
         // and delete the zip file
         name.delete();
