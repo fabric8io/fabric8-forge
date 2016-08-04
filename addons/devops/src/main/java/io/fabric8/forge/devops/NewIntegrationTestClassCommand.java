@@ -92,8 +92,13 @@ public class NewIntegrationTestClassCommand extends AbstractDevOpsCommand {
 
     @Override
     public boolean isEnabled(UIContext context) {
-        // must be fabric8 project
-        return isFabric8Project(getSelectedProjectOrNull(context));
+        // must be fabric8 and java project
+        boolean answer = isFabric8Project(getSelectedProjectOrNull(context));
+        if (answer) {
+            Project project = getCurrentSelectedProject(context);
+            answer = project.hasFacet(JavaSourceFacet.class);
+        }
+        return answer;
     }
 
     @Override
