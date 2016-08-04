@@ -168,14 +168,14 @@ public abstract class AbstractDevOpsCommand extends AbstractProjectCommand imple
         UISelection<Object> selection = context.getSelection();
         Object selectedObject = selection.get();
         try {
-            LOG.info("START getCurrentSelectedProject: on " + getProjectFactory() + " selection: " + selectedObject + ". This may result in mvn artifacts being downloaded to ~/.m2/repository");
+            LOG.debug("START getCurrentSelectedProject: on " + getProjectFactory() + " selection: " + selectedObject + ". This may result in mvn artifacts being downloaded to ~/.m2/repository");
             project = Projects.getSelectedProject(getProjectFactory(), context);
             if (project != null && attributeMap != null) {
                 attributeMap.put(Project.class, project);
             }
             return project;
         } finally {
-            LOG.info("END   getCurrentSelectedProject: on " + getProjectFactory() + " selection: " + selectedObject);
+            LOG.debug("END   getCurrentSelectedProject: on " + getProjectFactory() + " selection: " + selectedObject);
         }
     }
 

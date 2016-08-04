@@ -92,8 +92,13 @@ public class NewIntegrationTestClassCommand extends AbstractDevOpsCommand {
 
     @Override
     public boolean isEnabled(UIContext context) {
-        // must be fabric8 project
-        return isFabric8Project(getSelectedProjectOrNull(context));
+        // must be fabric8 and java project
+        boolean answer = isFabric8Project(getSelectedProjectOrNull(context));
+        if (answer) {
+            Project project = getCurrentSelectedProject(context);
+            answer = project.hasFacet(JavaSourceFacet.class);
+        }
+        return answer;
     }
 
     @Override
@@ -109,9 +114,10 @@ public class NewIntegrationTestClassCommand extends AbstractDevOpsCommand {
         super.initializeUI(builder);
 
         Project project = getCurrentSelectedProject(builder.getUIContext());
-        JavaSourceFacet facet = project.getFacet(JavaSourceFacet.class);
-
-        targetPackage.setCompleter(new TestPackageNameCompleter(facet));
+        if (project.hasFacet(JavaSourceFacet.class)) {
+            JavaSourceFacet facet = project.getFacet(JavaSourceFacet.class);
+            targetPackage.setCompleter(new TestPackageNameCompleter(facet));
+        }
         targetPackage.addValidator(new PackageNameValidator());
         targetPackage.setDefaultValue("io.fabric8.itests");
 
@@ -183,52 +189,56 @@ public class NewIntegrationTestClassCommand extends AbstractDevOpsCommand {
             }
         }
 
-        JavaSourceFacet facet = project.getFacet(JavaSourceFacet.class);
+        if (project.hasFacet(JavaSourceFacet.class)) {
+            JavaSourceFacet facet = project.getFacet(JavaSourceFacet.class);
 
-        String generatePackageName = targetPackage.getValue();
-        String generateClassName = className.getValue();
+            String generatePackageName = targetPackage.getValue();
+            String generateClassName = className.getValue();
 
-        JavaClassSource javaClass = Roaster.create(JavaClassSource.class);
-        javaClass.setName(generateClassName);
-        if (Strings.isNotBlank(generatePackageName)) {
-            javaClass.setPackage(generatePackageName);
-            generateClassName = generatePackageName + "." + generateClassName;
+            JavaClassSource javaClass = Roaster.create(JavaClassSource.class);
+            javaClass.setName(generateClassName);
+            if (Strings.isNotBlank(generatePackageName)) {
+                javaClass.setPackage(generatePackageName);
+                generateClassName = generatePackageName + "." + generateClassName;
+            }
+            javaClass.addImport("io.fabric8.kubernetes.client.KubernetesClient");
+            javaClass.addImport("org.jboss.arquillian.junit.Arquillian");
+            javaClass.addImport("org.jboss.arquillian.test.api.ArquillianResource");
+            javaClass.addImport("org.junit.Test");
+            javaClass.addImport("org.junit.runner.RunWith");
+            javaClass.addImport("io.fabric8.kubernetes.assertions.Assertions.assertThat").setStatic(true);
+
+            javaClass.addAnnotation("RunWith").setLiteralValue("Arquillian.class");
+
+            javaClass.getJavaDoc().setText("Tests that the Kubernetes resources\n" +
+                    "* (Services, Replication Controllers and Pods)\n" +
+                    "* can be provisioned and start up correctly.\n" +
+                    "* \n" +
+                    "* This test creates a new Kubernetes Namespace for the duration of the test.\n" +
+                    "* For more information see: http://fabric8.io/guide/testing.html");
+
+            javaClass.addField().
+                    setProtected().
+                    setType("KubernetesClient").
+                    setName("kubernetes").
+                    addAnnotation("ArquillianResource");
+
+            String testBody = "assertThat(kubernetes).deployments().pods().isPodReadyForPeriod();\n";
+
+            javaClass.addMethod().
+                    setPublic().
+                    setReturnTypeVoid().
+                    setName("testRunningPodStaysUp").
+                    setBody(testBody).
+                    addThrows("Exception").
+                    addAnnotation("Test");
+
+            facet.saveTestJavaSource(javaClass);
+
+            return Results.success("Created Integration Test class: " + generateClassName);
+        } else {
+            return Results.fail("Project is not Java project. Cannot create integration test");
         }
-        javaClass.addImport("io.fabric8.kubernetes.client.KubernetesClient");
-        javaClass.addImport("org.jboss.arquillian.junit.Arquillian");
-        javaClass.addImport("org.jboss.arquillian.test.api.ArquillianResource");
-        javaClass.addImport("org.junit.Test");
-        javaClass.addImport("org.junit.runner.RunWith");
-        javaClass.addImport("io.fabric8.kubernetes.assertions.Assertions.assertThat").setStatic(true);
-
-        javaClass.addAnnotation("RunWith").setLiteralValue("Arquillian.class");
-
-        javaClass.getJavaDoc().setText("Tests that the Kubernetes resources\n" +
-                "* (Services, Replication Controllers and Pods)\n" +
-                "* can be provisioned and start up correctly.\n" +
-                "* \n" +
-                "* This test creates a new Kubernetes Namespace for the duration of the test.\n" +
-                "* For more information see: http://fabric8.io/guide/testing.html" );
-
-        javaClass.addField().
-                setProtected().
-                setType("KubernetesClient").
-                setName("kubernetes").
-                addAnnotation("ArquillianResource");
-
-        String testBody = "assertThat(kubernetes).deployments().pods().isPodReadyForPeriod();\n";
-
-        javaClass.addMethod().
-                setPublic().
-                setReturnTypeVoid().
-                setName("testRunningPodStaysUp").
-                setBody(testBody).
-                addThrows("Exception").
-                addAnnotation("Test");
-
-        facet.saveTestJavaSource(javaClass);
-
-        return Results.success("Created Integration Test class: " + generateClassName);
     }
 
 }
