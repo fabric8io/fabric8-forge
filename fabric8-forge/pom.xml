@@ -48,6 +48,12 @@
         <version>1.1.11.Final</version>
         <scope>test</scope>
       </dependency>
+      <dependency>
+        <groupId>org.jboss.shrinkwrap.resolver</groupId>
+        <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
+        <version>2.2.1</version>
+        <scope>test</scope>
+      </dependency>
     </dependencies>
   </dependencyManagement>
   <dependencies>
@@ -177,6 +183,11 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>org.jboss.shrinkwrap.resolver</groupId>
+      <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>io.fabric8</groupId>
       <artifactId>fabric8-arquillian</artifactId>
       <scope>test</scope>
@@ -186,6 +197,8 @@
       <artifactId>arquillian-junit-container</artifactId>
       <scope>test</scope>
     </dependency>
+    
+    
   </dependencies>
   <build>
     <resources>
@@ -262,26 +275,18 @@
         <groupId>io.fabric8</groupId>
         <artifactId>fabric8-maven-plugin</artifactId>
         <version>${fabric8.version}</version>
-        <executions>
-          <execution>
-            <id>json</id>
-            <phase>generate-resources</phase>
-            <goals>
-              <goal>json</goal>
-            </goals>
-          </execution>
-          <execution>
-            <id>attach</id>
-            <phase>package</phase>
-            <goals>
-              <goal>attach</goal>
-            </goals>
-          </execution>
-        </executions>
         <configuration>
-          <replaceReadmeLinksPrefix>/apps/</replaceReadmeLinksPrefix>
+          <images>
+            <image>
+              <name>${project.artifactId}:${project.version}</name>
+              <build>
+                <from>docker.io/fabric8/jetty-9:1.1.5</from>
+              </build>
+            </image>
+          </images>
         </configuration>
       </plugin>
+      
     </plugins>
   </build>
   <profiles>
@@ -403,6 +408,23 @@
       <properties>
         <fabric8.recreate>true</fabric8.recreate>
       </properties>
+    </profile>
+    <profile>
+      <id>kit</id>
+      <activation />
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <version>2.19</version>
+            <configuration>
+              <includes>
+                <include>**/*KT.*</include>
+              </includes>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
     </profile>
   </profiles>
 </project>

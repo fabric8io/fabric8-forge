@@ -63,7 +63,7 @@ public final class VersionHelper {
      * Retrieves the version of docker to use
      */
     public static String dockerVersion() {
-        return MavenHelpers.getVersion("org.jolokia", "docker-maven-plugin");
+        return MavenHelpers.getVersion("io.fabric8", "docker-maven-plugin");
     }
 
     public static String after(String text, String after) {

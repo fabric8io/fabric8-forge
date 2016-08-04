@@ -21,9 +21,8 @@ import org.junit.Test;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-/**
- */
 public class MavenHelpersTest {
+
     @Test
     public void testVersions() throws Exception {
         assertVersionFound("junit", "junit");
@@ -31,7 +30,7 @@ public class MavenHelpersTest {
         assertVersionFound("io.fabric8", "fabric8-maven-plugin");
         assertVersionFound("io.fabric8.archetypes", "archetypes-catalog");
         assertVersionFound("io.hawt", "hawtio-maven-plugin");
-        assertVersionFound("org.jolokia", "docker-maven-plugin");
+        assertVersionFound("io.fabric8", "docker-maven-plugin");
     }
 
     public static void assertVersionFound(String groupId, String artifactId) {
