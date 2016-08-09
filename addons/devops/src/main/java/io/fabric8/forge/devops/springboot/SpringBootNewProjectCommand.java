@@ -30,6 +30,7 @@ import io.fabric8.forge.devops.dto.SpringBootDependencyDTO;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import org.jboss.forge.addon.convert.Converter;
 import org.jboss.forge.addon.dependencies.builder.DependencyBuilder;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
@@ -104,6 +105,14 @@ public class SpringBootNewProjectCommand extends AbstractDevOpsCommand implement
 
         dependencies.setValueChoices(choices);
         dependencies.setItemLabelConverter(SpringBootDependencyDTO::getGroupAndName);
+        dependencies.setValueConverter(s -> {
+            for (SpringBootDependencyDTO dto : choices) {
+                if (dto.getId().equals(s)) {
+                    return dto;
+                }
+            }
+            return null;
+        });
 
         builder.add(springBootVersion).add(dependencies);
     }
