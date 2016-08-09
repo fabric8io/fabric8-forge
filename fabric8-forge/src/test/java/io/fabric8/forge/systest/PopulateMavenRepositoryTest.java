@@ -81,10 +81,10 @@ public class PopulateMavenRepositoryTest {
         String testArchetype = System.getProperty(TEST_ARCHETYPE_SYSTEM_PROPERTY, "");
         if (Strings.isNotBlank(testArchetype)) {
             LOG.info("Due to system property: '" + TEST_ARCHETYPE_SYSTEM_PROPERTY + "' we will just run the test on archetype: " + testArchetype);
-            generator.createProject(testArchetype);
+            generator.createProjectFromArchetype(testArchetype);
         } else {
             for (String archetype : archetypes) {
-                generator.createProject(archetype);
+                generator.createProjectFromArchetype(archetype);
             }
         }
 

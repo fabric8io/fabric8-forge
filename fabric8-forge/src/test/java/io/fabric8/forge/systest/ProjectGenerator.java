@@ -16,6 +16,7 @@
  */
 package io.fabric8.forge.systest;
 
+import io.fabric8.forge.devops.dto.SpringBootDependencyDTO;
 import io.fabric8.forge.systest.support.RestUIContext;
 import io.fabric8.forge.systest.support.RestUIRuntime;
 import io.fabric8.utils.Strings;
@@ -34,6 +35,7 @@ import org.jboss.forge.addon.ui.controller.CommandControllerFactory;
 import org.jboss.forge.addon.ui.controller.WizardCommandController;
 import org.jboss.forge.addon.ui.input.InputComponent;
 import org.jboss.forge.addon.ui.input.UICompleter;
+import org.jboss.forge.addon.ui.input.UISelectMany;
 import org.jboss.forge.addon.ui.output.UIMessage;
 import org.jboss.forge.addon.ui.result.CompositeResult;
 import org.jboss.forge.addon.ui.result.Result;
@@ -57,8 +59,11 @@ import static org.junit.Assert.assertEquals;
 /**
  */
 public class ProjectGenerator {
+
     public final static String FABRIC8_ARCHETYPE_VERSION = System.getProperty("fabric8ArchetypeVersion", "2.2.161");
+
     private static final transient Logger LOG = LoggerFactory.getLogger(ProjectGenerator.class);
+
     private final CommandControllerFactory commandControllerFactory;
     private final CommandFactory commandFactory;
     private final RestUIRuntime runtime = new RestUIRuntime();
@@ -115,7 +120,62 @@ public class ProjectGenerator {
         return new File(localMavenRepo, path);
     }
 
-    public void createProject(String archetype) throws Exception {
+    public void createNewSpringBootProject() throws Exception {
+
+        LOG.info("Creating new project");
+
+        String name = "my-project";
+
+        RestUIContext context = new RestUIContext();
+        UICommand projectNewCommand = commandFactory.getCommandByName(context, "project-new");
+
+        File outputDir = new File(projectsOutputFolder, name);
+        outputDir.mkdirs();
+
+        CommandController controller = commandControllerFactory.createController(context, runtime, projectNewCommand);
+        controller.initialize();
+
+        controller.setValueFor("named", name);
+        controller.setValueFor("topLevelPackage", "org.example");
+        controller.setValueFor("version", "1.0.0-SNAPSHOT");
+        controller.setValueFor("targetLocation", outputDir.getAbsolutePath());
+        controller.setValueFor("buildSystem", "Maven");
+        controller.setValueFor("type", "Spring Boot");
+
+        WizardCommandController wizardCommandController = assertWizardController(controller);
+        validate(wizardCommandController);
+        wizardCommandController = wizardCommandController.next();
+        LOG.info("Next result: " + wizardCommandController);
+
+        wizardCommandController.setValueFor("springBootVersion", "1.3.7");
+
+        // due to furnace/forge classloading we need to find the dto from the existing choices
+        // and then select the dependencies we want to use
+        SpringBootDependencyDTO web = null;
+        UISelectMany many = (UISelectMany) wizardCommandController.getInput("dependencies");
+        for (Object c : many.getValueChoices()) {
+            SpringBootDependencyDTO dto = (SpringBootDependencyDTO) c;
+            if ("web".equals(dto.getId())) {
+                web = dto;
+                break;
+            }
+        }
+
+        wizardCommandController.setValueFor("dependencies", web);
+
+        validate(wizardCommandController);
+        try {
+
+            Result result = wizardCommandController.execute();
+            printResult(result);
+
+            useNewProject(outputDir, name);
+        } catch (Exception e) {
+            LOG.error("Failed to create project " + name + " " + e, e);
+        }
+    }
+
+    public void createProjectFromArchetype(String archetype) throws Exception {
         String archetypeUri = "io.fabric8.archetypes:" + archetype + ":" + FABRIC8_ARCHETYPE_VERSION;
 
         LOG.info("Creating archetype: " + archetypeUri);
@@ -156,13 +216,13 @@ public class ProjectGenerator {
             Result result = wizardCommandController.execute();
             printResult(result);
 
-            useProject(archetype, outputDir, name);
+            useProjectFromArchetype(archetype, outputDir, name);
         } catch (Exception e) {
             LOG.error("Failed to create project " + archetypeUri + " " + e, e);
         }
     }
 
-    protected void useProject(String archetype, File outputDir, String projectName) throws MavenInvocationException {
+    protected void useProjectFromArchetype(String archetype, File outputDir, String projectName) throws MavenInvocationException {
         File projectDir = new File(outputDir, projectName);
         File pom = new File(projectDir, "pom.xml");
         boolean hasPom = pom.exists() && pom.isFile();
@@ -197,15 +257,52 @@ public class ProjectGenerator {
         */
 
         if (hasPom) {
-            runMavenGoals(archetype, projectDir, "package");
+            runMavenGoals(projectDir, "package");
         }
     }
 
-    protected void runMavenGoals(String archetype, File outputDir, String... goals) throws MavenInvocationException {
+    protected void useNewProject(File outputDir, String projectName) throws MavenInvocationException {
+        File projectDir = new File(outputDir, projectName);
+        File pom = new File(projectDir, "pom.xml");
+        boolean hasPom = pom.exists() && pom.isFile();
+
+        LOG.info("Now using project: " + projectName + " at folder: " + projectDir + " has pom.xml: " + hasPom);
+
+        RestUIContext context = createUIContextForFolder(projectDir);
+        Set<String> names = commandFactory.getCommandNames(context);
+
+        LOG.info("Got command names: " + names);
+
+        // turn off checking commands as that takes too long
+        /*
+        for (String name : names) {
+            try {
+                UICommand command = commandFactory.getCommandByName(context, name);
+                boolean enabled = command.isEnabled(context);
+                LOG.info("Command " + name + " enabled: " + enabled);
+            } catch (Throwable e) {
+                LOG.warn("Failed to check command " + name + ". " + e, e);
+            }
+        }*/
+
+        // now lets try validate the devops-edit command
+        //UICommand devOpsEdit = commandFactory.getCommandByName(context, "devops-edit");
+
+        // setup fabric8
+        LOG.info("Setting up fabric8 ...");
+        if (hasPom) {
+            useCommand(context, "fabric8-setup", true);
+        }
+
+        if (hasPom) {
+            runMavenGoals(projectDir, "package", "fabric8:resource");
+        }
+    }
+
+    protected void runMavenGoals(File outputDir, String... goals) throws MavenInvocationException {
         List<String> goalList = Arrays.asList(goals);
         LOG.info("Invoking maven with goals: " + goalList + " in folder: " + outputDir);
         File pomFile = new File(outputDir, "pom.xml");
-
 
         InvocationRequest request = new DefaultInvocationRequest();
         request.setLocalRepositoryDirectory(localMavenRepo);
