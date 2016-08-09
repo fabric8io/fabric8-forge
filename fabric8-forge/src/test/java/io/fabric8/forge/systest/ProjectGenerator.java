@@ -57,7 +57,7 @@ import static org.junit.Assert.assertEquals;
 /**
  */
 public class ProjectGenerator {
-    public final static String FABRIC8_ARCHETYPE_VERSION = System.getProperty("fabric8ArchetypeVersion", "2.2.81");
+    public final static String FABRIC8_ARCHETYPE_VERSION = System.getProperty("fabric8ArchetypeVersion", "2.2.161");
     private static final transient Logger LOG = LoggerFactory.getLogger(ProjectGenerator.class);
     private final CommandControllerFactory commandControllerFactory;
     private final CommandFactory commandFactory;
@@ -173,6 +173,9 @@ public class ProjectGenerator {
         Set<String> names = commandFactory.getCommandNames(context);
 
         LOG.info("Got command names: " + names);
+
+        // turn off checking commands as that takes too long
+        /*
         for (String name : names) {
             try {
                 UICommand command = commandFactory.getCommandByName(context, name);
@@ -181,15 +184,17 @@ public class ProjectGenerator {
             } catch (Throwable e) {
                 LOG.warn("Failed to check command " + name + ". " + e, e);
             }
-        }
+        }*/
 
         // now lets try validate the devops-edit command
         //UICommand devOpsEdit = commandFactory.getCommandByName(context, "devops-edit");
 
-        if (hasPom) {
+        // the projects are already setup
+        /*if (hasPom) {
             useCommand(context, "fabric8-setup", true);
         }
         useCommand(context, "fabric8-pipeline", false);
+        */
 
         if (hasPom) {
             runMavenGoals(archetype, projectDir, "package");
