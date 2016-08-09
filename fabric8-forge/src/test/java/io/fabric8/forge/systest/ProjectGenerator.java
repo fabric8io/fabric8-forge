@@ -129,7 +129,7 @@ public class ProjectGenerator {
         RestUIContext context = new RestUIContext();
         UICommand projectNewCommand = commandFactory.getCommandByName(context, "project-new");
 
-        File outputDir = new File(projectsOutputFolder, name);
+        File outputDir = projectsOutputFolder;
         outputDir.mkdirs();
 
         CommandController controller = commandControllerFactory.createController(context, runtime, projectNewCommand);
