@@ -77,8 +77,8 @@
     <fabric8.devops.version>2.2.218</fabric8.devops.version>
     <fabric8.maven.plugin.version>3.1.14</fabric8.maven.plugin.version>
 
-    <furnace.version>2.23.5.Final</furnace.version>
-    <jboss.forge.version>3.2.3.Final</jboss.forge.version>
+    <furnace.version>2.23.7.Final</furnace.version>
+    <jboss.forge.version>3.3.0.Final</jboss.forge.version>
     <jboss.roaster.version>2.19.0.Final</jboss.roaster.version>
     <gitective.version>0.9.16</gitective.version>
 
