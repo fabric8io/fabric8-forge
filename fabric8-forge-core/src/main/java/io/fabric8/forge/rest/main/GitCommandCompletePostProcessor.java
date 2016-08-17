@@ -60,20 +60,14 @@ public class GitCommandCompletePostProcessor implements CommandCompletePostProce
     private final KubernetesClient kubernetes;
     private final GitUserHelper gitUserHelper;
     private final ProjectFileSystem projectFileSystem;
-    private final String jenkinsSeedJob;
-    private final boolean createOpenShiftBuildResources;
 
     @Inject
     public GitCommandCompletePostProcessor(KubernetesClient kubernetes,
                                            GitUserHelper gitUserHelper,
-                                           ProjectFileSystem projectFileSystem,
-                                           @ConfigProperty(name = "JENKINS_SEED_JOB", defaultValue = DEFAULT_JENKINS_SEED_JOB) String jenkinsSeedJob,
-                                           @ConfigProperty(name = "OPENSHIFT_CREATE_BUILD_ON_PROJECT_CREATE", defaultValue = "false") boolean createOpenShiftBuildResources) {
+                                           ProjectFileSystem projectFileSystem) {
         this.kubernetes = kubernetes;
         this.gitUserHelper = gitUserHelper;
         this.projectFileSystem = projectFileSystem;
-        this.jenkinsSeedJob = jenkinsSeedJob;
-        this.createOpenShiftBuildResources = createOpenShiftBuildResources;
     }
 
     @Override
