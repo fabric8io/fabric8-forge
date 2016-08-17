@@ -74,7 +74,7 @@
 
     <fabric8.version>2.2.153</fabric8.version>
     <fabric8.archetypes.release.version>2.2.163</fabric8.archetypes.release.version>
-    <fabric8.devops.version>2.2.218</fabric8.devops.version>
+    <fabric8.devops.version>2.2.233</fabric8.devops.version>
     <fabric8.maven.plugin.version>3.1.14</fabric8.maven.plugin.version>
 
     <furnace.version>2.23.7.Final</furnace.version>
@@ -92,6 +92,7 @@
     <buildnumber.plugin.version>1.3</buildnumber.plugin.version>
     <docker.maven.plugin.version>0.15.16</docker.maven.plugin.version>
     <exec-maven-plugin.version>1.4.0</exec-maven-plugin.version>
+    <fabric8.maven.plugin.version>3.1.17</fabric8.maven.plugin.version>
     <maven.enforcer.plugin.version>1.4</maven.enforcer.plugin.version>
     <maven.jar.plugin.version>2.6</maven.jar.plugin.version>
     <maven.javadoc.plugin.version>2.10.3</maven.javadoc.plugin.version>
