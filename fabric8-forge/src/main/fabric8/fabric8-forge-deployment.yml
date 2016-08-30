@@ -54,7 +54,7 @@ spec:
         - name: "FABRIC8_ARCHETYPES_VERSION"
           value: "${fabric8.archetypes.release.version}"
         - name: "JAVA_OPTIONS"
-          value: "-Dorg.apache.maven.log_transfer=true"
+          value: "-Dorg.apache.maven.log_transfer=true -Dorg.apache.cxf.logging.enabled=false"
         - name: "JENKINS_GOGS_EMAIL"
           valueFrom:
             configMapKeyRef:

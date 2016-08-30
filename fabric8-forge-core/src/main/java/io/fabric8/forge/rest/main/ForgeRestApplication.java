@@ -56,12 +56,11 @@ public class ForgeRestApplication extends Application {
                         rootResource,
                         commandsResource,
                         repositoriesResource,
-                        new JacksonJsonProvider(),
+                        new JacksonJsonProvider()
 /*
                         new SwaggerFeature(),
                         new EnableJMXFeature(),
 */
-                        new LoggingFeature()
                 )
         );
     }
