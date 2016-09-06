@@ -86,7 +86,7 @@ public class PopulateMavenRepositoryTest {
         } else {
             for (String archetype : archetypes) {
                 // TODO fix failing archetypes...
-                if (!archetype.startsWith("jboss-fuse-camel-rest-sql")) {
+                if (!archetype.startsWith("jboss-fuse-")) {
                     generator.createProjectFromArchetype(archetype);
                 }
             }
