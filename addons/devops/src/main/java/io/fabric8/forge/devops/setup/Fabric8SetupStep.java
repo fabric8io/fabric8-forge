@@ -273,7 +273,7 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
             // add fabric8 plugin
             pluginBuilder = MavenPluginBuilder.create()
                     .setCoordinate(MavenHelpers.createCoordinate("io.fabric8", "fabric8-maven-plugin", VersionHelper.fabric8MavenPluginVersion()))
-                    .addExecution(ExecutionBuilder.create().addGoal("resource").addGoal("build"));
+                    .addExecution(ExecutionBuilder.create().addGoal("resource").addGoal("build").addGoal("helm"));
         }
 
         if (pluginBuilder != null) {

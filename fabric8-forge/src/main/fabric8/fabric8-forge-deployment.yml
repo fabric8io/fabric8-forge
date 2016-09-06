@@ -68,9 +68,6 @@ spec:
               fieldPath: "metadata.namespace"
         image: "fabric8/fabric8-forge:${project.version}"
         name: "fabric8-forge"
-        ports:
-        - containerPort: 8778
-          name: "jolokia"
         readinessProbe:
           httpGet:
             path: "/_ping"
