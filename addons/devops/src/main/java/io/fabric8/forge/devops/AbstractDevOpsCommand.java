@@ -392,6 +392,18 @@ public abstract class AbstractDevOpsCommand extends AbstractProjectCommand imple
                        }
                    }
         );
+        answer.add(new GetOverviewCommand.FileProcessor() {
+                       @Override
+                       public boolean processes(ProjectOverviewDTO overview, File file, String name, String extension, int level) {
+                           if (java.util.Objects.equals(extension, "sbt")|| java.util.Objects.equals(extension, "scala")) {
+                               overview.addBuilder("sbt");
+                               return true;
+                           }
+                           return false;
+                       }
+                   }
+        );
+        
         return answer;
     }
 
