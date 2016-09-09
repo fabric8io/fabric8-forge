@@ -73,7 +73,7 @@
     <maven.compiler.target>1.8</maven.compiler.target>
 
     <fabric8.version>2.2.157</fabric8.version>
-    <fabric8.archetypes.release.version>2.2.166</fabric8.archetypes.release.version>
+    <fabric8.archetypes.release.version>2.2.167</fabric8.archetypes.release.version>
     <fabric8.devops.version>2.2.248</fabric8.devops.version>
 
     <furnace.version>2.23.8.Final</furnace.version>
