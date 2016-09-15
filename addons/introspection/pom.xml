@@ -22,7 +22,7 @@
 	<parent>
 		<artifactId>forge-addons</artifactId>
 		<groupId>io.fabric8.forge</groupId>
-		<version>2.3-SNAPSHOT</version>
+		<version>2.3.33</version>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>introspection</artifactId>
