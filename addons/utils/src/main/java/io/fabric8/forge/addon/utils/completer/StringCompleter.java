@@ -39,7 +39,7 @@ public class StringCompleter implements UICompleter<String> {
     public Iterable<String> getCompletionProposals(UIContext context, InputComponent input, String value) {
         List<String> answer = new ArrayList<String>();
         for (String name : valueSet) {
-            if (value == null || value.isEmpty() || name.indexOf(value) >= 0) {
+            if (value == null || value.isEmpty() || name.contains(value)) {
                 answer.add(name);
             }
         }
