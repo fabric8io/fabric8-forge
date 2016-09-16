@@ -42,10 +42,13 @@ public class PackageNameCompleter implements UICompleter<String> {
             @Override
             public void visit(VisitContext context, JavaResource javaResource) {
                 try {
-                    JavaClass clazz = javaResource.getJavaType();
-                    String packageName = clazz.getPackage();
-                    if (packageName != null) {
-                        packageNames.add(packageName);
+                    // avoid package-info.java files
+                    if (!javaResource.getName().contains("package-info")) {
+                        JavaClass clazz = javaResource.getJavaType();
+                        String packageName = clazz.getPackage();
+                        if (packageName != null && !packageNames.contains(packageName)) {
+                            packageNames.add(packageName);
+                        }
                     }
                 } catch (FileNotFoundException e) {
                     // ignore
