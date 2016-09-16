@@ -29,15 +29,15 @@ import org.jboss.forge.roaster.model.source.MethodSource;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class RoasterSimpleToDTest {
+public class RoasterSimpleToFTest {
 
     @Test
     public void parse() throws Exception {
-        JavaClassSource clazz = (JavaClassSource) Roaster.parse(new File("src/test/java/io/fabric8/forge/camel/java/MySimpleToDRoute.java"));
+        JavaClassSource clazz = (JavaClassSource) Roaster.parse(new File("src/test/java/io/fabric8/forge/camel/java/MySimpleToFRoute.java"));
         MethodSource<JavaClassSource> method = CamelJavaParserHelper.findConfigureMethod(clazz);
 
         List<CamelEndpointDetails> details = new ArrayList<CamelEndpointDetails>();
-        RouteBuilderParser.parseRouteBuilderEndpoints(clazz, ".", "src/test/java/io/fabric8/forge/camel/java/MySimpleToDRoute.java", details);
+        RouteBuilderParser.parseRouteBuilderEndpoints(clazz, ".", "src/test/java/io/fabric8/forge/camel/java/MySimpleToFRoute.java", details);
         System.out.println(details);
 
         List<ParserResult> list = CamelJavaParserHelper.parseCamelConsumerUris(method, true, true);
@@ -50,19 +50,13 @@ public class RoasterSimpleToDTest {
         for (ParserResult result : list) {
             System.out.println("Producer: " + result.getElement());
         }
-        Assert.assertEquals("toD", list.get(0).getNode());
-        Assert.assertEquals("log:a", list.get(0).getElement());
-        Assert.assertEquals("to", list.get(1).getNode());
-        Assert.assertEquals("log:b", list.get(1).getElement());
-        Assert.assertEquals("to", list.get(2).getNode());
-        Assert.assertEquals("log:c", list.get(2).getElement());
-        Assert.assertEquals(3, list.size());
+        Assert.assertEquals("toF", list.get(0).getNode());
+        Assert.assertEquals("log:a?level={{%s}}", list.get(0).getElement());
+        Assert.assertEquals(1, list.size());
 
-        Assert.assertEquals(4, details.size());
+        Assert.assertEquals(2, details.size());
         Assert.assertEquals("direct:start", details.get(0).getEndpointUri());
-        Assert.assertEquals("log:a", details.get(1).getEndpointUri());
-        Assert.assertEquals("log:b", details.get(2).getEndpointUri());
-        Assert.assertEquals("log:c", details.get(3).getEndpointUri());
+        Assert.assertEquals("log:a?level={{%s}}", details.get(1).getEndpointUri());
     }
 
 }
