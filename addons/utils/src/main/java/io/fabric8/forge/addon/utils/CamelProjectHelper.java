@@ -72,15 +72,34 @@ public class CamelProjectHelper {
     }
 
     public static boolean hasDependency(Project project, String groupId) {
-        return hasDependency(project, groupId, null, null);
+        return hasDependency(project, groupId, null, null) ||
+                hasManagedDependency(project, groupId, null, null);
     }
 
     public static boolean hasDependency(Project project, String groupId, String artifactId) {
-        return hasDependency(project, groupId, artifactId, null);
+        return hasDependency(project, groupId, artifactId, null) ||
+                hasManagedDependency(project, groupId, artifactId, null);
     }
 
     public static boolean hasDependency(Project project, String groupId, String artifactId, String version) {
         List<Dependency> dependencies = project.getFacet(DependencyFacet.class).getEffectiveDependencies();
+        for (Dependency d : dependencies) {
+            boolean match = d.getCoordinate().getGroupId().equals(groupId);
+            if (match && artifactId != null) {
+                match = d.getCoordinate().getArtifactId().equals(artifactId);
+            }
+            if (match && version != null) {
+                match = d.getCoordinate().getVersion().equals(version);
+            }
+            if (match) {
+                return match;
+            }
+        }
+        return false;
+    }
+
+    public static boolean hasManagedDependency(Project project, String groupId, String artifactId, String version) {
+        List<Dependency> dependencies = project.getFacet(DependencyFacet.class).getManagedDependencies();
         for (Dependency d : dependencies) {
             boolean match = d.getCoordinate().getGroupId().equals(groupId);
             if (match && artifactId != null) {
