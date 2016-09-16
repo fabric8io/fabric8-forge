@@ -44,20 +44,23 @@ public class RouteBuilderCamelEndpointsVisitor extends JavaResourceVisitor {
     @Override
     public void visit(VisitContext visitContext, JavaResource resource) {
         try {
-            JavaClassSource clazz = resource.getJavaType();
-            String fqn = resource.getFullyQualifiedName();
-            String name = clazz.getQualifiedName();
-            String baseDir = facet.getSourceDirectory().getFullyQualifiedName();
+            // avoid package-info.java files
+            if (!resource.getName().contains("package-info")) {
+                JavaClassSource clazz = resource.getJavaType();
+                String fqn = resource.getFullyQualifiedName();
+                String name = clazz.getQualifiedName();
+                String baseDir = facet.getSourceDirectory().getFullyQualifiedName();
 
-            boolean include = true;
-            if (filter != null) {
-                Boolean out = filter.apply(name);
-                LOG.info("Filter " + name + " -> " + out);
-                include = out == null || out;
-            }
+                boolean include = true;
+                if (filter != null) {
+                    Boolean out = filter.apply(name);
+                    LOG.info("Filter " + name + " -> " + out);
+                    include = out == null || out;
+                }
 
-            if (include) {
-                RouteBuilderParser.parseRouteBuilderEndpoints(clazz, baseDir, fqn, endpoints);
+                if (include) {
+                    RouteBuilderParser.parseRouteBuilderEndpoints(clazz, baseDir, fqn, endpoints);
+                }
             }
         } catch (Throwable e) {
             // ignore

@@ -41,11 +41,14 @@ public class RouteBuilderCompleter implements UICompleter<String> {
             @Override
             public void visit(VisitContext context, JavaResource javaResource) {
                 try {
-                    JavaClass clazz = javaResource.getJavaType();
-                    String superType = clazz.getSuperType();
-                    if (superType != null && isRouteBuilder(superType)) {
-                        routeBuilders.add(clazz.getQualifiedName());
-                        packages.add(clazz.getPackage());
+                    // avoid package-info.java files
+                    if (!javaResource.getName().contains("package-info")) {
+                        JavaClass clazz = javaResource.getJavaType();
+                        String superType = clazz.getSuperType();
+                        if (superType != null && isRouteBuilder(superType)) {
+                            routeBuilders.add(clazz.getQualifiedName());
+                            packages.add(clazz.getPackage());
+                        }
                     }
                 } catch (FileNotFoundException e) {
                     // ignore
