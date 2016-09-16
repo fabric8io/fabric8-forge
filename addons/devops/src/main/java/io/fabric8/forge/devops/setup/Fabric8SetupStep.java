@@ -151,10 +151,11 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
 
         String packaging = getProjectPackaging(project);
         boolean springBoot = hasSpringBoot(project);
+        boolean wildflySwarm = hasWildlySwarm(project);
 
         // limit the choices depending on the project packaging
         final List<String> choices = new ArrayList<String>();
-        if (packaging == null || springBoot || "jar".equals(packaging)) {
+        if (packaging == null || springBoot || wildflySwarm || "jar".equals(packaging)) {
             String currentImage = getDockerFromImage(project);
             if (currentImage != null) {
                 choices.add(currentImage);
@@ -165,7 +166,7 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
         if (packaging == null || "bundle".equals(packaging)) {
             choices.add(bundleImages[0]);
         }
-        if (!springBoot && (packaging == null || "war".equals(packaging))) {
+        if ((!springBoot && !wildflySwarm) && (packaging == null || "war".equals(packaging))) {
             choices.addAll(Arrays.asList(warImages));
         }
         from.setCompleter(new UICompleter<String>() {

@@ -43,7 +43,8 @@ public class DockerSetupHelper {
     public static final String DEFAULT_KARAF_IMAGE = "fabric8/karaf-2.4";
     public static final String DEFAULT_TOMCAT_IMAGE = "fabric8/tomcat-8";
     public static final String DEFAULT_WILDFLY_IMAGE = "jboss/wildfly:9.0.2.Final";
-    public static final String S2I_JAVA_IMAGE = "fabric8/s2i-java:1.2.9";
+    public static final String DEFAULT_JAVA_IMAGE = "fabric8/java-alpine-openjdk8-jdk";
+    public static final String S2I_JAVA_IMAGE = "fabric8/s2i-java";
 
     // see https://github.com/fabric8io/fabric8/issues/4160
     private static String dockerFromImagePrefix = "docker.io/";
@@ -86,7 +87,6 @@ public class DockerSetupHelper {
         MavenPlugin plugin = MavenHelpers.findPlugin(project, "io.fabric8", "fabric8-maven-plugin");
         if (plugin != null) {
             MavenPluginBuilder pluginBuilder = MavenPluginBuilder.create(plugin);
-            //Configuration config = plugin.getConfig();
             Configuration config = ConfigurationBuilder.create(pluginBuilder);
             boolean updated = false;
             if (Strings.isNotBlank(main)) {
@@ -203,7 +203,6 @@ public class DockerSetupHelper {
     public static boolean hasWildlySwarm(Project project) {
         return CamelProjectHelper.hasDependency(project, "org.wildfly.swarm");
     }
-
 
     public static boolean hasVertx(Project project) {
         return CamelProjectHelper.hasDependency(project, "io.vertx");
