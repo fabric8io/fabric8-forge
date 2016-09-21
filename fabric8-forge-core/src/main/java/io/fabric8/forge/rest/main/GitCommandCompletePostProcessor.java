@@ -20,20 +20,10 @@ import io.fabric8.forge.rest.dto.ExecutionRequest;
 import io.fabric8.forge.rest.dto.ExecutionResult;
 import io.fabric8.forge.rest.hooks.CommandCompletePostProcessor;
 import io.fabric8.forge.rest.ui.RestUIContext;
-import io.fabric8.kubernetes.api.Controller;
-import io.fabric8.kubernetes.api.KubernetesHelper;
-import io.fabric8.kubernetes.api.ServiceNames;
-import io.fabric8.kubernetes.api.builds.Builds;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.openshift.api.model.BuildConfig;
-import io.fabric8.repo.git.CreateRepositoryDTO;
-import io.fabric8.repo.git.GitRepoClient;
-import io.fabric8.repo.git.RepositoryDTO;
-import io.fabric8.utils.IOHelpers;
-import org.apache.deltaspike.core.api.config.ConfigProperty;
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.InitCommand;
-import org.eclipse.jgit.lib.PersonIdent;
+import io.fabric8.project.support.BuildConfigHelper;
+import io.fabric8.project.support.GitUtils;
+import io.fabric8.project.support.UserDetails;
 import org.jboss.forge.addon.ui.controller.CommandController;
 import org.jboss.forge.furnace.util.Strings;
 import org.slf4j.Logger;
@@ -43,12 +33,9 @@ import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.NotAuthorizedException;
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
-import static io.fabric8.utils.cxf.JsonHelper.toJson;
 
 /**
  * For new projects; lets git add, git commit, git push otherwise lets git add/commit/push any new/udpated changes
@@ -97,17 +84,10 @@ public class GitCommandCompletePostProcessor implements CommandCompletePostProce
     public void firePostCompleteActions(String name, ExecutionRequest executionRequest, RestUIContext context, CommandController controller, ExecutionResult results, HttpServletRequest request) {
         UserDetails userDetails = gitUserHelper.createUserDetails(request);
 
-        String user = userDetails.getUser();
-        String address = userDetails.getAddress();
-        String internalAddress = userDetails.getInternalAddress();
-        String branch = userDetails.getBranch();
         String origin = projectFileSystem.getRemote();
 
         try {
             if (name.equals(Constants.PROJECT_NEW_COMMAND)) {
-                GitHelpers.disableSslCertificateChecks();
-
-                PersonIdent personIdent = userDetails.createPersonIdent();
 
                 String targetLocation = projectFileSystem.getUserProjectFolderLocation(userDetails);
                 String named = null;
@@ -130,49 +110,17 @@ public class GitCommandCompletePostProcessor implements CommandCompletePostProce
                     if (!basedir.isDirectory() || !basedir.exists()) {
                         LOG.warn("Generated project folder does not exist: " + basedir.getAbsolutePath());
                     } else {
-                        InitCommand initCommand = Git.init();
-                        initCommand.setDirectory(basedir);
-                        Git git = initCommand.call();
-                        LOG.info("Initialised an empty git configuration repo at {}", basedir.getAbsolutePath());
-
-                        // lets create the repository
-                        GitRepoClient repoClient = userDetails.createRepoClient();
-                        CreateRepositoryDTO createRepository = new CreateRepositoryDTO();
-                        createRepository.setName(named);
-
-                        String fullName = null;
-                        RepositoryDTO repository = repoClient.createRepository(createRepository);
-                        if (repository != null) {
-                            if (LOG.isDebugEnabled()) {
-                                LOG.debug("Got repository: " + toJson(repository));
-                            }
-                            fullName = repository.getFullName();
-                        }
-                        if (Strings.isNullOrEmpty(fullName)) {
-                            fullName = user + "/" + named;
-                        }
-                        String htmlUrl = address + user + "/" + named;
-                        String remoteUrl = internalAddress + user + "/" + named + ".git";
-                        //results.appendOut("Created git repository " + fullName + " at: " + htmlUrl);
-                        String cloneUrl =  htmlUrl + ".git";
-
-                        results.setOutputProperty("fullName", fullName);
-                        results.setOutputProperty("cloneUrl", remoteUrl);
-                        results.setOutputProperty("htmlUrl", htmlUrl);
-
-                        // now lets import the code and publish
-                        LOG.info("Using remoteUrl: " + remoteUrl + " and remote name " + origin);
-                        GitHelpers.configureBranch(git, branch, origin, remoteUrl);
-
-                        addDummyFileToEmptyFolders(basedir);
-                        String message = ExecutionRequest.createCommitMessage(name, executionRequest);
-                        LOG.info("Commiting and pushing to: " + remoteUrl + " and remote name " + origin);
-                        GitHelpers.doAddCommitAndPushFiles(git, userDetails, personIdent, branch, origin, message, isPushOnCommit());
-
                         String namespace = firstNotBlank(context.getProjectName(), executionRequest.getNamespace());
                         String projectName = firstNotBlank(named, context.getProjectName(), executionRequest.getProjectName());
+                        String message = ExecutionRequest.createCommitMessage(name, executionRequest);
+
+                        BuildConfigHelper.CreateGitProjectResults createProjectResults = BuildConfigHelper.importNewGitProject(this.kubernetes, userDetails, basedir, namespace, projectName, origin, message, true);
+
+                        results.setOutputProperty("fullName", createProjectResults.getFullName());
+                        results.setOutputProperty("cloneUrl", createProjectResults.getCloneUrl());
+                        results.setOutputProperty("htmlUrl", createProjectResults.getHtmlUrl());
+
                         results.setProjectName(projectName);
-                        createBuildConfig(context, namespace, projectName, cloneUrl);
 
                         LOG.info("Creating any pending webhooks");
                         registerWebHooks(context);
@@ -197,42 +145,6 @@ public class GitCommandCompletePostProcessor implements CommandCompletePostProce
         return null;
     }
 
-    protected void createBuildConfig(RestUIContext context, String namespace, String projectName, String cloneUrl) throws Exception {
-        LOG.info("Creating a BuildConfig for namespace: " + namespace + " project: " + projectName);
-        String jenkinsUrl = getJenkinsServiceUrl(namespace);
-        BuildConfig buildConfig = Builds.createDefaultBuildConfig(projectName, cloneUrl, jenkinsUrl);
-        Controller controller = new Controller(kubernetes);
-        controller.setNamespace(namespace);
-        controller.applyBuildConfig(buildConfig, "from project " + projectName);
-    }
-
-    protected String getJenkinsServiceUrl(String namespace) {
-        return KubernetesHelper.getServiceURL(kubernetes, ServiceNames.JENKINS, namespace, "http", true);
-    }
-
-    /**
-     * Git tends to ignore empty directories so lets add a dummy file to empty folders to keep them in git
-     */
-    protected void addDummyFileToEmptyFolders(File dir) {
-        if (dir != null && dir.isDirectory()) {
-            File[] children = dir.listFiles();
-            if (children == null || children.length == 0) {
-                File dummyFile = new File(dir, ".gitkeep");
-                try {
-                    IOHelpers.writeFully(dummyFile, "This file is only here to avoid git removing empty folders\nOnce there are files in this folder feel free to delete this file!");
-                } catch (IOException e) {
-                    LOG.warn("Failed to write file " + dummyFile + ". " + e, e);
-                }
-            } else {
-                for (File child : children) {
-                    if (child.isDirectory()) {
-                        addDummyFileToEmptyFolders(child);
-                    }
-                }
-            }
-        }
-    }
-
     protected void registerWebHooks(RestUIContext context) {
         Map<Object, Object> attributeMap = context.getAttributeMap();
         Object registerWebHooksValue = attributeMap.get("registerWebHooks");
@@ -240,10 +152,6 @@ public class GitCommandCompletePostProcessor implements CommandCompletePostProce
             Runnable runnable = (Runnable) registerWebHooksValue;
             projectFileSystem.invokeLater(runnable, 1000L);
         }
-    }
-
-    protected boolean isPushOnCommit() {
-        return true;
     }
 
     protected void handleException(Throwable e) {

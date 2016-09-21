@@ -15,10 +15,11 @@
  */
 package io.fabric8.forge.rest.git;
 
+import io.fabric8.forge.rest.Constants;
 import io.fabric8.forge.rest.main.GitUserHelper;
 import io.fabric8.forge.rest.main.ProjectFileSystem;
 import io.fabric8.forge.rest.main.RepositoryCache;
-import io.fabric8.forge.rest.main.UserDetails;
+import io.fabric8.project.support.UserDetails;
 import io.fabric8.kubernetes.api.Controller;
 import io.fabric8.kubernetes.api.model.LocalObjectReference;
 import io.fabric8.kubernetes.api.model.Secret;
@@ -181,8 +182,8 @@ public class RepositoriesResource {
             throw new NotFoundException("No BuildConfig git URI for " + remoteRepository);
         }
 
-        String sourceSecretName = request.getParameter("secret");
-        String secretNamespace = request.getParameter("secretNamespace");
+        String sourceSecretName = request.getParameter(Constants.RequestParameters.SECRET);
+        String secretNamespace = request.getParameter(Constants.RequestParameters.SECRET_NAMESPACE);
         if (Strings.isNullOrBlank(secretNamespace)) {
             secretNamespace = namespace;
         }

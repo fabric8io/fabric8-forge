@@ -18,6 +18,8 @@ package io.fabric8.forge.rest.main;
 import io.fabric8.annotations.External;
 import io.fabric8.annotations.Protocol;
 import io.fabric8.annotations.ServiceName;
+import io.fabric8.forge.rest.Constants;
+import io.fabric8.project.support.UserDetails;
 import org.apache.deltaspike.core.api.config.ConfigProperty;
 import org.eclipse.jgit.util.Base64;
 import org.jboss.forge.furnace.util.Strings;
@@ -67,11 +69,11 @@ public class GitUserHelper {
         if (request != null) {
             authorization = request.getHeader("GogsAuthorization");
             if (Strings.isNullOrEmpty(authorization)) {
-                authorization = request.getParameter("_gogsAuth");
+                authorization = request.getParameter(Constants.RequestParameters.GOGS_AUTH);
             }
             emailHeader = request.getHeader("GogsEmail");
             if (Strings.isNullOrEmpty(emailHeader)) {
-                emailHeader = request.getParameter("_gogsEmail");
+                emailHeader = request.getParameter(Constants.RequestParameters.GOGS_EMAIL);
             }
         }
         if (!Strings.isNullOrEmpty(authorization)) {

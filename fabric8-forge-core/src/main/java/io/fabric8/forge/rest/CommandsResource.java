@@ -31,11 +31,11 @@ import io.fabric8.forge.rest.hooks.CommandCompletePostProcessor;
 import io.fabric8.forge.rest.main.GitUserHelper;
 import io.fabric8.forge.rest.main.ProjectFileSystem;
 import io.fabric8.forge.rest.main.RepositoryCache;
-import io.fabric8.forge.rest.main.UserDetails;
 import io.fabric8.forge.rest.ui.RestUIContext;
 import io.fabric8.forge.rest.ui.RestUIFunction;
 import io.fabric8.forge.rest.ui.RestUIRuntime;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.project.support.UserDetails;
 import io.fabric8.utils.Objects;
 import io.fabric8.utils.Strings;
 import org.eclipse.jgit.api.Git;
@@ -74,12 +74,15 @@ import javax.ws.rs.core.Response.Status;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static io.fabric8.forge.rest.Constants.*;
+import static io.fabric8.forge.rest.Constants.PROJECT_NEW_COMMAND;
+import static io.fabric8.forge.rest.Constants.RequestParameters;
+import static io.fabric8.forge.rest.Constants.TARGET_LOCATION_PROPERTY;
 
 @Singleton
 @Path("/api/forge")
@@ -253,6 +256,61 @@ public class CommandsResource {
                 }
             }
         });
+    }
+
+
+    /**
+     * Provides a simple way to execute a command via a single GET
+     */
+    @GET
+    @Path("/invoke/{name}/{namespace}/{projectName}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response executeCommandViaGetNoPath(@PathParam("name") final String name,
+                                               @PathParam("namespace") final String namespace,
+                                               @PathParam("projectName") final String project) throws Exception {
+        return executeCommandViaGet(name, namespace, project, "");
+
+    }
+
+
+    /**
+     * Provides a simple way to execute a command via a single GET
+     */
+    @GET
+    @Path("/invoke/{name}/{namespace}/{projectName}/{path: .*}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response executeCommandViaGet(@PathParam("name") final String name,
+                                         @PathParam("namespace") final String namespace,
+                                         @PathParam("projectName") final String project,
+                                         @PathParam("path") final String path) throws Exception {
+
+        LOG.info("Invoking command " + name + " in project " + namespace + "/" + project + " with path: " + path);
+
+        ExecutionRequest executionRequest = new ExecutionRequest();
+        executionRequest.setNamespace(namespace);
+        executionRequest.setProjectName(project);
+        executionRequest.setResource(path);
+        List<Map<String, Object>> inputList = new ArrayList<>();
+        Map<String, Object> arguments = new HashMap<>();
+
+        // lets pass in query arguments that are not secret related stuff
+        Map<String, String[]> parameterMap = request.getParameterMap();
+        for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
+            String parameterName = entry.getKey();
+            String[] value = entry.getValue();
+            if (value != null) {
+                if (!RequestParameters.REQUEST_PARAMETERS.contains(parameterName)) {
+                    Object paramValue = value;
+                    if (value.length == 1) {
+                        paramValue = value[0];
+                    }
+                    arguments.put(parameterName, paramValue);
+                }
+            }
+        }
+        inputList.add(arguments);
+        executionRequest.setInputList(inputList);
+        return executeCommand(name, executionRequest);
     }
 
 
