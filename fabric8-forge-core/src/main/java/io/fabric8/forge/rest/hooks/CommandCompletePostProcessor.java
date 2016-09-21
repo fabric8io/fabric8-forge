@@ -16,7 +16,7 @@
 package io.fabric8.forge.rest.hooks;
 
 import io.fabric8.forge.rest.dto.ExecutionRequest;
-import io.fabric8.forge.rest.main.UserDetails;
+import io.fabric8.project.support.UserDetails;
 import io.fabric8.forge.rest.ui.RestUIContext;
 import org.jboss.forge.addon.ui.controller.CommandController;
 import io.fabric8.forge.rest.dto.ExecutionResult;

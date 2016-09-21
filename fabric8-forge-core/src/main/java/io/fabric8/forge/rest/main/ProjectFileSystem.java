@@ -15,6 +15,8 @@
  */
 package io.fabric8.forge.rest.main;
 
+import io.fabric8.project.support.GitUtils;
+import io.fabric8.project.support.UserDetails;
 import io.fabric8.repo.git.GitRepoClient;
 import io.fabric8.repo.git.RepositoryDTO;
 import io.fabric8.utils.Files;
@@ -196,7 +198,7 @@ public class ProjectFileSystem {
         boolean cloneAll = true;
         LOG.info("Cloning git repo " + cloneUrl + " into directory " + projectFolder.getAbsolutePath() + " cloneAllBranches: " + cloneAll);
         CloneCommand command = Git.cloneRepository();
-        GitHelpers.configureCommand(command, credentialsProvider, sshPrivateKey, sshPublicKey);
+        GitUtils.configureCommand(command, credentialsProvider, sshPrivateKey, sshPublicKey);
         command = command.setCredentialsProvider(credentialsProvider).
                         setCloneAllBranches(cloneAll).setURI(cloneUrl).setDirectory(projectFolder).setRemote(remote);
 
@@ -259,7 +261,7 @@ public class ProjectFileSystem {
 
             LOG.info("Performing a pull in git repository " + projectFolder.getCanonicalPath() + " on remote URL: " + url);
             PullCommand pull = git.pull();
-            GitHelpers.configureCommand(pull, userDetails);
+            GitUtils.configureCommand(pull, userDetails);
             pull.setRebase(true).call();
         } catch (Throwable e) {
             LOG.error("Failed to pull from the remote git repo with credentials " + cp + " due: " + e.getMessage() + ". This exception is ignored.", e);

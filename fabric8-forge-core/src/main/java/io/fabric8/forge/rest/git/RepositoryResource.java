@@ -21,10 +21,10 @@ import io.fabric8.forge.rest.git.dto.CommitTreeInfo;
 import io.fabric8.forge.rest.git.dto.DiffInfo;
 import io.fabric8.forge.rest.git.dto.FileDTO;
 import io.fabric8.forge.rest.git.dto.StatusDTO;
-import io.fabric8.forge.rest.main.GitHelpers;
+import io.fabric8.project.support.GitUtils;
 import io.fabric8.forge.rest.main.MD5Util;
 import io.fabric8.forge.rest.main.ProjectFileSystem;
-import io.fabric8.forge.rest.main.UserDetails;
+import io.fabric8.project.support.UserDetails;
 import io.fabric8.utils.Files;
 import io.fabric8.utils.IOHelpers;
 import io.fabric8.utils.Strings;
@@ -93,9 +93,9 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.Callable;
 
-import static io.fabric8.forge.rest.main.GitHelpers.configureCommand;
-import static io.fabric8.forge.rest.main.GitHelpers.disableSslCertificateChecks;
-import static io.fabric8.forge.rest.main.GitHelpers.doAddCommitAndPushFiles;
+import static io.fabric8.project.support.GitUtils.configureCommand;
+import static io.fabric8.project.support.GitUtils.disableSslCertificateChecks;
+import static io.fabric8.project.support.GitUtils.doAddCommitAndPushFiles;
 
 /**
  */
@@ -903,7 +903,7 @@ public class RepositoryResource {
     }
 
     public CommitInfo createCommitInfo(RevCommit entry) {
-        final Date date = GitHelpers.getCommitDate(entry);
+        final Date date = GitUtils.getCommitDate(entry);
         PersonIdent authorIdent = entry.getAuthorIdent();
         String author = null;
         String name = null;

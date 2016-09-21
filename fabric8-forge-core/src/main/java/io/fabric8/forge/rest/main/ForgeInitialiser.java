@@ -20,6 +20,7 @@ import io.fabric8.forge.rest.dto.CommandInfoDTO;
 import io.fabric8.forge.rest.dto.ExecutionRequest;
 import io.fabric8.forge.rest.hooks.CommandCompletePostProcessor;
 import io.fabric8.forge.rest.producer.FurnaceProducer;
+import io.fabric8.project.support.UserDetails;
 import org.apache.deltaspike.core.api.config.ConfigProperty;
 import org.jboss.forge.furnace.util.Strings;
 import org.slf4j.Logger;
