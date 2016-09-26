@@ -79,7 +79,7 @@
     <furnace.version>2.24.0.Final</furnace.version>
     <jboss.forge.version>3.3.1.Final</jboss.forge.version>
     <jboss.roaster.version>2.19.0.Final</jboss.roaster.version>
-    <gitective.version>0.9.16</gitective.version>
+    <gitective.version>0.9.17</gitective.version>
 
     <!-- NOTE these properties are used to generate the addons/utils/src/main/resources/io/fabric8/forge/addon/utils/versions.properties file -->
     <arquillian.version>1.1.11.Final</arquillian.version>
