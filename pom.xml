@@ -74,7 +74,7 @@
 
     <fabric8.version>2.2.163</fabric8.version>
     <fabric8.archetypes.release.version>2.2.171</fabric8.archetypes.release.version>
-    <fabric8.devops.version>2.2.259</fabric8.devops.version>
+    <fabric8.devops.version>2.2.260</fabric8.devops.version>
 
     <furnace.version>2.24.0.Final</furnace.version>
     <jboss.forge.version>3.3.1.Final</jboss.forge.version>
@@ -89,7 +89,7 @@
 
     <!-- maven plugins -->
     <buildnumber.plugin.version>1.3</buildnumber.plugin.version>
-    <docker.maven.plugin.version>0.16.4</docker.maven.plugin.version>
+    <docker.maven.plugin.version>0.16.5</docker.maven.plugin.version>
     <exec-maven-plugin.version>1.4.0</exec-maven-plugin.version>
     <fabric8.maven.plugin.version>3.1.50</fabric8.maven.plugin.version>
     <maven.enforcer.plugin.version>1.4</maven.enforcer.plugin.version>
