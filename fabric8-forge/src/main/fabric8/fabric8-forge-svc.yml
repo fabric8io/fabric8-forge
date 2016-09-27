@@ -20,4 +20,3 @@ spec:
     project: "fabric8-forge"
     provider: "fabric8"
     group: "io.fabric8.forge.apps"
-  type: "LoadBalancer"
