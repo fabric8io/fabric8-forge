@@ -14,7 +14,7 @@
     <docker.assemblyDescriptor>${basedir}/src/main/fabric8/assembly.xml</docker.assemblyDescriptor>
     <docker.assemblyDescriptorRef>artifact-with-dependencies</docker.assemblyDescriptorRef>
     <docker.env.FORGE_ADDON_DIRECTORY>/forge-addon-repo</docker.env.FORGE_ADDON_DIRECTORY>
-    <docker.from>docker.io/fabric8/jetty-9:1.1.7</docker.from>
+    <docker.from>docker.io/fabric8/jetty-9:1.1.10</docker.from>
     <docker.image>fabric8/${project.artifactId}:${project.version}</docker.image>
     <guava.version>15.0</guava.version>
     <wildfly.swarm.version>1.0.0.Final</wildfly.swarm.version>
@@ -190,7 +190,7 @@
       <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
       <scope>test</scope>
     </dependency>
-    
+
 
   </dependencies>
   <build>
@@ -238,7 +238,7 @@
           </systemPropertyVariables>
         </configuration>
       </plugin>
-      
+
       <plugin>
         <groupId>io.fabric8</groupId>
         <artifactId>fabric8-maven-plugin</artifactId>
