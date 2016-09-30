@@ -44,7 +44,7 @@
       <outputDirectory>/root/.m2/repository</outputDirectory>
     </fileSet>
     <fileSet>
-      <directory>${basedir}/src/main/fabric8/m2</directory>
+      <directory>${basedir}/src/main/docker/m2</directory>
       <outputDirectory>/root/.m2</outputDirectory>
     </fileSet>
   </fileSets>
