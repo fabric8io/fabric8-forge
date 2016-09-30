@@ -73,7 +73,7 @@
     <maven.compiler.target>1.8</maven.compiler.target>
 
     <fabric8.version>2.2.165</fabric8.version>
-    <fabric8.archetypes.release.version>2.2.172</fabric8.archetypes.release.version>
+    <fabric8.archetypes.release.version>2.2.173</fabric8.archetypes.release.version>
     <fabric8.devops.version>2.2.262</fabric8.devops.version>
     <fabric8.django.version>2.3.2</fabric8.django.version>
 
