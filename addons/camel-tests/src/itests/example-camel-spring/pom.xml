@@ -25,7 +25,7 @@
     <fabric8.metrics.scrape>true</fabric8.metrics.scrape>
     <fabric8.service.headless>true</fabric8.service.headless>
     <fabric8.service.name>${project.artifactId}</fabric8.service.name>
-    <fabric8.version>2.2.165</fabric8.version>
+    <fabric8.version>2.2.168</fabric8.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
   <dependencyManagement>
