@@ -78,7 +78,7 @@
     <fabric8.django.version>2.3.3</fabric8.django.version>
 
     <furnace.version>2.24.0.Final</furnace.version>
-    <jboss.forge.version>3.3.1.Final</jboss.forge.version>
+    <jboss.forge.version>3.3.2.Final</jboss.forge.version>
     <jboss.roaster.version>2.19.0.Final</jboss.roaster.version>
     <gitective.version>0.9.17</gitective.version>
 
