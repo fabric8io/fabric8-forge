@@ -173,6 +173,9 @@ public class SpringBootNewProjectCommand extends AbstractDevOpsCommand implement
     public Result execute(UIExecutionContext context) throws Exception {
         UIContext uiContext = context.getUIContext();
         Project project = (Project) uiContext.getAttributeMap().get(Project.class);
+        if (project == null) {
+            project = getSelectedProject(context.getUIContext());
+        }
         MetadataFacet metadataFacet = project.getFacet(MetadataFacet.class);
 
         String projectName = metadataFacet.getProjectName();
