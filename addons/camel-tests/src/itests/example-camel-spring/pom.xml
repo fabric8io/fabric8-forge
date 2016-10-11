@@ -12,7 +12,7 @@
     <docker.assemblyDescriptorRef>artifact-with-dependencies</docker.assemblyDescriptorRef>
     <docker.from>docker.io/fabric8/s2i-java:1.2</docker.from>
     <docker.image>fabric8/${project.artifactId}:${project.version}</docker.image>
-    <docker.maven.plugin.version>0.16.5</docker.maven.plugin.version>
+    <docker.maven.plugin.version>0.16.7</docker.maven.plugin.version>
     <docker.port.container.jolokia>8778</docker.port.container.jolokia>
     <fabric8.dockerUser>fabric8/</fabric8.dockerUser>
     <fabric8.iconRef>icons/camel</fabric8.iconRef>
