@@ -57,7 +57,7 @@ def mergePullRequest(prId){
 
 def updateDownstreamDependencies(stagedProject) {
   pushPomPropertyChangePR {
-    propertyName = 'fabric8.maven.plugin.version'
+    propertyName = 'ffabric8.forge.version'
     projects = [
             'fabric8io/fabric8-maven-dependencies',
             'fabric8io/fabric8-platform',
