@@ -32,6 +32,8 @@ import org.apache.camel.catalog.DefaultCamelCatalog;
 import org.apache.camel.catalog.EndpointValidationResult;
 import org.apache.camel.catalog.SimpleValidationResult;
 import org.apache.camel.catalog.lucene.LuceneSuggestionStrategy;
+import org.apache.camel.catalog.maven.MavenVersionManager;
+import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -125,6 +127,13 @@ public class EndpointMojo extends AbstractMojo {
     @Parameter(property = "showAll", defaultValue = "false", readonly = true, required = false)
     private boolean showAll;
 
+    /**
+     * Whether to allow downloading Camel catalog version from the internet. This is needed if the project
+     * uses a different Camel version than this plugin is using by default.
+     */
+    @Parameter(property = "downloadVersion", defaultValue = "true", readonly = true, required = false)
+    private boolean downloadVersion;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         CamelCatalog catalog = new DefaultCamelCatalog();
@@ -132,6 +141,26 @@ public class EndpointMojo extends AbstractMojo {
         catalog.addComponent("activemq", "org.apache.activemq.camel.component.ActiveMQComponent");
         // enable did you mean
         catalog.setSuggestionStrategy(new LuceneSuggestionStrategy());
+        // enable loading other catalog versions dynamically
+        catalog.setVersionManager(new MavenVersionManager());
+
+        if (downloadVersion) {
+            String camelVersion = findCamelVersion(project);
+            if (camelVersion != null && !camelVersion.equals(catalog.getCatalogVersion())) {
+                // the project uses a different Camel version so attempt to load it
+                getLog().info("Downloading Camel version: " + camelVersion);
+                boolean loaded = catalog.loadVersion(camelVersion);
+                if (!loaded) {
+                    getLog().warn("Error downloading Camel version: " + camelVersion);
+                }
+            }
+        }
+
+        if (catalog.getLoadedVersion() != null) {
+            getLog().info("Using Camel version: " + catalog.getLoadedVersion());
+        } else {
+            getLog().info("Using Camel version: " + catalog.getCatalogVersion());
+        }
 
         List<CamelEndpointDetails> endpoints = new ArrayList<>();
         List<CamelSimpleDetails> simpleExpressions = new ArrayList<>();
@@ -409,6 +438,27 @@ public class EndpointMojo extends AbstractMojo {
         } else {
             getLog().info(simpleSummary);
         }
+    }
+
+    private static String findCamelVersion(MavenProject project) {
+        Dependency candidate = null;
+
+        for (Dependency dep : project.getDependencies()) {
+            if ("org.apache.camel".equals(dep.getGroupId())) {
+                if ("camel-core".equals(dep.getArtifactId())) {
+                    // favor camel-core
+                    candidate = dep;
+                    break;
+                } else {
+                    candidate = dep;
+                }
+            }
+        }
+        if (candidate != null) {
+            return candidate.getVersion();
+        }
+
+        return null;
     }
 
     private void findJavaFiles(File dir, Set<File> javaFiles) {
