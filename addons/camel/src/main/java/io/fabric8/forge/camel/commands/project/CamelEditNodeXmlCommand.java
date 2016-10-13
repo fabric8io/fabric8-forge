@@ -118,6 +118,10 @@ public class CamelEditNodeXmlCommand extends AbstractCamelProjectCommand impleme
         attributeMap.remove("navigationResult");
 
         Project project = getSelectedProject(context);
+
+        // include custom components
+        discoverCustomCamelComponentsOnClasspathAndAddToCatalog(camelCatalog, project);
+
         String selectedFile = getSelectedFile(builder.getUIContext());
         final String currentFile = asRelativeFile(builder.getUIContext(), selectedFile);
         final int cursorLineNumber = getCurrentCursorLine(builder.getUIContext());

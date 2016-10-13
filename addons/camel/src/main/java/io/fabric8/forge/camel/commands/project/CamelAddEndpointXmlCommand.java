@@ -105,6 +105,9 @@ public class CamelAddEndpointXmlCommand extends AbstractCamelProjectCommand impl
         Project project = getSelectedProject(context);
         String currentFile = getSelectedFile(context);
 
+        // include custom components
+        discoverCustomCamelComponentsOnClasspathAndAddToCatalog(camelCatalog, project);
+
         configureComponentName(project, componentName, false, false);
 
         String selected = configureXml(project, xml, currentFile);

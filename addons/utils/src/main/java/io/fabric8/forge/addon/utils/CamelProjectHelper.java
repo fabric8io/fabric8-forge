@@ -15,10 +15,16 @@
  */
 package io.fabric8.forge.addon.utils;
 
+import java.io.File;
+import java.io.InputStream;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 
+import io.fabric8.utils.IOHelpers;
 import org.jboss.forge.addon.dependencies.Dependency;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.facets.DependencyFacet;
@@ -69,6 +75,40 @@ public class CamelProjectHelper {
             }
         }
         return answer;
+    }
+
+    public static Set<Dependency> findCustomCamelArtifacts(Project project) {
+        Set<Dependency> answer = new LinkedHashSet<Dependency>();
+
+        List<Dependency> dependencies = project.getFacet(DependencyFacet.class).getEffectiveDependencies();
+        for (Dependency d : dependencies) {
+            if (isCamelComponentArtifact(d)) {
+                answer.add(d);
+            }
+        }
+        return answer;
+    }
+
+    public static boolean isCamelComponentArtifact(Dependency dependency) {
+        try {
+            // is it a JAR file
+            File file = dependency.getArtifact().getUnderlyingResourceObject();
+            if (file != null && file.getName().toLowerCase().endsWith(".jar")) {
+                URL url = new URL("file:" + file.getAbsolutePath());
+                URLClassLoader child = new URLClassLoader(new URL[]{url});
+
+                // custom component
+                InputStream is = child.getResourceAsStream("META-INF/services/org/apache/camel/component.properties");
+                if (is != null) {
+                    IOHelpers.close(is);
+                    return true;
+                }
+            }
+        } catch (Throwable e) {
+            // ignore
+        }
+
+        return false;
     }
 
     public static boolean hasDependency(Project project, String groupId) {

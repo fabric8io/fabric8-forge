@@ -31,6 +31,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import static io.fabric8.forge.addon.utils.CamelProjectHelper.findCamelArtifacts;
+import static io.fabric8.forge.addon.utils.CamelProjectHelper.findCustomCamelArtifacts;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.componentsFromArtifact;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.createComponentDto;
 
@@ -57,6 +58,11 @@ public class CamelCurrentComponentsFinder {
 
         // filter out existing components we already have
         Set<Dependency> artifacts = findCamelArtifacts(project);
+        for (Dependency dep : artifacts) {
+            Set<String> components = componentsFromArtifact(camelCatalog, dep.getCoordinate().getArtifactId());
+            names.addAll(components);
+        }
+        artifacts = findCustomCamelArtifacts(project);
         for (Dependency dep : artifacts) {
             Set<String> components = componentsFromArtifact(camelCatalog, dep.getCoordinate().getArtifactId());
             names.addAll(components);

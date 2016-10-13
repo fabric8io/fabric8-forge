@@ -15,16 +15,20 @@
  */
 package io.fabric8.forge.camel.commands.project;
 
+import java.io.File;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.function.Function;
 import javax.inject.Inject;
 
@@ -35,14 +39,13 @@ import io.fabric8.forge.camel.commands.project.completer.RouteBuilderEndpointsCo
 import io.fabric8.forge.camel.commands.project.completer.SpringBootConfigurationFileCompleter;
 import io.fabric8.forge.camel.commands.project.completer.XmlEndpointsCompleter;
 import io.fabric8.forge.camel.commands.project.completer.XmlFileCompleter;
-import io.fabric8.forge.camel.commands.project.converter.NodeDtoConverter;
-import io.fabric8.forge.camel.commands.project.converter.NodeDtoLabelConverter;
 import io.fabric8.forge.camel.commands.project.dto.ComponentDto;
 import io.fabric8.forge.camel.commands.project.dto.ContextDto;
 import io.fabric8.forge.camel.commands.project.dto.NodeDto;
 import io.fabric8.forge.camel.commands.project.dto.NodeDtos;
 import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
 import io.fabric8.forge.camel.commands.project.helper.CamelXmlHelper;
+import io.fabric8.forge.camel.commands.project.helper.PoorMansLogger;
 import io.fabric8.utils.Strings;
 import org.apache.camel.catalog.CamelCatalog;
 import org.jboss.forge.addon.convert.Converter;
@@ -50,8 +53,8 @@ import org.jboss.forge.addon.convert.ConverterFactory;
 import org.jboss.forge.addon.dependencies.Coordinate;
 import org.jboss.forge.addon.dependencies.Dependency;
 import org.jboss.forge.addon.dependencies.builder.CoordinateBuilder;
+import org.jboss.forge.addon.maven.projects.facets.MavenDependencyFacet;
 import org.jboss.forge.addon.parser.java.facets.JavaSourceFacet;
-import org.jboss.forge.addon.parser.java.resources.JavaResource;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.ProjectFactory;
 import org.jboss.forge.addon.projects.Projects;
@@ -70,9 +73,12 @@ import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
 import org.w3c.dom.Element;
 
+import static io.fabric8.forge.addon.utils.VersionHelper.loadText;
 import static io.fabric8.forge.camel.commands.project.helper.CollectionHelper.first;
 
 public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand {
+
+    private static final PoorMansLogger LOG = new PoorMansLogger(false);
 
     public static String CATEGORY = "Camel";
     public static int MAX_OPTIONS = 20;
@@ -528,5 +534,114 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
         return target != null ? target : currentFile;
     }
 
+    protected Set<String> discoverCustomCamelComponentsOnClasspathAndAddToCatalog(CamelCatalog camelCatalog, Project project) {
+        Set<String> answer = new LinkedHashSet<>();
+
+        // find the dependency again because forge don't associate artifact on the returned dependency when installed
+        MavenDependencyFacet facet = project.getFacet(MavenDependencyFacet.class);
+        List<Dependency> list = facet.getEffectiveDependencies();
+
+        for (Dependency dep : list) {
+            Properties properties = loadComponentProperties(dep);
+            if (properties != null) {
+                String components = (String) properties.get("components");
+                if (components != null) {
+                    String[] part = components.split("\\s");
+                    for (String scheme : part) {
+                        if (!camelCatalog.findComponentNames().contains(scheme)) {
+                            // find the class name
+                            String javaType = extractComponentJavaType(dep, scheme);
+                            if (javaType != null) {
+                                String json = loadComponentJSonSchema(dep, scheme);
+                                if (json != null) {
+                                    camelCatalog.addComponent(scheme, javaType, json);
+                                    answer.add(scheme);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return answer;
+    }
+
+    public static Properties loadComponentProperties(Dependency dependency) {
+        Properties answer = new Properties();
+
+        try {
+            // is it a JAR file
+            File file = dependency.getArtifact().getUnderlyingResourceObject();
+            if (file != null && file.getName().toLowerCase().endsWith(".jar")) {
+                URL url = new URL("file:" + file.getAbsolutePath());
+                URLClassLoader child = new URLClassLoader(new URL[]{url});
+
+                InputStream is = child.getResourceAsStream("META-INF/services/org/apache/camel/component.properties");
+                if (is != null) {
+                    answer.load(is);
+                }
+            }
+        } catch (Throwable e) {
+            // ignore
+        }
+
+        return answer;
+    }
+
+    public static String loadComponentJSonSchema(Dependency dependency, String scheme) {
+        String answer = null;
+
+        String path = null;
+        String javaType = extractComponentJavaType(dependency, scheme);
+        if (javaType != null) {
+            int pos = javaType.lastIndexOf(".");
+            path = javaType.substring(0, pos);
+            path = path.replace('.', '/');
+            path = path + "/" + scheme + ".json";
+        }
+
+        if (path != null) {
+            try {
+                // is it a JAR file
+                File file = dependency.getArtifact().getUnderlyingResourceObject();
+                if (file != null && file.getName().toLowerCase().endsWith(".jar")) {
+                    URL url = new URL("file:" + file.getAbsolutePath());
+                    URLClassLoader child = new URLClassLoader(new URL[]{url});
+
+                    InputStream is = child.getResourceAsStream(path);
+                    if (is != null) {
+                        answer = loadText(is);
+                    }
+                }
+            } catch (Throwable e) {
+                // ignore
+            }
+        }
+
+        return answer;
+    }
+
+    public static String extractComponentJavaType(Dependency dependency, String scheme) {
+        try {
+            // is it a JAR file
+            File file = dependency.getArtifact().getUnderlyingResourceObject();
+            if (file != null && file.getName().toLowerCase().endsWith(".jar")) {
+                URL url = new URL("file:" + file.getAbsolutePath());
+                URLClassLoader child = new URLClassLoader(new URL[]{url});
+
+                InputStream is = child.getResourceAsStream("META-INF/services/org/apache/camel/component/" + scheme);
+                if (is != null) {
+                    Properties props = new Properties();
+                    props.load(is);
+                    return (String) props.get("class");
+                }
+            }
+        } catch (Throwable e) {
+            // ignore
+        }
+
+        return null;
+    }
 
 }

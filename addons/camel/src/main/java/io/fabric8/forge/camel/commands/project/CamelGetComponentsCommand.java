@@ -79,6 +79,9 @@ public class CamelGetComponentsCommand extends AbstractCamelProjectCommand {
     public void initializeUI(UIBuilder builder) throws Exception {
         Project project = getSelectedProject(builder);
 
+        // include custom components
+        discoverCustomCamelComponentsOnClasspathAndAddToCatalog(camelCatalog, project);
+
         filter.setValueChoices(CamelCommandsHelper.createComponentLabelValues(project, getCamelCatalog()));
         filter.setDefaultValue("<all>");
 

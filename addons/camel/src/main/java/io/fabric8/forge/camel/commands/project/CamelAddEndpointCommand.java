@@ -97,6 +97,9 @@ public class CamelAddEndpointCommand extends AbstractCamelProjectCommand impleme
         final String currentFile = asRelativeFile(builder.getUIContext(), selectedFile);
         attributeMap.put("currentFile", currentFile);
 
+        // include custom components
+        discoverCustomCamelComponentsOnClasspathAndAddToCatalog(camelCatalog, project);
+
         boolean xmlFile = isSelectedFileXml(builder.getUIContext());
 
         // determine if the current cursor position is in a route where we should be either consumer or producer only
@@ -105,6 +108,15 @@ public class CamelAddEndpointCommand extends AbstractCamelProjectCommand impleme
         determineConsumerAndProducerOnly(consumerOnly, producerOnly, builder.getUIContext(), xmlFile, currentFile);
         attributeMap.put("consumerOnly", Boolean.toString(consumerOnly.get()));
         attributeMap.put("producerOnly", Boolean.toString(producerOnly.get()));
+
+        List<String> names = camelCatalog.findComponentNames();
+        LOG.info("All component names +++ start +++");
+        for (String name : names) {
+            LOG.info(name);
+        }
+        LOG.info("All component names +++ end +++");
+        LOG.info("ConsumerOnly: " + consumerOnly.get());
+        LOG.info("ProducerOnly: " + producerOnly.get());
 
         // filter the list of components based on consumer and producer only
         configureComponentName(project, componentName, consumerOnly.get(), producerOnly.get());
