@@ -100,6 +100,9 @@ public class CamelAddRouteXmlCommand extends AbstractCamelProjectCommand impleme
         Project project = getSelectedProject(builder.getUIContext());
         String currentFile = getSelectedFile(builder.getUIContext());
 
+        // include custom components
+        discoverCustomCamelComponentsOnClasspathAndAddToCatalog(camelCatalog, project);
+
         // we only want components that is able to consume because this is to add a new route
         configureComponentName(project, componentName, true, false);
         configureXml(project, xml, currentFile);

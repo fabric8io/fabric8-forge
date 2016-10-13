@@ -97,6 +97,9 @@ public class CamelAddEndpointCommand extends AbstractCamelProjectCommand impleme
         final String currentFile = asRelativeFile(builder.getUIContext(), selectedFile);
         attributeMap.put("currentFile", currentFile);
 
+        // include custom components
+        discoverCustomCamelComponentsOnClasspathAndAddToCatalog(camelCatalog, project);
+
         boolean xmlFile = isSelectedFileXml(builder.getUIContext());
 
         // determine if the current cursor position is in a route where we should be either consumer or producer only

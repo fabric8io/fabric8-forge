@@ -26,6 +26,7 @@ import io.fabric8.forge.camel.commands.project.completer.XmlEndpointsCompleter;
 import io.fabric8.forge.camel.commands.project.helper.PoorMansLogger;
 import io.fabric8.forge.camel.commands.project.model.CamelEndpointDetails;
 import io.fabric8.forge.camel.commands.project.model.InputOptionByGroup;
+import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.dependencies.DependencyInstaller;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
@@ -91,6 +92,11 @@ public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implem
     public void initializeUI(UIBuilder builder) throws Exception {
         Map<Object, Object> attributeMap = builder.getUIContext().getAttributeMap();
         attributeMap.remove("navigationResult");
+
+        Project project = getSelectedProject(builder.getUIContext());
+
+        // include custom components
+        discoverCustomCamelComponentsOnClasspathAndAddToCatalog(camelCatalog, project);
 
         String selectedFile = getSelectedFile(builder.getUIContext());
         final String currentFile = asRelativeFile(builder.getUIContext(), selectedFile);

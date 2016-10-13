@@ -98,6 +98,9 @@ public class CamelEditComponentCommand extends AbstractCamelProjectCommand imple
         Map<Object, Object> attributeMap = builder.getUIContext().getAttributeMap();
         attributeMap.remove("navigationResult");
 
+        // include custom components
+        discoverCustomCamelComponentsOnClasspathAndAddToCatalog(camelCatalog, project);
+
         // find all components in project (and filter out components without options)
         Iterable<ComponentDto> it = CamelCommandsHelper.createComponentDtoValues(project, getCamelCatalog(), null, false, false, false, true).call();
         componentName.setValueChoices(it);
