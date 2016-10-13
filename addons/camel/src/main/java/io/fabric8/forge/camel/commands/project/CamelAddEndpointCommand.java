@@ -55,7 +55,7 @@ public class CamelAddEndpointCommand extends AbstractCamelProjectCommand impleme
 
     private static final int MAX_OPTIONS = 20;
 
-    private static final PoorMansLogger LOG = new PoorMansLogger(false);
+    private static final PoorMansLogger LOG = new PoorMansLogger(true);
 
     @Inject
     @WithAttributes(label = "Name", required = true, description = "Name of component to use for the endpoint")
@@ -108,6 +108,15 @@ public class CamelAddEndpointCommand extends AbstractCamelProjectCommand impleme
         determineConsumerAndProducerOnly(consumerOnly, producerOnly, builder.getUIContext(), xmlFile, currentFile);
         attributeMap.put("consumerOnly", Boolean.toString(consumerOnly.get()));
         attributeMap.put("producerOnly", Boolean.toString(producerOnly.get()));
+
+        List<String> names = camelCatalog.findComponentNames();
+        LOG.info("All component names +++ start +++");
+        for (String name : names) {
+            LOG.info(name);
+        }
+        LOG.info("All component names +++ end +++");
+        LOG.info("ConsumerOnly: " + consumerOnly.get());
+        LOG.info("ProducerOnly: " + producerOnly.get());
 
         // filter the list of components based on consumer and producer only
         configureComponentName(project, componentName, consumerOnly.get(), producerOnly.get());

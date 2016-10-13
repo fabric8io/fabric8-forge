@@ -29,7 +29,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.function.Function;
 import javax.inject.Inject;
 
@@ -40,14 +39,13 @@ import io.fabric8.forge.camel.commands.project.completer.RouteBuilderEndpointsCo
 import io.fabric8.forge.camel.commands.project.completer.SpringBootConfigurationFileCompleter;
 import io.fabric8.forge.camel.commands.project.completer.XmlEndpointsCompleter;
 import io.fabric8.forge.camel.commands.project.completer.XmlFileCompleter;
-import io.fabric8.forge.camel.commands.project.converter.NodeDtoConverter;
-import io.fabric8.forge.camel.commands.project.converter.NodeDtoLabelConverter;
 import io.fabric8.forge.camel.commands.project.dto.ComponentDto;
 import io.fabric8.forge.camel.commands.project.dto.ContextDto;
 import io.fabric8.forge.camel.commands.project.dto.NodeDto;
 import io.fabric8.forge.camel.commands.project.dto.NodeDtos;
 import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
 import io.fabric8.forge.camel.commands.project.helper.CamelXmlHelper;
+import io.fabric8.forge.camel.commands.project.helper.PoorMansLogger;
 import io.fabric8.utils.Strings;
 import org.apache.camel.catalog.CamelCatalog;
 import org.jboss.forge.addon.convert.Converter;
@@ -57,7 +55,6 @@ import org.jboss.forge.addon.dependencies.Dependency;
 import org.jboss.forge.addon.dependencies.builder.CoordinateBuilder;
 import org.jboss.forge.addon.maven.projects.facets.MavenDependencyFacet;
 import org.jboss.forge.addon.parser.java.facets.JavaSourceFacet;
-import org.jboss.forge.addon.parser.java.resources.JavaResource;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.ProjectFactory;
 import org.jboss.forge.addon.projects.Projects;
@@ -80,6 +77,8 @@ import static io.fabric8.forge.addon.utils.VersionHelper.loadText;
 import static io.fabric8.forge.camel.commands.project.helper.CollectionHelper.first;
 
 public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand {
+
+    private static final PoorMansLogger LOG = new PoorMansLogger(true);
 
     public static String CATEGORY = "Camel";
     public static int MAX_OPTIONS = 20;

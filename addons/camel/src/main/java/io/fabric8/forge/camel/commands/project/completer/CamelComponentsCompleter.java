@@ -24,6 +24,7 @@ import java.util.TreeSet;
 
 import io.fabric8.forge.addon.utils.CamelProjectHelper;
 import io.fabric8.forge.camel.commands.project.dto.ComponentDto;
+import io.fabric8.forge.camel.commands.project.helper.PoorMansLogger;
 import org.apache.camel.catalog.CamelCatalog;
 import org.apache.camel.catalog.JSonSchemaHelper;
 import org.jboss.forge.addon.dependencies.Dependency;
@@ -34,10 +35,13 @@ import org.jboss.forge.addon.ui.input.UICompleter;
 import org.jboss.forge.addon.ui.input.UIInput;
 
 import static io.fabric8.forge.addon.utils.CamelProjectHelper.findCamelArtifacts;
+import static io.fabric8.forge.addon.utils.CamelProjectHelper.findCustomCamelArtifacts;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.componentsFromArtifact;
 import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.createComponentDto;
 
 public class CamelComponentsCompleter implements UICompleter<ComponentDto> {
+
+    private static final PoorMansLogger LOG = new PoorMansLogger(true);
 
     private final Project project;
     private final CamelCatalog camelCatalog;
@@ -177,6 +181,11 @@ public class CamelComponentsCompleter implements UICompleter<ComponentDto> {
         } else {
             SortedSet<String> set = new TreeSet<>();
             Set<Dependency> artifacts = findCamelArtifacts(project);
+            for (Dependency dep : artifacts) {
+                Set<String> components = componentsFromArtifact(camelCatalog, dep.getCoordinate().getArtifactId());
+                set.addAll(components);
+            }
+            artifacts = findCustomCamelArtifacts(project);
             for (Dependency dep : artifacts) {
                 Set<String> components = componentsFromArtifact(camelCatalog, dep.getCoordinate().getArtifactId());
                 set.addAll(components);
