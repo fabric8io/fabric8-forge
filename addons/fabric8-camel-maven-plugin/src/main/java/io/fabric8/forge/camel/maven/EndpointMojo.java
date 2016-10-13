@@ -127,6 +127,13 @@ public class EndpointMojo extends AbstractMojo {
     @Parameter(property = "showAll", defaultValue = "false", readonly = true, required = false)
     private boolean showAll;
 
+    /**
+     * Whether to allow downloading Camel catalog version from the internet. This is needed if the project
+     * uses a different Camel version than this plugin is using by default.
+     */
+    @Parameter(property = "downloadVersion", defaultValue = "true", readonly = true, required = false)
+    private boolean downloadVersion;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         CamelCatalog catalog = new DefaultCamelCatalog();
@@ -137,15 +144,18 @@ public class EndpointMojo extends AbstractMojo {
         // enable loading other catalog versions dynamically
         catalog.setVersionManager(new MavenVersionManager());
 
-        String camelVersion = findCamelVersion(project);
-        if (camelVersion != null && !camelVersion.equals(catalog.getCatalogVersion())) {
-            // the project uses a different Camel version so attempt to load it
-            getLog().info("Loading Camel version: " + camelVersion);
-            boolean loaded = catalog.loadVersion(camelVersion);
-            if (!loaded) {
-                getLog().warn("Error loading Camel version: " + camelVersion);
+        if (downloadVersion) {
+            String camelVersion = findCamelVersion(project);
+            if (camelVersion != null && !camelVersion.equals(catalog.getCatalogVersion())) {
+                // the project uses a different Camel version so attempt to load it
+                getLog().info("Downloading Camel version: " + camelVersion);
+                boolean loaded = catalog.loadVersion(camelVersion);
+                if (!loaded) {
+                    getLog().warn("Error downloading Camel version: " + camelVersion);
+                }
             }
         }
+
         if (catalog.getLoadedVersion() != null) {
             getLog().info("Using Camel version: " + catalog.getLoadedVersion());
         } else {
