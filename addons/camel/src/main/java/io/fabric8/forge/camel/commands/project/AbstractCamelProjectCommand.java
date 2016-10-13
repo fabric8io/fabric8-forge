@@ -78,7 +78,7 @@ import static io.fabric8.forge.camel.commands.project.helper.CollectionHelper.fi
 
 public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand {
 
-    private static final PoorMansLogger LOG = new PoorMansLogger(true);
+    private static final PoorMansLogger LOG = new PoorMansLogger(false);
 
     public static String CATEGORY = "Camel";
     public static int MAX_OPTIONS = 20;

@@ -41,7 +41,7 @@ import static io.fabric8.forge.camel.commands.project.helper.CamelCatalogHelper.
 
 public class CamelComponentsCompleter implements UICompleter<ComponentDto> {
 
-    private static final PoorMansLogger LOG = new PoorMansLogger(true);
+    private static final PoorMansLogger LOG = new PoorMansLogger(false);
 
     private final Project project;
     private final CamelCatalog camelCatalog;

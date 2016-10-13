@@ -55,7 +55,7 @@ public class CamelAddEndpointCommand extends AbstractCamelProjectCommand impleme
 
     private static final int MAX_OPTIONS = 20;
 
-    private static final PoorMansLogger LOG = new PoorMansLogger(true);
+    private static final PoorMansLogger LOG = new PoorMansLogger(false);
 
     @Inject
     @WithAttributes(label = "Name", required = true, description = "Name of component to use for the endpoint")
