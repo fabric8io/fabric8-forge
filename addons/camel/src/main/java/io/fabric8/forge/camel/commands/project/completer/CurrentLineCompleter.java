@@ -81,27 +81,29 @@ public class CurrentLineCompleter implements UICompleter<String> {
     }
 
     protected String getCurrentCursorLineText() throws Exception {
-        LOG.info("Loading relative file: " + relativeFile + " using java source facet: " + sourceFacet);
-        FileResource file = sourceFacet != null ? sourceFacet.getJavaResource(relativeFile) : null;
-        if (file == null || !file.exists()) {
-            LOG.info("Loading relative file: " + relativeFile + " using resource facet: " + resourcesFacet);
-            file = resourcesFacet != null ? resourcesFacet.getResource(relativeFile) : null;
-        }
-        if (file == null || !file.exists()) {
-            LOG.info("Loading relative file: " + relativeFile + " using web facet: " + webFacet);
-            file = webFacet != null ? webFacet.getWebResource(relativeFile) : null;
-        }
-        if (file != null) {
-            // read all the lines
-            List<String> lines = LineNumberHelper.readLines(file.getResourceInputStream());
+        if (relativeFile != null) {
+            LOG.info("Loading relative file: " + relativeFile + " using java source facet: " + sourceFacet);
+            FileResource file = sourceFacet != null ? sourceFacet.getJavaResource(relativeFile) : null;
+            if (file == null || !file.exists()) {
+                LOG.info("Loading relative file: " + relativeFile + " using resource facet: " + resourcesFacet);
+                file = resourcesFacet != null ? resourcesFacet.getResource(relativeFile) : null;
+            }
+            if (file == null || !file.exists()) {
+                LOG.info("Loading relative file: " + relativeFile + " using web facet: " + webFacet);
+                file = webFacet != null ? webFacet.getWebResource(relativeFile) : null;
+            }
+            if (file != null) {
+                // read all the lines
+                List<String> lines = LineNumberHelper.readLines(file.getResourceInputStream());
 
-            LOG.info("Read " + lines.size() + " lines from file: " + relativeFile);
+                LOG.info("Read " + lines.size() + " lines from file: " + relativeFile);
 
-            // the list is 0-based, and line number is 1-based
-            int idx = lineNumber - 1;
-            String line = lines.get(idx);
+                // the list is 0-based, and line number is 1-based
+                int idx = lineNumber - 1;
+                String line = lines.get(idx);
 
-            return line;
+                return line;
+            }
         }
 
         return null;
