@@ -71,7 +71,7 @@ public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implem
     public UICommandMetadata getMetadata(UIContext context) {
         return Metadata.forCommand(CamelEditEndpointCommand.class).name(
                 "Camel: Edit Endpoint").category(Categories.create(CATEGORY))
-                .description("Edit Camel endpoint in the current file");
+                .description("Edit Camel endpoint");
     }
 
     @Override
@@ -98,19 +98,28 @@ public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implem
         // include custom components
         discoverCustomCamelComponentsOnClasspathAndAddToCatalog(camelCatalog, project);
 
+        // do we have a specific file open in the editor?
         String selectedFile = getSelectedFile(builder.getUIContext());
         final String currentFile = asRelativeFile(builder.getUIContext(), selectedFile);
         final int cursorLineNumber = getCurrentCursorLine(builder.getUIContext());
-        LOG.info("Current file " + currentFile + " line number: " + cursorLineNumber);
 
-        boolean javaFile = isSelectedFileJava(builder.getUIContext());
-        boolean xmlFile = isSelectedFileXml(builder.getUIContext());
+        boolean javaFile = false;
+        boolean xmlFile = false;
+        if (selectedFile != null) {
+            LOG.info("Current file " + currentFile + " line number: " + cursorLineNumber);
+            javaFile = isSelectedFileJava(builder.getUIContext());
+            xmlFile = isSelectedFileXml(builder.getUIContext());
+        }
 
-        if (javaFile) {
+        if (javaFile || selectedFile == null) {
             LOG.info("Java file");
 
             // find all endpoints
-            javaCompleter = createRouteBuilderEndpointsCompleter(builder.getUIContext(), currentFile::equals);
+            if (currentFile != null) {
+                javaCompleter = createRouteBuilderEndpointsCompleter(builder.getUIContext(), currentFile::equals);
+            } else {
+                javaCompleter = createRouteBuilderEndpointsCompleter(builder.getUIContext(), null);
+            }
 
             boolean found = false;
             if (cursorLineNumber != -1) {
@@ -138,11 +147,17 @@ public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implem
                 // show the UI where you can chose the endpoint to select
                 builder.add(endpoints);
             }
-        } else if (xmlFile) {
+        }
+
+        if (xmlFile || selectedFile == null) {
             LOG.info("XML file");
 
             // find all endpoints
-            xmlCompleter = createXmlEndpointsCompleter(builder.getUIContext(), currentFile::equals);
+            if (currentFile != null) {
+                xmlCompleter = createXmlEndpointsCompleter(builder.getUIContext(), currentFile::equals);
+            } else {
+                xmlCompleter = createXmlEndpointsCompleter(builder.getUIContext(), null);
+            }
 
             boolean found = false;
             if (cursorLineNumber != -1) {
@@ -170,13 +185,15 @@ public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implem
                 // show the UI where you can chose the endpoint to select
                 builder.add(endpoints);
             }
-        } else {
-            // non java file such as properties/cfg/yaml files
-            currentLineCompleter = createCurrentLineCompleter(cursorLineNumber, currentFile, builder.getUIContext());
-            CamelEndpointDetails detail = currentLineCompleter.getEndpoint();
-            if (detail != null && detail.getEndpointUri() != null) {
-                endpoints.setValue(detail.getEndpointUri());
-                endpoints.setRequired(false);
+
+            if (!javaFile && !xmlFile) {
+                // non java file such as properties/cfg/yaml files
+                currentLineCompleter = createCurrentLineCompleter(cursorLineNumber, currentFile, builder.getUIContext());
+                CamelEndpointDetails detail = currentLineCompleter.getEndpoint();
+                if (detail != null && detail.getEndpointUri() != null) {
+                    endpoints.setValue(detail.getEndpointUri());
+                    endpoints.setRequired(false);
+                }
             }
         }
     }
@@ -204,10 +221,27 @@ public class CamelEditEndpointCommand extends AbstractCamelProjectCommand implem
         CamelEndpointDetails detail = null;
         if (javaCompleter != null) {
             detail = javaCompleter.getEndpointDetail(selectedUri);
-        } else if (xmlCompleter != null) {
+            if (detail != null) {
+                // it was the java completer
+                xmlCompleter = null;
+                currentLineCompleter = null;
+            }
+        }
+        if (detail == null && xmlCompleter != null) {
             detail = xmlCompleter.getEndpointDetail(selectedUri);
-        } else if (currentLineCompleter != null) {
+            if (detail != null) {
+                // it was the xml completer
+                javaCompleter = null;
+                currentLineCompleter = null;
+            }
+        }
+        if (detail == null && currentLineCompleter != null) {
             detail = currentLineCompleter.getEndpoint();
+            if (detail != null) {
+                // it was the line completer
+                javaCompleter = null;
+                xmlCompleter = null;
+            }
         }
 
         LOG.info("Endpoint detail: " + detail);
