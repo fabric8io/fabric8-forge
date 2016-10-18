@@ -47,6 +47,7 @@ import org.jboss.forge.addon.ui.metadata.WithAttributes;
 import org.jboss.forge.addon.ui.result.NavigationResult;
 import org.jboss.forge.addon.ui.result.Result;
 import org.jboss.forge.addon.ui.result.Results;
+import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
 import org.jboss.forge.addon.ui.wizard.UIWizard;
 import org.jboss.forge.furnace.util.Strings;
@@ -64,9 +65,12 @@ public class SpringBootNewProjectCommand extends AbstractDevOpsCommand implement
 
     private static final transient Logger LOG = LoggerFactory.getLogger(SpringBootNewProjectCommand.class);
 
+    // lets use a different category for this command
+    private static final String CATEGORY = "Spring Boot";
+
     // lets use 1.3.x which currently fabric8 works best with
-    private static final String SPRING_BOOT_DEFAULT_VERSION = "1.3.7";
-    private static final String[] SPRING_BOOT_VERSIONS = new String[]{"1.3.7", "1.4.0"};
+    private static final String SPRING_BOOT_DEFAULT_VERSION = "1.4.1";
+    private static final String[] SPRING_BOOT_VERSIONS = new String[]{"1.3.8", "1.4.1"};
 
     private static final String STARTER_URL = "https://start.spring.io/starter.zip";
 
@@ -165,7 +169,9 @@ public class SpringBootNewProjectCommand extends AbstractDevOpsCommand implement
 
     @Override
     public UICommandMetadata getMetadata(UIContext context) {
-        return Metadata.from(super.getMetadata(context), getClass()).name("Spring-Boot: New Project")
+        return Metadata.from(super.getMetadata(context), getClass())
+                .category(Categories.create(CATEGORY))
+                .name(CATEGORY + ": New Project")
                 .description("Create a new Spring Boot project");
     }
 
