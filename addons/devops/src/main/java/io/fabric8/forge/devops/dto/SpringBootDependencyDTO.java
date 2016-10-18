@@ -65,6 +65,10 @@ public class SpringBootDependencyDTO {
         return group + ": " +  name;
     }
 
+    public String getGroupDashName() {
+        return group + "-" + name;
+    }
+
     public void setName(String name) {
         this.name = name;
     }
