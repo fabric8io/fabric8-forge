@@ -20,23 +20,23 @@ initializr:
       vaadin-bom:
         groupId: com.vaadin
         artifactId: vaadin-bom
-        version: 7.6.3
+        version: 7.7.3
       cloud-bom:
         groupId: org.springframework.cloud
         artifactId: spring-cloud-dependencies
         mappings:
           - versionRange: "[1.2.3.RELEASE,1.3.0.M1)"
             version: Angel.SR6
-          - versionRange: "[1.3.0.M2,1.4.0.RELEASE]"
-            version: Brixton.SR4
-          - versionRange: 1.4.1.BUILD-SNAPSHOT
+          - versionRange: "[1.3.0.M1,1.3.9.BUILD-SNAPSHOT)"
+            version: Brixton.SR6
+          - versionRange: "[1.3.9.BUILD-SNAPSHOT,1.4.0.RELEASE)"
             version: Brixton.BUILD-SNAPSHOT
             repositories: spring-snapshots,spring-milestones
-      cloud-contract-bom:
-        groupId: org.springframework.cloud
-        artifactId: spring-cloud-contract-dependencies
-        version: 1.0.0.M1
-        repositories: spring-snapshots,spring-milestones
+          - versionRange: "[1.4.0.RELEASE,1.4.2.BUILD-SNAPSHOT)"
+            version: Camden.RELEASE
+          - versionRange: 1.4.2.BUILD-SNAPSHOT
+            version: Camden.BUILD-SNAPSHOT
+            repositories: spring-snapshots,spring-milestones
       cloud-dataflow-bom:
         groupId: org.springframework.cloud
         artifactId: spring-cloud-dataflow-dependencies
@@ -46,27 +46,18 @@ initializr:
       experimental-reactive-bom:
         groupId: org.springframework.boot.experimental
         artifactId: spring-boot-dependencies-web-reactive
-        version: 0.1.0.BUILD-SNAPSHOT
         repositories: spring-snapshots,spring-milestones
+        version: 0.1.0.BUILD-SNAPSHOT
       scs-bom:
         groupId: io.pivotal.spring.cloud
         artifactId: spring-cloud-services-dependencies
-        version: 1.1.1.RELEASE
+        version: 1.2.0.RELEASE
         additionalBoms: [cloud-bom]
     gradle:
       dependency-management-plugin-version: 0.6.0.RELEASE
     kotlin:
       version: 1.0.3
   dependencies:
-    - name: Experimental
-      content:
-        - name: Reactive Web
-          id: experimental-web-reactive
-          groupId: org.springframework.boot.experimental
-          artifactId: spring-boot-starter-web-reactive
-          bom: experimental-reactive-bom
-          versionRange: 1.4.0.RC1
-          description: Reactive web development with Tomcat and Spring Reactive (experimental)
     - name: Core
       content:
         - name: Security
@@ -84,6 +75,10 @@ initializr:
           id: jta-bitronix
           description: JTA distributed transactions via Bitronix
           versionRange: 1.2.0.M1
+        - name: Narayana (JTA)
+          id: jta-narayana
+          description: JTA distributed transactions via Narayana
+          versionRange: 1.4.0.M2
         - name: Cache
           id: cache
           description: Spring's Cache abstraction
@@ -117,7 +112,7 @@ initializr:
           id: lombok
           groupId: org.projectlombok
           artifactId: lombok
-          description: Java annotation library which help to reduce boilerplate code and code faster
+          description: Java annotation library which helps to reduce boilerplate code and code faster
           mappings:
             - versionRange: "[1.2.0.RELEASE,1.4.0.M1)"
               version: 1.16.6
@@ -145,7 +140,7 @@ initializr:
               artifactId: spring-boot-starter-ws
         - name: Jersey (JAX-RS)
           id: jersey
-          description: the Jersey RESTful Web Services framework
+          description: RESTful Web Services framework
           versionRange: 1.2.0.RELEASE
         - name: Ratpack
           id: ratpack
@@ -161,8 +156,8 @@ initializr:
             - web
           groupId: com.vaadin
           artifactId: vaadin-spring-boot-starter
-          version: 1.0.0
-          description: Vaadin
+          version: 1.0.2
+          description: Vaadin java web application framework
           bom: vaadin-bom
         - name: Rest Repositories
           id: data-rest
@@ -174,7 +169,7 @@ initializr:
           versionRange: 1.2.2.RELEASE
         - name: Rest Repositories HAL Browser
           id: data-rest-hal
-          description: Browsing Spring Data REST repositories with an HTML UI
+          description: Browsing Spring Data REST repositories in your browser
           groupId: org.springframework.data
           artifactId: spring-data-rest-hal-browser
           versionRange: 1.3.0.M1
@@ -240,6 +235,13 @@ initializr:
           id: jooq
           description: Persistence support using Java Object Oriented Querying
           versionRange: 1.3.0.M2
+        - name: MyBatis
+          id: mybatis
+          description: Persistence support using MyBatis
+          groupId: org.mybatis.spring.boot
+          artifactId: mybatis-spring-boot-starter
+          version: 1.1.1
+          versionRange: 1.3.0.RELEASE
         - name: JDBC
           id: jdbc
           description: JDBC databases
@@ -349,8 +351,6 @@ initializr:
           description: Task result tracking along with integration with batch and streams
           groupId: org.springframework.cloud
           artifactId: spring-cloud-task-starter
-          version: 1.0.1.RELEASE
-          versionRange: 1.3.2.RELEASE
     - name: Cloud Config
       bom: cloud-bom
       versionRange: 1.2.3.RELEASE
@@ -585,7 +585,7 @@ initializr:
           groupId: org.springframework.cloud
           artifactId: spring-cloud-cluster-etcd
     - name: Cloud Contract
-      bom: cloud-contract-bom
+      bom: cloud-bom
       versionRange: 1.4.0.RC1
       content:
         - name: Cloud Contract Verifier
@@ -611,7 +611,7 @@ initializr:
           starter: false
     - name: Pivotal Cloud Foundry
       bom: scs-bom
-      versionRange: 1.3.0.RELEASE
+      versionRange: "[1.3.0.RELEASE,1.4.0.M1)"
       content:
         - name: Config Client (PCF)
           id: scs-config-client
@@ -653,13 +653,13 @@ initializr:
           description: Activiti BPMN workflow engine
           groupId: org.activiti
           artifactId: activiti-spring-boot-starter-basic
-          version: 5.19.0
+          version: 5.21.0
         - name: Apache Camel
           id: camel
           description: Integration using Apache Camel
           groupId: org.apache.camel
           artifactId: camel-spring-boot-starter
-          version: 2.17.2
+          version: 2.18.0
         - name: JMS (ActiveMQ)
           id: activemq
           description: Java Message Service API via Apache ActiveMQ
@@ -693,6 +693,15 @@ initializr:
         - name: Remote Shell
           id: remote-shell
           description: CRaSH shell integration
+    - name: Experimental
+      content:
+        - name: Reactive Web
+          id: experimental-web-reactive
+          groupId: org.springframework.boot.experimental
+          artifactId: spring-boot-starter-web-reactive
+          bom: experimental-reactive-bom
+          versionRange: 2.0.0.BUILD-SNAPSHOT
+          description: Reactive web development with Apache Tomcat and Spring Reactive (experimental)
   types:
     - name: Maven Project
       id: maven-project
