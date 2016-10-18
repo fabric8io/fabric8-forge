@@ -20,6 +20,7 @@ import java.util.Map;
 
 import io.fabric8.forge.camel.commands.project.dto.ComponentDto;
 import io.fabric8.forge.camel.commands.project.helper.CamelCommandsHelper;
+import io.fabric8.forge.camel.commands.project.helper.CamelVersionHelper;
 import org.apache.camel.catalog.CamelCatalog;
 import org.jboss.forge.addon.dependencies.Dependency;
 import org.jboss.forge.addon.dependencies.builder.DependencyBuilder;
@@ -99,8 +100,19 @@ public class CamelProjectAddComponentStep extends AbstractCamelProjectCommand im
             } else {
                 version = dto.getVersion();
             }
+
+            String artifactId = dto.getArtifactId();
+
+            // is it spring boot project and Camel is > 2.18.0 then we must use -starter
+            if (isSpringBootProject(project)) {
+                boolean newer = CamelVersionHelper.isGE("2.18.0", version);
+                if (newer) {
+                    artifactId = artifactId + "-starter";
+                }
+            }
+
             DependencyBuilder dependency = DependencyBuilder.create().setGroupId(dto.getGroupId())
-                    .setArtifactId(dto.getArtifactId()).setVersion(version);
+                    .setArtifactId(artifactId).setVersion(version);
 
             // install the component
             dependencyInstaller.install(project, dependency);
