@@ -21,6 +21,7 @@ import javax.inject.Inject;
 
 import io.fabric8.forge.camel.commands.project.completer.CamelDataFormatsCompleter;
 import io.fabric8.forge.camel.commands.project.dto.DataFormatDto;
+import io.fabric8.forge.camel.commands.project.helper.CamelVersionHelper;
 import org.jboss.forge.addon.dependencies.Dependency;
 import org.jboss.forge.addon.dependencies.builder.DependencyBuilder;
 import org.jboss.forge.addon.projects.Project;
@@ -91,8 +92,20 @@ public class CamelProjectAddDataFormatCommand extends AbstractCamelProjectComman
             } else {
                 version = dto.getVersion();
             }
+
+            String artifactId = dto.getArtifactId();
+
+            // is it spring boot project and Camel is > 2.18.0 then we must use -starter
+            if (isSpringBootProject(project)) {
+                boolean newer = CamelVersionHelper.isGE("2.18.0", version);
+                if (newer) {
+                    artifactId = artifactId + "-starter";
+                }
+            }
+
+
             DependencyBuilder dependency = DependencyBuilder.create().setGroupId(dto.getGroupId())
-                    .setArtifactId(dto.getArtifactId()).setVersion(version);
+                    .setArtifactId(artifactId).setVersion(version);
 
             // install the component
             dependencyInstaller.install(project, dependency);

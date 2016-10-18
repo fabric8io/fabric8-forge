@@ -203,6 +203,10 @@ public abstract class AbstractCamelProjectCommand extends AbstractProjectCommand
         return !findCamelArtifacts(project).isEmpty();
     }
 
+    protected boolean isSpringBootProject(Project project) {
+        return CamelProjectHelper.hasDependency(project, "org.springframework.boot");
+    }
+
     protected Dependency findCamelCoreDependency(Project project) {
         return CamelProjectHelper.findCamelCoreDependency(project);
     }
