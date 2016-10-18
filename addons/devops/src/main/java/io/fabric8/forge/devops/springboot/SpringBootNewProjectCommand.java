@@ -66,7 +66,7 @@ public class SpringBootNewProjectCommand extends AbstractDevOpsCommand implement
     private static final transient Logger LOG = LoggerFactory.getLogger(SpringBootNewProjectCommand.class);
 
     // lets use a different category for this command
-    private static final String CATEGORY = "Spring-Boot";
+    private static final String CATEGORY = "Spring Boot";
 
     // lets use 1.3.x which currently fabric8 works best with
     private static final String SPRING_BOOT_DEFAULT_VERSION = "1.4.1";
