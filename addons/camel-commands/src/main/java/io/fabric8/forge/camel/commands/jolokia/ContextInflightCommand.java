@@ -35,6 +35,10 @@ public class ContextInflightCommand extends AbstractJolokiaCommand {
     private UIInput<String> name;
 
     @Inject
+    @WithAttributes(label = "route", required = true, description = "The name of the Camel route")
+    private UIInput<String> route;
+
+    @Inject
     @WithAttributes(label = "limit", required = false, defaultValue = "0", description = "To limit the number of exchanges shown")
     private UIInput<Integer> limit;
 
@@ -52,7 +56,7 @@ public class ContextInflightCommand extends AbstractJolokiaCommand {
     @Override
     public void initializeUI(UIBuilder builder) throws Exception {
         name.setCompleter(new CamelContextCompleter(getController()));
-        builder.add(name).add(limit).add(sortByLongestDuration);
+        builder.add(name).add(route).add(limit).add(sortByLongestDuration);
     }
 
     @Override
@@ -62,7 +66,9 @@ public class ContextInflightCommand extends AbstractJolokiaCommand {
             return Results.fail("Not connected to remote jolokia agent. Use camel-connect command first");
         }
 
-        org.apache.camel.commands.ContextInflightCommand command = new org.apache.camel.commands.ContextInflightCommand(name.getValue(), limit.getValue(), sortByLongestDuration.getValue());
+        Boolean value = sortByLongestDuration.getValue();
+        boolean flag = value != null && value.booleanValue();
+        org.apache.camel.commands.ContextInflightCommand command = new org.apache.camel.commands.ContextInflightCommand(name.getValue(), route.getValue(), limit.getValue(), flag);
 
         command.execute(getController(), getOutput(context), getError(context));
         return Results.success();
