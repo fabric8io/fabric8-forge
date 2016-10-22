@@ -93,6 +93,15 @@ public class PopulateMavenRepositoryTest {
         }
 
         removeSnapshotFabric8Artifacts();
+
+
+        List<File> failedFolders = generator.getFailedFolders();
+        if (failedFolders.size() > 0) {
+            LOG.error("Failed to build all the projects!!!");
+            for (File failedFolder : failedFolders) {
+                LOG.error("Failed to build project: " + failedFolder.getName());
+            }
+        }
     }
 
     protected List<String> getArchetypesFromJar(File archetypeJar) throws IOException {

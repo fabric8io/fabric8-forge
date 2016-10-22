@@ -46,6 +46,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -72,6 +73,7 @@ public class ProjectGenerator {
     private final File localMavenRepo;
     private final AddonRegistry addonRegistry;
     private final ResourceFactory resourceFactory;
+    private List<File> failedFolders = new ArrayList<>();
 
     public ProjectGenerator(Furnace furnace, File projectsOutputFolder, File localMavenRepo) throws Exception {
         this.furnace = furnace;
@@ -92,6 +94,10 @@ public class ProjectGenerator {
             fail("controller is not a wizard! " + controller.getClass());
             return null;
         }
+    }
+
+    public List<File> getFailedFolders() {
+        return failedFolders;
     }
 
     public File getArtifactJar(String groupId, String artifactId, String version) {
@@ -317,7 +323,10 @@ public class ProjectGenerator {
         InvocationResult result = invoker.execute(request);
         int exitCode = result.getExitCode();
         LOG.info("maven result " + exitCode + " exception: " + result.getExecutionException());
-        assertEquals("Failed to invoke maven goals: " + goalList + " in folder: " + outputDir + ". Exit Code: ", 0, exitCode);
+        if (exitCode != 0) {
+            LOG.error("Failed to invoke maven goals: " + goalList + " in folder: " + outputDir + ". Exit Code: " + exitCode);
+            failedFolders.add(outputDir);
+        }
     }
 
     protected void useCommand(RestUIContext context, String commandName, boolean shouldExecute) {
