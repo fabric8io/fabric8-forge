@@ -18,7 +18,11 @@ package io.fabric8.forge.rest.main;
 import io.fabric8.annotations.External;
 import io.fabric8.annotations.Protocol;
 import io.fabric8.annotations.ServiceName;
+import io.fabric8.cdi.Services;
 import io.fabric8.forge.rest.Constants;
+import io.fabric8.kubernetes.api.KubernetesHelper;
+import io.fabric8.kubernetes.api.ServiceNames;
+import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.project.support.UserDetails;
 import org.apache.deltaspike.core.api.config.ConfigProperty;
 import org.eclipse.jgit.util.Base64;
@@ -30,6 +34,8 @@ import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import java.nio.charset.Charset;
 
+import static io.fabric8.kubernetes.api.ServiceNames.*;
+
 /**
  * A helper class for working with git user stuff
  */
@@ -37,26 +43,19 @@ public class GitUserHelper {
     private static final transient Logger LOG = LoggerFactory.getLogger(GitUserHelper.class);
     private final String gitUser;
     private final String gitPassword;
+    private final KubernetesClient kubernetesClient;
     private String address;
     private String internalAddress;
 
     // TODO it'd be nice to pick either http or https based on the port number of the gogs service
     // so if folks configured it on https then we'd just work
     @Inject
-    public GitUserHelper(@ServiceName("gogs") @Protocol("http") @External String gogsUrl,
-                         @ServiceName("gogs") @Protocol("http") String gogsInternalUrl,
-                         @ConfigProperty(name = "JENKINS_GOGS_USER") String gitUser,
-                         @ConfigProperty(name = "JENKINS_GOGS_PASSWORD") String gitPassword) {
+    public GitUserHelper(@ConfigProperty(name = "JENKINS_GOGS_USER") String gitUser,
+                         @ConfigProperty(name = "JENKINS_GOGS_PASSWORD") String gitPassword,
+                         KubernetesClient kubernetesClient) {
         this.gitUser = gitUser;
         this.gitPassword = gitPassword;
-        this.address = gogsUrl;
-        this.internalAddress = gogsInternalUrl;
-        if (!address.endsWith("/")) {
-            address += "/";
-        }
-        if (!internalAddress.endsWith("/")) {
-            internalAddress += "/";
-        }
+        this.kubernetesClient = kubernetesClient;
     }
 
     public UserDetails createUserDetails(HttpServletRequest request) {
@@ -95,6 +94,29 @@ public class GitUserHelper {
         if (!Strings.isNullOrEmpty(emailHeader)) {
             email = emailHeader;
         }
+        if (Strings.isNullOrEmpty(address)) {
+            address = getGogsURL(true);
+            internalAddress = getGogsURL(false);
+            if (!address.endsWith("/")) {
+                address += "/";
+            }
+            if (!internalAddress.endsWith("/")) {
+                internalAddress += "/";
+            }
+        }
         return new UserDetails(address, internalAddress, user, password, email);
+    }
+
+    protected String getGogsURL(boolean external) {
+        String namespace = kubernetesClient.getNamespace();
+        if (Strings.isNullOrEmpty(namespace)) {
+            namespace = KubernetesHelper.defaultNamespace();
+        }
+        String answer = KubernetesHelper.getServiceURL(kubernetesClient, GOGS, namespace, "http", external);
+        if (Strings.isNullOrEmpty(answer)) {
+            String kind = external ? "external" : "internal";
+            throw new IllegalStateException("Could not find external URL for " + kind + " service: gogs!");
+        }
+        return answer;
     }
 }
