@@ -32,10 +32,10 @@ spec:
             configMapKeyRef:
               key: "fabric8-default-environments"
               name: "fabric8-forge"
-        - name: "JENKINS_WORKFLOW_GIT_REPOSITORY"
+        - name: "JENKINSFILE_LIBRARY_GIT_REPOSITORY"
           valueFrom:
             configMapKeyRef:
-              key: "jenkins-workflow-git-repository"
+              key: "jenkinsfile-library-git-repository"
               name: "fabric8-forge"
         - name: "KUBERNETES_TRUST_CERTIFICATES"
           value: "true"

@@ -459,7 +459,7 @@ public class CommandsResource {
             attributeMap.put("projectName", executionRequest.getProjectName());
             attributeMap.put("buildName", executionRequest.getProjectName());
             attributeMap.put("namespace", executionRequest.getNamespace());
-            attributeMap.put("jenkinsWorkflowFolder", projectFileSystem.getJenkinsWorkflowFolder());
+            attributeMap.put("jenkinsfilesFolder", projectFileSystem.getJenkinsfilesLibraryFolder());
             projectFileSystem.asyncCloneOrPullJenkinsWorkflows(userDetails);
         }
     }
