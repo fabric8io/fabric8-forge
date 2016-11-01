@@ -84,8 +84,6 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
 
     public static final String JENKINSFILE = "Jenkinsfile";
 
-    private String jenkinsFilePrefix = "workflows/";
-
     @Inject
     @WithAttributes(label = "Pipeline", required = false, description = "The Jenkinsfile used to define the Continous Delivery pipeline")
     private UIInput<PipelineDTO> pipeline;
@@ -513,9 +511,6 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
                     if (label.endsWith(postfix)) {
                         label = label.substring(0, label.length() - postfix.length());
                     }
-                    if (label.startsWith(jenkinsFilePrefix)) {
-                        label = label.substring(jenkinsFilePrefix.length());
-                    }
                     // Lets ignore the fabric8 specific pipelines
                     if (label.startsWith("fabric8-release/")) {
                         continue;
@@ -572,14 +567,14 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
             Collections.sort(pipelines);
             return pipelines;
         } else {
-            LOG.warn("No jenkinsWorkflowFolder!");
+            LOG.warn("No jenkinsfilesFolder!");
             return new ArrayList<>();
         }
     }
 
     protected File getJenkinsWorkflowFolder(UIContext context) {
         File dir = null;
-        Object workflowFolder = context.getAttributeMap().get("jenkinsWorkflowFolder");
+        Object workflowFolder = context.getAttributeMap().get("jenkinsfilesFolder");
         if (workflowFolder instanceof File) {
             dir = (File) workflowFolder;
         }

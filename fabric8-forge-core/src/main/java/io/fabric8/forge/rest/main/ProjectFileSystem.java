@@ -51,19 +51,19 @@ public class ProjectFileSystem {
     private final RepositoryCache repositoryCache;
     private final String rootProjectFolder;
     private final String remote;
-    private final String jenkinsWorkflowGitUrl;
+    private final String jenkinsfileLibraryGitUrl;
     private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(2);
 
     @Inject
     public ProjectFileSystem(RepositoryCache repositoryCache,
                              @ConfigProperty(name = "PROJECT_FOLDER", defaultValue = "/tmp/fabric8-forge") String rootProjectFolder,
                              @ConfigProperty(name = "GIT_REMOTE_BRANCH_NAME", defaultValue = "origin") String remote,
-                             @ConfigProperty(name = "JENKINS_WORKFLOW_GIT_REPOSITORY") String jenkinsWorkflowGitUrl) {
+                             @ConfigProperty(name = "JENKINSFILE_LIBRARY_GIT_REPOSITORY") String jenkinsfileLibraryGitUrl) {
         this.repositoryCache = repositoryCache;
         this.rootProjectFolder = rootProjectFolder;
         this.remote = remote;
-        this.jenkinsWorkflowGitUrl = jenkinsWorkflowGitUrl;
-        LOG.info("Using jenkins workflow library: " + this.jenkinsWorkflowGitUrl);
+        this.jenkinsfileLibraryGitUrl = jenkinsfileLibraryGitUrl;
+        LOG.info("Using jenkins workflow library: " + this.jenkinsfileLibraryGitUrl);
     }
 
     public String getRemote() {
@@ -88,9 +88,9 @@ public class ProjectFileSystem {
         return projectFolder;
     }
 
-    public File getJenkinsWorkflowFolder() {
+    public File getJenkinsfilesLibraryFolder() {
         File root = new File(rootProjectFolder);
-        File workflowFolder = new File(root, "jenkinsWorkflows");
+        File workflowFolder = new File(root, "jenkinsfiles");
         workflowFolder.mkdirs();
         return workflowFolder;
     }
@@ -124,22 +124,22 @@ public class ProjectFileSystem {
     }
 
     public void asyncCloneOrPullJenkinsWorkflows(final UserDetails userDetails) {
-        final File folder = getJenkinsWorkflowFolder();
-        if (Strings.isNotBlank(jenkinsWorkflowGitUrl)) {
+        final File folder = getJenkinsfilesLibraryFolder();
+        if (Strings.isNotBlank(jenkinsfileLibraryGitUrl)) {
             executorService.execute(new Runnable() {
                 @Override
                 public void run() {
                     try {
-                        LOG.debug("Cloning or pulling jenkins workflow repo from " + jenkinsWorkflowGitUrl + " to " + folder);
+                        LOG.debug("Cloning or pulling jenkins workflow repo from " + jenkinsfileLibraryGitUrl + " to " + folder);
                         UserDetails anonymous = userDetails.createAnonymousDetails();
-                        cloneOrPullRepo(anonymous, folder, jenkinsWorkflowGitUrl, null, null);
+                        cloneOrPullRepo(anonymous, folder, jenkinsfileLibraryGitUrl, null, null);
                     } catch (Exception e) {
-                        LOG.error("Failed to clone jenkins workflow repo from : " + jenkinsWorkflowGitUrl + ". " + e, e);
+                        LOG.error("Failed to clone jenkins workflow repo from : " + jenkinsfileLibraryGitUrl + ". " + e, e);
                     }
                 }
             });
         } else {
-            LOG.warn("Cannot clone jenkins workflow repository as the environment variable JENKINS_WORKFLOW_GIT_REPOSITORY is not defined");
+            LOG.warn("Cannot clone jenkins workflow repository as the environment variable JENKINSFILE_LIBRARY_GIT_REPOSITORY is not defined");
         }
     }
 

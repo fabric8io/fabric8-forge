@@ -5,7 +5,7 @@ data:
   jenkins-gogs-email: "gogsadmin@fabric8.local"
   jenkins-gogs-password: "RedHat$1"
   jenkins-gogs-user: "gogsadmin"
-  jenkins-workflow-git-repository: "https://github.com/fabric8io/jenkins-workflow-library.git"
+  jenkinsfile-library-git-repository: "https://github.com/fabric8io/fabric8-jenkinsfile-library.git"
 kind: "ConfigMap"
 metadata:
   annotations:
