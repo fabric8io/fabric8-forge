@@ -59,13 +59,6 @@ public final class VersionHelper {
         return MavenHelpers.getVersion("io.hawt", "hawtio-maven-plugin");
     }
 
-    /**
-     * Retrieves the version of docker to use
-     */
-    public static String dockerVersion() {
-        return MavenHelpers.getVersion("io.fabric8", "docker-maven-plugin");
-    }
-
     public static String after(String text, String after) {
         if (!text.contains(after)) {
             return null;
