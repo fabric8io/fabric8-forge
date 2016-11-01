@@ -12,7 +12,6 @@
     <docker.assemblyDescriptorRef>artifact-with-dependencies</docker.assemblyDescriptorRef>
     <docker.from>docker.io/fabric8/s2i-java:1.2</docker.from>
     <docker.image>fabric8/${project.artifactId}:${project.version}</docker.image>
-    <docker.maven.plugin.version>0.16.9</docker.maven.plugin.version>
     <docker.port.container.jolokia>8778</docker.port.container.jolokia>
     <fabric8.dockerUser>fabric8/</fabric8.dockerUser>
     <fabric8.iconRef>icons/camel</fabric8.iconRef>
@@ -141,29 +140,6 @@
             </configuration>
           </execution>
         </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.jolokia</groupId>
-        <artifactId>docker-maven-plugin</artifactId>
-        <version>${docker.maven.plugin.version}</version>
-        <configuration>
-          <images>
-            <image>
-              <name>${docker.image}</name>
-              <build>
-                <from>${docker.from}</from>
-                <assembly>
-                  <basedir>/deployments</basedir>
-                  <descriptorRef>hawt-app</descriptorRef>
-                </assembly>
-                <env>
-                  <JAVA_LIB_DIR>/deployments/lib</JAVA_LIB_DIR>
-                  <JAVA_MAIN_CLASS>org.apache.camel.spring.Main</JAVA_MAIN_CLASS>
-                </env>
-              </build>
-            </image>
-          </images>
-        </configuration>
       </plugin>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
