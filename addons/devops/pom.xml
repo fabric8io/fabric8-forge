@@ -31,7 +31,7 @@
     <!-- versions used in spring-boot new-project command for additional choices -->
     <fabric8.spring.cloud.kubernetes.version>0.0.13</fabric8.spring.cloud.kubernetes.version>
     <fabric8.kubeflix.version>1.0.17</fabric8.kubeflix.version>
-
+    <el.version>3.0.0</el.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
@@ -195,8 +195,7 @@
     <dependency>
       <groupId>javax.el</groupId>
       <artifactId>javax.el-api</artifactId>
-      <!--<version>3.0.0</version>
-      -->
+      <version>${el.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
