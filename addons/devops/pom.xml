@@ -99,16 +99,6 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>org.jboss.forge.furnace.test</groupId>
-      <artifactId>furnace-test-harness</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.jboss.forge.furnace.test</groupId>
-      <artifactId>arquillian-furnace-classpath</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>org.jboss.forge.addon</groupId>
       <artifactId>slf4j</artifactId>
       <classifier>forge-addon</classifier>
@@ -188,6 +178,26 @@
           <artifactId>slf4j-api</artifactId>
         </exclusion>
       </exclusions>
+    </dependency>
+
+
+    <!-- testing -->
+    <dependency>
+      <groupId>org.jboss.forge.furnace.test</groupId>
+      <artifactId>furnace-test-harness</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.forge.furnace.test</groupId>
+      <artifactId>arquillian-furnace-classpath</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>javax.el</groupId>
+      <artifactId>javax.el-api</artifactId>
+      <!--<version>3.0.0</version>
+      -->
+      <scope>test</scope>
     </dependency>
   </dependencies>
 
