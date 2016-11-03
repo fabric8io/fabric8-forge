@@ -179,7 +179,14 @@
         </exclusion>
       </exclusions>
     </dependency>
-
+    <dependency>
+      <groupId>javax.el</groupId>
+      <artifactId>javax.el-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.web</groupId>
+      <artifactId>javax.el</artifactId>
+    </dependency>
 
     <!-- testing -->
     <dependency>
@@ -190,12 +197,6 @@
     <dependency>
       <groupId>org.jboss.forge.furnace.test</groupId>
       <artifactId>arquillian-furnace-classpath</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>javax.el</groupId>
-      <artifactId>javax.el-api</artifactId>
-      <version>${el.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -244,22 +245,6 @@
               </execution>
             </executions>
           </plugin>
-
-          <!-- lets exclude this test that bizarrely only fails when releasing -->
-          <plugin>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <version>${maven.surefire.plugin.version}</version>
-            <configuration>
-              <forkMode>perTest</forkMode>
-              <systemPropertyVariables>
-                <fabric8ArchetypeVersion>${fabric8.archetypes.release.version}</fabric8ArchetypeVersion>
-              </systemPropertyVariables>
-              <excludes>
-                <exclude>**/BuilderTest.*</exclude>
-              </excludes>
-            </configuration>
-          </plugin>
-
         </plugins>
       </build>
     </profile>
