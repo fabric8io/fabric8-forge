@@ -81,6 +81,7 @@ import static io.fabric8.kubernetes.api.KubernetesHelper.loadYaml;
 public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardStep {
     private static final transient Logger LOG = LoggerFactory.getLogger(DevOpsEditStep.class);
     private static final String DEFAULT_MAVEN_FLOW = "workflows/maven/CanaryReleaseStageAndApprovePromote.groovy";
+    private static final boolean copyPipelineToProject = true;
 
     public static final String JENKINSFILE = "Jenkinsfile";
 
@@ -367,9 +368,7 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
             }
         }
 
-        // always copy pipeline to project
-        Boolean copyFlowToProjectValue = true;
-        if (copyFlowToProjectValue != null && copyFlowToProjectValue) {
+        if (copyPipelineToProject) {
             if (basedir == null || !basedir.isDirectory()) {
                 LOG.warn("Cannot copy the pipeline to the project as no basedir!");
             } else {
