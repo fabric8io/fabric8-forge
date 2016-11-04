@@ -89,10 +89,6 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
     private UIInput<PipelineDTO> pipeline;
 
     @Inject
-    @WithAttributes(label = "Copy pipeline to project", required = false, description = "Should we copy the pipeline definition (in the Jenkinsfile) into the project source code")
-    private UIInput<Boolean> copyPipelineToProject;
-
-    @Inject
     @WithAttributes(label = "Chat room", required = false, description = "Name of chat room to use for this project")
     private UIInput<String> chatRoom;
 
@@ -121,7 +117,6 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
     @Override
     public void initializeUI(UIBuilder builder) throws Exception {
         final UIContext context = builder.getUIContext();
-        copyPipelineToProject.setValue(Boolean.TRUE);
         pipeline.setCompleter(new UICompleter<PipelineDTO>() {
             @Override
             public Iterable<PipelineDTO> getCompletionProposals(UIContext context, InputComponent<?, PipelineDTO> input, String value) {
@@ -144,8 +139,6 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
                 } else {
                     pipeline.setNote("");
                 }
-                boolean canCopy = Strings.isNotBlank(value);
-                copyPipelineToProject.setEnabled(canCopy);
             }
         });
         if (getCurrentSelectedProject(context) != null) {
@@ -213,7 +206,7 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
         boolean hasJenkinsFile = Files.isFile(jenkinsFile);
         LOG.debug("Has Jenkinsfile " + hasJenkinsFile + " with file: " + jenkinsFile);
         if (!hasJenkinsFile) {
-            inputComponents.addAll(CommandHelpers.addInputComponents(builder, pipeline, copyPipelineToProject));
+            inputComponents.addAll(CommandHelpers.addInputComponents(builder, pipeline));
         }
         inputComponents.addAll(CommandHelpers.addInputComponents(builder, chatRoom, issueProjectName, codeReview));
     }
@@ -374,8 +367,9 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
             }
         }
 
-        Boolean copyFlowToProjectValue = copyPipelineToProject.getValue();
-        if (copyFlowToProjectValue != null && copyFlowToProjectValue.booleanValue()) {
+        // always copy pipeline to project
+        Boolean copyFlowToProjectValue = true;
+        if (copyFlowToProjectValue != null && copyFlowToProjectValue) {
             if (basedir == null || !basedir.isDirectory()) {
                 LOG.warn("Cannot copy the pipeline to the project as no basedir!");
             } else {
@@ -395,10 +389,8 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
                         File newFile = new File(basedir, ProjectConfigs.LOCAL_FLOW_FILE_NAME);
                         Files.writeToFile(newFile, flowText.getBytes());
                         LOG.info("Written pipeline to " + newFile);
-                        if (config != null) {
-                            config.setPipeline(null);
-                            config.setUseLocalFlow(true);
-                        }
+                        config.setPipeline(null);
+                        config.setUseLocalFlow(true);
                     }
                 }
             }
@@ -486,7 +478,7 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
 
     protected Iterable<PipelineDTO> getPipelines(UIContext context, boolean filterPipelines) {
         Set<String> builders =  null;
-        ProjectOverviewDTO projectOveriew = null;
+        ProjectOverviewDTO projectOveriew;
         if (filterPipelines) {
             projectOveriew = getProjectOverview(context);
             builders = projectOveriew.getBuilders();
