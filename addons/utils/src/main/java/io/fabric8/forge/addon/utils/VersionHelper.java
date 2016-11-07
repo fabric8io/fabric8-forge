@@ -19,7 +19,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.Properties;
 
 import io.fabric8.utils.Strings;
 
@@ -50,13 +49,6 @@ public final class VersionHelper {
             return version;
         }
         return MavenHelpers.getVersion("io.fabric8.archetypes", "archetypes-catalog");
-    }
-
-    /**
-     * Retrieves the version of hawtio to use
-     */
-    public static String hawtioVersion() {
-        return MavenHelpers.getVersion("io.hawt", "hawtio-maven-plugin");
     }
 
     public static String after(String text, String after) {
