@@ -29,7 +29,6 @@ public class MavenHelpersTest {
         assertVersionFound("org.apache.maven.plugins", "maven-surefire-plugin");
         assertVersionFound("io.fabric8", "fabric8-maven-plugin");
         assertVersionFound("io.fabric8.archetypes", "archetypes-catalog");
-        assertVersionFound("io.hawt", "hawtio-maven-plugin");
     }
 
     public static void assertVersionFound(String groupId, String artifactId) {
