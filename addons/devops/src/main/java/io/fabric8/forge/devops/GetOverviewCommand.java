@@ -72,8 +72,8 @@ public class GetOverviewCommand extends AbstractDevOpsCommand {
     @Override
     public Result execute(UIExecutionContext context) throws Exception {
         UIContext uiContext = context.getUIContext();
-        ProjectOverviewDTO projectOveriew = getProjectOverview(uiContext);
-        String result = formatResult(projectOveriew);
+        ProjectOverviewDTO projectOverview = getProjectOverview(uiContext);
+        String result = formatResult(projectOverview);
         return Results.success(result);
     }
 

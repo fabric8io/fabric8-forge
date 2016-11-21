@@ -274,32 +274,32 @@ public abstract class AbstractDevOpsCommand extends AbstractProjectCommand imple
     }
 
     protected ProjectOverviewDTO getProjectOverview(UIContext uiContext) {
-        ProjectOverviewDTO projectOveriew = new ProjectOverviewDTO();
+        ProjectOverviewDTO projectOverview = new ProjectOverviewDTO();
         File rootFolder = getSelectionFolder(uiContext);
         if (rootFolder != null) {
             List<GetOverviewCommand.FileProcessor> processors = loadFileMatches();
-            scanProject(rootFolder, processors, projectOveriew, 0, 3);
+            scanProject(rootFolder, processors, projectOverview, 0, 3);
         }
         if (hasProjectFile(uiContext, "pom.xml")) {
-            projectOveriew.addBuilder("maven");
-            projectOveriew.addPerspective("forge");
+            projectOverview.addBuilder("maven");
+            projectOverview.addPerspective("forge");
 
             if (containsProject(uiContext)) {
                 Project project = getSelectedProject(uiContext);
                 if (findCamelCoreDependency(project) != null) {
                     if (hasFunktionDependency(project)) {
-                        projectOveriew.addPerspective("funktion");
+                        projectOverview.addPerspective("funktion");
                     } else {
                     }
                     // TOD should we show funktion instead of camel?
-                    projectOveriew.addPerspective("camel");
+                    projectOverview.addPerspective("camel");
                 }
                 if (ProfilesProjectHelper.isProfilesProject(project)) {
-                    projectOveriew.addPerspective("fabric8-profiles");
+                    projectOverview.addPerspective("fabric8-profiles");
                 }
             }
         }
-        return projectOveriew;
+        return projectOverview;
     }
 
     protected List<GetOverviewCommand.FileProcessor> loadFileMatches() {
