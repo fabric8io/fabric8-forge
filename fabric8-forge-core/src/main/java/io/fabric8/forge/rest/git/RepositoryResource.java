@@ -741,10 +741,10 @@ public class RepositoryResource {
     }
 
     public <T> T gitWriteOperation(GitOperation<T> operation) throws Exception {
-        return gitWriteoperation(operation, new GitContext());
+        return gitWriteOperation(operation, new GitContext());
     }
 
-    public <T> T gitWriteoperation(GitOperation<T> operation, GitContext context) throws Exception {
+    public <T> T gitWriteOperation(GitOperation<T> operation, GitContext context) throws Exception {
         context.setRequireCommit(true);
         context.setRequirePush(true);
         return gitOperation(context, operation);
@@ -755,6 +755,8 @@ public class RepositoryResource {
 
             @Override
             public T call() throws Exception {
+                StopWatch watch = new StopWatch();
+
                 projectFileSystem.cloneRepoIfNotExist(userDetails, basedir, cloneUrl);
 
                 FileRepositoryBuilder builder = new FileRepositoryBuilder();
@@ -806,6 +808,9 @@ public class RepositoryResource {
                 if (context.isRequireCommit() && hasGitChanges(git)) {
                     doAddCommitAndPushFiles(git, userDetails, personIdent, branch, origin, message, isPushOnCommit());
                 }
+
+                LOG.info("Git operation took " + watch.taken());
+
                 return result;
             }
 
