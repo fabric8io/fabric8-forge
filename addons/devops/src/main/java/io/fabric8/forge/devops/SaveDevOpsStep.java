@@ -17,6 +17,7 @@ package io.fabric8.forge.devops;
 
 import io.fabric8.devops.ProjectConfig;
 import io.fabric8.devops.ProjectConfigs;
+import io.fabric8.forge.addon.utils.StopWatch;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
@@ -56,6 +57,8 @@ public class SaveDevOpsStep extends AbstractDevOpsCommand implements UIWizardSte
 
     @Override
     public Result execute(UIExecutionContext context) throws Exception {
+        StopWatch watch = new StopWatch();
+
         String fileName = ProjectConfigs.FILE_NAME;
         File configFile = getProjectConfigFile(context.getUIContext(), getSelectedProject(context));
         if (configFile == null) {
@@ -74,15 +77,19 @@ public class SaveDevOpsStep extends AbstractDevOpsCommand implements UIWizardSte
         updateConfiguration(context, config);
         LOG.info("Result: " + config);
 
-        if (config.isEmpty() && !hasFile) {
-            return Results.success("No " + fileName + " need be generated as there is no configuration");
-        } else {
-            String message = "Updated";
-            if (!configFile.exists()) {
-                message = "Created";
+        try {
+            if (config.isEmpty() && !hasFile) {
+                return Results.success("No " + fileName + " need be generated as there is no configuration");
+            } else {
+                String message = "Updated";
+                if (!configFile.exists()) {
+                    message = "Created";
+                }
+                ProjectConfigs.saveConfig(config, configFile);
+                return Results.success(message + " " + fileName);
             }
-            ProjectConfigs.saveConfig(config, configFile);
-            return Results.success(message + " " + fileName);
+        } finally {
+            log.info("execute took " + watch.taken());
         }
     }
 }

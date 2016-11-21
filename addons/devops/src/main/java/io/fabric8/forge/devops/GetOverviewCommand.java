@@ -16,6 +16,7 @@
 package io.fabric8.forge.devops;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import io.fabric8.forge.addon.utils.StopWatch;
 import io.fabric8.forge.addon.utils.dto.OutputFormat;
 import io.fabric8.forge.devops.dto.ProjectOverviewDTO;
 import io.fabric8.utils.TablePrinter;
@@ -71,9 +72,11 @@ public class GetOverviewCommand extends AbstractDevOpsCommand {
 
     @Override
     public Result execute(UIExecutionContext context) throws Exception {
+        StopWatch watch = new StopWatch();
         UIContext uiContext = context.getUIContext();
-        ProjectOverviewDTO projectOveriew = getProjectOverview(uiContext);
-        String result = formatResult(projectOveriew);
+        ProjectOverviewDTO projectOverview = getProjectOverview(uiContext);
+        String result = formatResult(projectOverview);
+        log.info("execute took " + watch.taken());
         return Results.success(result);
     }
 

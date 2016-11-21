@@ -15,13 +15,9 @@
  */
 package io.fabric8.forge.rest.main;
 
-import io.fabric8.annotations.External;
-import io.fabric8.annotations.Protocol;
-import io.fabric8.annotations.ServiceName;
-import io.fabric8.cdi.Services;
 import io.fabric8.forge.rest.Constants;
+import io.fabric8.forge.rest.utils.StopWatch;
 import io.fabric8.kubernetes.api.KubernetesHelper;
-import io.fabric8.kubernetes.api.ServiceNames;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.project.support.UserDetails;
 import org.apache.deltaspike.core.api.config.ConfigProperty;
@@ -59,6 +55,8 @@ public class GitUserHelper {
     }
 
     public UserDetails createUserDetails(HttpServletRequest request) {
+        StopWatch watch = new StopWatch();
+
         String user = gitUser;
         String password = gitPassword;
         String authorization = null;
@@ -104,10 +102,14 @@ public class GitUserHelper {
                 internalAddress += "/";
             }
         }
+
+        LOG.info("createUserDetails took " + watch.taken());
         return new UserDetails(address, internalAddress, user, password, email);
     }
 
     protected String getGogsURL(boolean external) {
+        StopWatch watch = new StopWatch();
+
         String namespace = kubernetesClient.getNamespace();
         if (Strings.isNullOrEmpty(namespace)) {
             namespace = KubernetesHelper.defaultNamespace();
@@ -117,6 +119,8 @@ public class GitUserHelper {
             String kind = external ? "external" : "internal";
             throw new IllegalStateException("Could not find external URL for " + kind + " service: gogs!");
         }
+
+        LOG.info("getGogsURL took " + watch.taken());
         return answer;
     }
 }

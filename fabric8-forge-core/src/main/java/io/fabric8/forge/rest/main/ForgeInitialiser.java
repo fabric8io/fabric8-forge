@@ -20,6 +20,7 @@ import io.fabric8.forge.rest.dto.CommandInfoDTO;
 import io.fabric8.forge.rest.dto.ExecutionRequest;
 import io.fabric8.forge.rest.hooks.CommandCompletePostProcessor;
 import io.fabric8.forge.rest.producer.FurnaceProducer;
+import io.fabric8.forge.rest.utils.StopWatch;
 import io.fabric8.project.support.UserDetails;
 import org.apache.deltaspike.core.api.config.ConfigProperty;
 import org.jboss.forge.furnace.util.Strings;
@@ -69,6 +70,8 @@ public class ForgeInitialiser {
     }
 
     public void preloadCommands(CommandsResource commandsResource)  {
+        StopWatch watch = new StopWatch();
+
         LOG.info("Preloading commands");
         List<CommandInfoDTO> commands = Collections.EMPTY_LIST;
         try {
@@ -144,6 +147,8 @@ public class ForgeInitialiser {
                 LOG.error("Failed to execute command: " + e, e);
             }
         }
+
+        LOG.info("preloadCommands took " + watch.taken());
     }
 
     protected void dumpResult(Response response) {

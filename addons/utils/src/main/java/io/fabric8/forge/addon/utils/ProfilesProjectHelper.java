@@ -22,7 +22,6 @@ public class ProfilesProjectHelper {
 
     public static boolean isProfilesProject(Project project) {
         String packaging = project.getFacet(PackagingFacet.class).getPackagingType();
-        System.out.println(packaging);
         return "fabric8-profiles".equals(packaging);
     }
 

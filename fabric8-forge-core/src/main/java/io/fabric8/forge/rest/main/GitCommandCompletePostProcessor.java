@@ -20,6 +20,7 @@ import io.fabric8.forge.rest.dto.ExecutionRequest;
 import io.fabric8.forge.rest.dto.ExecutionResult;
 import io.fabric8.forge.rest.hooks.CommandCompletePostProcessor;
 import io.fabric8.forge.rest.ui.RestUIContext;
+import io.fabric8.forge.rest.utils.StopWatch;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.project.support.BuildConfigHelper;
 import io.fabric8.project.support.GitUtils;
@@ -59,6 +60,8 @@ public class GitCommandCompletePostProcessor implements CommandCompletePostProce
 
     @Override
     public UserDetails preprocessRequest(String name, ExecutionRequest executionRequest, HttpServletRequest request) {
+        StopWatch watch = new StopWatch();
+
         UserDetails userDetails = gitUserHelper.createUserDetails(request);
         // TODO this isn't really required if there's a secret associated with the BuildConfig source
         if (Strings.isNullOrEmpty(userDetails.getUser()) || Strings.isNullOrEmpty(userDetails.getUser())) {
@@ -76,14 +79,18 @@ public class GitCommandCompletePostProcessor implements CommandCompletePostProce
                 }
             }
         }
+
+        LOG.info("preprocessRequest took " + watch.taken());
+
         return userDetails;
     }
 
 
     @Override
     public void firePostCompleteActions(String name, ExecutionRequest executionRequest, RestUIContext context, CommandController controller, ExecutionResult results, HttpServletRequest request) {
-        UserDetails userDetails = gitUserHelper.createUserDetails(request);
+        StopWatch watch = new StopWatch();
 
+        UserDetails userDetails = gitUserHelper.createUserDetails(request);
         String origin = projectFileSystem.getRemote();
 
         try {
@@ -134,6 +141,8 @@ public class GitCommandCompletePostProcessor implements CommandCompletePostProce
         } catch (Exception e) {
             handleException(e);
         }
+
+        LOG.info("firePostCompleteActions took " + watch.taken());
     }
 
     public static String firstNotBlank(String... texts) {

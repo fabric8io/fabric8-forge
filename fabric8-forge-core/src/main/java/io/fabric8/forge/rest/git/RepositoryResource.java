@@ -21,6 +21,7 @@ import io.fabric8.forge.rest.git.dto.CommitTreeInfo;
 import io.fabric8.forge.rest.git.dto.DiffInfo;
 import io.fabric8.forge.rest.git.dto.FileDTO;
 import io.fabric8.forge.rest.git.dto.StatusDTO;
+import io.fabric8.forge.rest.utils.StopWatch;
 import io.fabric8.project.support.GitUtils;
 import io.fabric8.forge.rest.main.MD5Util;
 import io.fabric8.forge.rest.main.ProjectFileSystem;
@@ -740,10 +741,10 @@ public class RepositoryResource {
     }
 
     public <T> T gitWriteOperation(GitOperation<T> operation) throws Exception {
-        return gitWriteoperation(operation, new GitContext());
+        return gitWriteOperation(operation, new GitContext());
     }
 
-    public <T> T gitWriteoperation(GitOperation<T> operation, GitContext context) throws Exception {
+    public <T> T gitWriteOperation(GitOperation<T> operation, GitContext context) throws Exception {
         context.setRequireCommit(true);
         context.setRequirePush(true);
         return gitOperation(context, operation);
@@ -754,6 +755,8 @@ public class RepositoryResource {
 
             @Override
             public T call() throws Exception {
+                StopWatch watch = new StopWatch();
+
                 projectFileSystem.cloneRepoIfNotExist(userDetails, basedir, cloneUrl);
 
                 FileRepositoryBuilder builder = new FileRepositoryBuilder();
@@ -805,6 +808,9 @@ public class RepositoryResource {
                 if (context.isRequireCommit() && hasGitChanges(git)) {
                     doAddCommitAndPushFiles(git, userDetails, personIdent, branch, origin, message, isPushOnCommit());
                 }
+
+                LOG.info("Git operation took " + watch.taken());
+
                 return result;
             }
 
@@ -832,12 +838,14 @@ public class RepositoryResource {
     }
 
     protected void doPull(Git git, GitContext context) throws GitAPIException {
+        StopWatch watch = new StopWatch();
+
         LOG.info("Performing a pull in git repository " + this.gitFolder + " on remote URL: " + this.remoteRepository);
         CredentialsProvider cp = userDetails.createCredentialsProvider();
         PullCommand command = git.pull();
         configureCommand(command, userDetails);
         command.setCredentialsProvider(cp).setRebase(true).call();
-        LOG.info("Completed pull in git repository " + this.gitFolder + " on remote URL: " + this.remoteRepository);
+        LOG.info("Took " + watch.taken() + " to complete pull in git repository " + this.gitFolder + " on remote URL: " + this.remoteRepository);
     }
 
     protected Response uploadFile(final String path, final String message, final InputStream body) throws Exception {

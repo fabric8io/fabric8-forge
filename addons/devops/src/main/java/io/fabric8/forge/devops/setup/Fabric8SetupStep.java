@@ -16,6 +16,7 @@
 package io.fabric8.forge.devops.setup;
 
 import io.fabric8.forge.addon.utils.MavenHelpers;
+import io.fabric8.forge.addon.utils.StopWatch;
 import io.fabric8.forge.addon.utils.VersionHelper;
 import io.fabric8.forge.addon.utils.validator.ClassNameOrMavenPropertyValidator;
 import io.fabric8.forge.devops.NewIntegrationTestClassCommand;
@@ -147,6 +148,8 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
 
     @Override
     public void initializeUI(final UIBuilder builder) throws Exception {
+        StopWatch watch = new StopWatch();
+
         final Project project = getSelectedProject(builder.getUIContext());
 
         String packaging = getProjectPackaging(project);
@@ -222,11 +225,13 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
         }
 
         builder.add(integrationTest);
+        log.info("initializeUI took " + watch.taken());
     }
 
     @Override
     public Result execute(UIExecutionContext context) throws Exception {
-        LOG.debug("Starting to setup fabric8 project");
+        StopWatch watch = new StopWatch();
+        log.debug("Starting to setup fabric8 project");
 
         Project project = getSelectedProject(context.getUIContext());
         if (project == null) {
@@ -235,10 +240,10 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
 
         // setup fabric8-maven-plugin
         setupFabricMavenPlugin(project);
-        LOG.debug("fabric8-maven-plugin now setup");
+        log.debug("fabric8-maven-plugin now setup");
 
         setupDocker(project, from.getValue(), main.getValue());
-        LOG.debug("docker configuration now setup");
+        log.debug("docker configuration now setup");
 
         MavenFacet maven = project.getFacet(MavenFacet.class);
         Model pom = maven.getModel();
@@ -246,10 +251,11 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
         // make sure we have resources as we need it later
         facetFactory.install(project, ResourcesFacet.class);
 
-        LOG.debug("setting up fabric8 properties");
+        log.debug("setting up fabric8 properties");
         setupFabricProperties(project, maven);
 
         String msg = "Added Fabric8 Maven support";
+        log.info("execute took " + watch.taken());
         return Results.success(msg);
     }
 
@@ -285,6 +291,7 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
     }
 
     public static void setupSitePlugin(Project project) {
+        StopWatch watch = new StopWatch();
         if (project != null) {
             MavenFacet mavenFacet = project.getFacet(MavenFacet.class);
             if (mavenFacet != null) {
@@ -383,6 +390,7 @@ public class Fabric8SetupStep extends AbstractFabricProjectCommand implements UI
                 }
             }
         }
+        LOG.info("setupSitePlugin took " + watch.taken());
     }
 
     public static void addChildElement(Xpp3Dom config, String name, String value) {
