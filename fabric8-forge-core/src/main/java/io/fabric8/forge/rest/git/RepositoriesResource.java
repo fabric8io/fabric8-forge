@@ -19,6 +19,7 @@ import io.fabric8.forge.rest.Constants;
 import io.fabric8.forge.rest.main.GitUserHelper;
 import io.fabric8.forge.rest.main.ProjectFileSystem;
 import io.fabric8.forge.rest.main.RepositoryCache;
+import io.fabric8.forge.rest.utils.StopWatch;
 import io.fabric8.project.support.UserDetails;
 import io.fabric8.kubernetes.api.Controller;
 import io.fabric8.kubernetes.api.model.LocalObjectReference;
@@ -106,14 +107,21 @@ public class RepositoriesResource {
     @GET
     @Path("user/{name}")
     public RepositoryDTO getUserRepository(@PathParam("name") String name) {
+        StopWatch watch = new StopWatch();
+
         UserDetails userDetails = gitUserHelper.createUserDetails(request);
         String user = userDetails.getUser();
         GitRepoClient repoClient = userDetails.createRepoClient();
-        return repositoryCache.getOrFindUserRepository(user, name, repoClient);
+        RepositoryDTO answer = repositoryCache.getOrFindUserRepository(user, name, repoClient);
+
+        LOG.info("getUserRepository took " + watch.taken());
+        return answer;
     }
 
     @Path("user/{owner}/{repo}")
     public RepositoryResource repositoryResource(@PathParam("owner") String userId, @PathParam("repo") String repositoryName) throws IOException, GitAPIException {
+        StopWatch watch = new StopWatch();
+
         UserDetails userDetails = gitUserHelper.createUserDetails(request);
         String origin = projectFileSystem.getRemote();
 
@@ -137,11 +145,15 @@ public class RepositoriesResource {
         } catch (Exception e) {
             LOG.warn("failed to load message parameter: " + e, e);
         }
+
+        LOG.info("repositoryResource took " + watch.taken());
         return resource;
     }
 
     @Path("project/{namespace}/{projectId}")
     public RepositoryResource projectRepositoryResource(@PathParam("namespace") String namespace, @PathParam("projectId") String projectId) throws IOException, GitAPIException {
+        StopWatch watch = new StopWatch();
+
         UserDetails userDetails = gitUserHelper.createUserDetails(request);
         String origin = projectFileSystem.getRemote();
 
@@ -242,6 +254,8 @@ public class RepositoriesResource {
         } catch (Exception e) {
             LOG.warn("failed to load message parameter: " + e, e);
         }
+        LOG.info("projectRepositoryResource took " + watch.taken());
+
         return resource;
     }
 

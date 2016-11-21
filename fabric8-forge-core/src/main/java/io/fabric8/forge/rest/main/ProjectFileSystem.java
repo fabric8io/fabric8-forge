@@ -15,6 +15,7 @@
  */
 package io.fabric8.forge.rest.main;
 
+import io.fabric8.forge.rest.utils.StopWatch;
 import io.fabric8.project.support.GitUtils;
 import io.fabric8.project.support.UserDetails;
 import io.fabric8.repo.git.GitRepoClient;
@@ -129,12 +130,15 @@ public class ProjectFileSystem {
             executorService.execute(new Runnable() {
                 @Override
                 public void run() {
+                    StopWatch watch = new StopWatch();
                     try {
                         LOG.debug("Cloning or pulling jenkins workflow repo from " + jenkinsfileLibraryGitUrl + " to " + folder);
                         UserDetails anonymous = userDetails.createAnonymousDetails();
                         cloneOrPullRepo(anonymous, folder, jenkinsfileLibraryGitUrl, null, null);
                     } catch (Exception e) {
                         LOG.error("Failed to clone jenkins workflow repo from : " + jenkinsfileLibraryGitUrl + ". " + e, e);
+                    } finally {
+                        LOG.info("asyncCloneOrPullJenkinsWorkflows took " + watch.taken());
                     }
                 }
             });
@@ -194,6 +198,8 @@ public class ProjectFileSystem {
     }
 
     public static void cloneRepo(File projectFolder, String cloneUrl, CredentialsProvider credentialsProvider, final File sshPrivateKey, final File sshPublicKey, String remote) {
+        StopWatch watch = new StopWatch();
+
         // clone the repo!
         boolean cloneAll = true;
         LOG.info("Cloning git repo " + cloneUrl + " into directory " + projectFolder.getAbsolutePath() + " cloneAllBranches: " + cloneAll);
@@ -207,10 +213,13 @@ public class ProjectFileSystem {
         } catch (Throwable e) {
             LOG.error("Failed to command remote repo " + cloneUrl + " due: " + e.getMessage(), e);
             throw new RuntimeException("Failed to command remote repo " + cloneUrl + " due: " + e.getMessage());
+        } finally {
+            LOG.info("cloneRepo took " + watch.taken());
         }
     }
 
     protected void doPull(File gitFolder, CredentialsProvider cp, String branch, PersonIdent personIdent, UserDetails userDetails) {
+        StopWatch watch = new StopWatch();
         try {
             FileRepositoryBuilder builder = new FileRepositoryBuilder();
             Repository repository = builder.setGitDir(gitFolder)
@@ -265,6 +274,8 @@ public class ProjectFileSystem {
             pull.setRebase(true).call();
         } catch (Throwable e) {
             LOG.error("Failed to pull from the remote git repo with credentials " + cp + " due: " + e.getMessage() + ". This exception is ignored.", e);
+        } finally {
+            LOG.info("doPull took " + watch.taken());
         }
     }
 
