@@ -52,14 +52,17 @@ public class DevOpsEditCommand extends AbstractDevOpsCommand implements UIWizard
         StopWatch watch = new StopWatch();
         try {
             Project project = getSelectedProject(builder.getUIContext());
+            log.info("initializeUI#getSelectedProject taken " + watch.taken());
             if (project != null) {
                 setupSitePlugin(project);
+                log.info("initializeUI#setupSitePlugin taken " + watch.taken());
 
                 if (ProfilesProjectHelper.isProfilesProject(project)) {
                     // TODO: in the future we might want to verify the setup of a profiles project here.
                 } else if (!SetupProjectHelper.fabric8ProjectSetupCorrectly(project)) {
                     needFabric8Setup = true;
                 }
+                log.info("initializeUI#fabric8ProjectSetupCorrectly taken " + watch.taken());
             }
         } catch (IllegalStateException e) {
             // ignore lack of project
