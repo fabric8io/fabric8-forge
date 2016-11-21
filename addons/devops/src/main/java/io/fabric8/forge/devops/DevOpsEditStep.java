@@ -477,10 +477,10 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
 
     protected Iterable<PipelineDTO> getPipelines(UIContext context, boolean filterPipelines) {
         Set<String> builders =  null;
-        ProjectOverviewDTO projectOveriew;
+        ProjectOverviewDTO projectOverview;
         if (filterPipelines) {
-            projectOveriew = getProjectOverview(context);
-            builders = projectOveriew.getBuilders();
+            projectOverview = getProjectOverview(context);
+            builders = projectOverview.getBuilders();
         }
         File dir = getJenkinsWorkflowFolder(context);
         Set<String> buildersFound = new HashSet<>();
