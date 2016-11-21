@@ -15,10 +15,20 @@
  */
 package io.fabric8.forge.devops;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import javax.inject.Inject;
+
 import io.fabric8.devops.ProjectConfig;
 import io.fabric8.devops.ProjectConfigs;
 import io.fabric8.forge.addon.utils.CommandHelpers;
 import io.fabric8.forge.addon.utils.MavenHelpers;
+import io.fabric8.forge.addon.utils.StopWatch;
 import io.fabric8.forge.devops.dto.PipelineDTO;
 import io.fabric8.forge.devops.dto.ProjectOverviewDTO;
 import io.fabric8.forge.devops.springboot.IOHelper;
@@ -56,23 +66,14 @@ import org.jboss.forge.addon.ui.result.Results;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 /**
  * An abstract base class for DevOps related commands
  */
 public abstract class AbstractDevOpsCommand extends AbstractProjectCommand implements UICommand {
-    private static final transient Logger LOG = LoggerFactory.getLogger(AbstractDevOpsCommand.class);
     public static final int ROOT_LEVEL = 1;
-
     public static String CATEGORY = "DevOps";
+
+    final transient Logger log = LoggerFactory.getLogger(this.getClass());
 
     private KubernetesClient kubernetes;
 
@@ -155,7 +156,7 @@ public abstract class AbstractDevOpsCommand extends AbstractProjectCommand imple
     }
 
     public Project getCurrentSelectedProject(UIContext context) {
-        Project project = null;
+        Project project;
         Map<Object, Object> attributeMap = context.getAttributeMap();
         if (attributeMap != null) {
             Object object = attributeMap.get(Project.class);
@@ -166,15 +167,17 @@ public abstract class AbstractDevOpsCommand extends AbstractProjectCommand imple
         }
         UISelection<Object> selection = context.getSelection();
         Object selectedObject = selection.get();
+        StopWatch watch = new StopWatch();
         try {
-            LOG.debug("START getCurrentSelectedProject: on " + getProjectFactory() + " selection: " + selectedObject + ". This may result in mvn artifacts being downloaded to ~/.m2/repository");
+            log.debug("START getCurrentSelectedProject: on " + getProjectFactory() + " selection: " + selectedObject + ". This may result in mvn artifacts being downloaded to ~/.m2/repository");
             project = Projects.getSelectedProject(getProjectFactory(), context);
             if (project != null && attributeMap != null) {
                 attributeMap.put(Project.class, project);
             }
             return project;
         } finally {
-            LOG.debug("END   getCurrentSelectedProject: on " + getProjectFactory() + " selection: " + selectedObject);
+            log.debug("END   getCurrentSelectedProject: on " + getProjectFactory() + " selection: " + selectedObject);
+            log.info("getCurrentSelectedProject took " + watch.taken());
         }
     }
 
@@ -237,7 +240,7 @@ public abstract class AbstractDevOpsCommand extends AbstractProjectCommand imple
                             }
                         }
                     } catch (Exception e) {
-                        LOG.debug("Ignoring missing git folders: " + e, e);
+                        log.debug("Ignoring missing git folders: " + e, e);
                     }
                 }
             }
@@ -273,12 +276,14 @@ public abstract class AbstractDevOpsCommand extends AbstractProjectCommand imple
     }
 
     protected ProjectOverviewDTO getProjectOverview(UIContext uiContext) {
+        StopWatch watch = new StopWatch();
         ProjectOverviewDTO projectOverview = new ProjectOverviewDTO();
         File rootFolder = getSelectionFolder(uiContext);
         if (rootFolder != null) {
             List<GetOverviewCommand.FileProcessor> processors = loadFileMatches();
             scanProject(rootFolder, processors, projectOverview, 0, 3);
         }
+        log.info("getProjectOverview took " + watch.taken());
         return projectOverview;
     }
 

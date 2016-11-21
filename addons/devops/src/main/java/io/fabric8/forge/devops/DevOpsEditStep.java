@@ -20,6 +20,7 @@ import io.fabric8.devops.ProjectConfigs;
 import io.fabric8.devops.connector.DevOpsConnector;
 import io.fabric8.forge.addon.utils.CommandHelpers;
 import io.fabric8.forge.addon.utils.MavenHelpers;
+import io.fabric8.forge.addon.utils.StopWatch;
 import io.fabric8.forge.devops.dto.PipelineDTO;
 import io.fabric8.forge.devops.dto.PipelineMetadata;
 import io.fabric8.forge.devops.dto.ProjectOverviewDTO;
@@ -117,6 +118,8 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
 
     @Override
     public void initializeUI(UIBuilder builder) throws Exception {
+        StopWatch watch = new StopWatch();
+
         final UIContext context = builder.getUIContext();
         pipeline.setCompleter(new UICompleter<PipelineDTO>() {
             @Override
@@ -210,6 +213,8 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
             inputComponents.addAll(CommandHelpers.addInputComponents(builder, pipeline));
         }
         inputComponents.addAll(CommandHelpers.addInputComponents(builder, chatRoom, issueProjectName, codeReview));
+
+        log.info("initializeUI took " + watch.taken());
     }
 
     public static Iterable<String> filterCompletions(Iterable<String> values, String inputValue) {
@@ -238,6 +243,8 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
 
     @Override
     public Result execute(UIExecutionContext context) throws Exception {
+        StopWatch watch = new StopWatch();
+
         LOG.info("Creating the fabric8.yml file");
 
         String fileName = ProjectConfigs.FILE_NAME;
@@ -427,6 +434,7 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
             LOG.error("Failed to update DevOps resources: " + e, e);
         }
 
+        log.info("execute took " + watch.taken());
         return Results.success(message);
     }
 
@@ -476,6 +484,8 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
     }
 
     protected Iterable<PipelineDTO> getPipelines(UIContext context, boolean filterPipelines) {
+        StopWatch watch = new StopWatch();
+
         Set<String> builders =  null;
         ProjectOverviewDTO projectOverview;
         if (filterPipelines) {
@@ -484,82 +494,86 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
         }
         File dir = getJenkinsWorkflowFolder(context);
         Set<String> buildersFound = new HashSet<>();
-        if (dir != null) {
-            Filter<File> filter = new Filter<File>() {
-                @Override
-                public boolean matches(File file) {
-                    return file.isFile() && Objects.equal(JENKINSFILE, file.getName());
-                }
-            };
-            Set<File> files =  Files.findRecursive(dir, filter);
-            List<PipelineDTO> pipelines = new ArrayList<>();
-            for (File file : files) {
-                try {
-                    String relativePath = Files.getRelativePath(dir, file);
-                    String value = Strings.stripPrefix(relativePath, "/");
-                    String label = value;
-                    String postfix = "/" + JENKINSFILE;
-                    if (label.endsWith(postfix)) {
-                        label = label.substring(0, label.length() - postfix.length());
+        try {
+            if (dir != null) {
+                Filter<File> filter = new Filter<File>() {
+                    @Override
+                    public boolean matches(File file) {
+                        return file.isFile() && Objects.equal(JENKINSFILE, file.getName());
                     }
-                    // Lets ignore the fabric8 specific pipelines
-                    if (label.startsWith("fabric8-release/")) {
-                        continue;
-                    }
-                    String builder = null;
-                    int idx = label.indexOf("/");
-                    if (idx > 0) {
-                        builder = label.substring(0, idx);
-                        if (filterPipelines && !builders.contains(builder)) {
-                            // ignore this builder
+                };
+                Set<File> files = Files.findRecursive(dir, filter);
+                List<PipelineDTO> pipelines = new ArrayList<>();
+                for (File file : files) {
+                    try {
+                        String relativePath = Files.getRelativePath(dir, file);
+                        String value = Strings.stripPrefix(relativePath, "/");
+                        String label = value;
+                        String postfix = "/" + JENKINSFILE;
+                        if (label.endsWith(postfix)) {
+                            label = label.substring(0, label.length() - postfix.length());
+                        }
+                        // Lets ignore the fabric8 specific pipelines
+                        if (label.startsWith("fabric8-release/")) {
                             continue;
-                        } else {
-                            buildersFound.add(builder);
                         }
-                    }
-                    String descriptionMarkdown = null;
-                    File markdownFile = new File(file.getParentFile(), "ReadMe.md");
-                    if (Files.isFile(markdownFile)) {
-                        descriptionMarkdown = IOHelpers.readFully(markdownFile);
-                    }
-                    PipelineDTO pipeline = new PipelineDTO(value, label, builder, descriptionMarkdown);
+                        String builder = null;
+                        int idx = label.indexOf("/");
+                        if (idx > 0) {
+                            builder = label.substring(0, idx);
+                            if (filterPipelines && !builders.contains(builder)) {
+                                // ignore this builder
+                                continue;
+                            } else {
+                                buildersFound.add(builder);
+                            }
+                        }
+                        String descriptionMarkdown = null;
+                        File markdownFile = new File(file.getParentFile(), "ReadMe.md");
+                        if (Files.isFile(markdownFile)) {
+                            descriptionMarkdown = IOHelpers.readFully(markdownFile);
+                        }
+                        PipelineDTO pipeline = new PipelineDTO(value, label, builder, descriptionMarkdown);
 
-                    File yamlFile = new File(file.getParentFile(), "metadata.yml");
-                    if (Files.isFile(yamlFile)) {
-                        PipelineMetadata metadata = null;
-                        try {
-                            metadata = loadYaml(yamlFile, PipelineMetadata.class);
-                        } catch (IOException e) {
-                            LOG.warn("Failed to parse yaml file " + yamlFile + ". " + e, e);
+                        File yamlFile = new File(file.getParentFile(), "metadata.yml");
+                        if (Files.isFile(yamlFile)) {
+                            PipelineMetadata metadata = null;
+                            try {
+                                metadata = loadYaml(yamlFile, PipelineMetadata.class);
+                            } catch (IOException e) {
+                                LOG.warn("Failed to parse yaml file " + yamlFile + ". " + e, e);
+                            }
+                            if (metadata != null) {
+                                metadata.configurePipeline(pipeline);
+                            }
                         }
-                        if (metadata != null) {
-                            metadata.configurePipeline(pipeline);
-                        }
+                        pipelines.add(pipeline);
+                    } catch (IOException e) {
+                        LOG.warn("Failed to find relative path for folder " + dir + " and file " + file + ". " + e, e);
                     }
-                    pipelines.add(pipeline);
-                } catch (IOException e) {
-                    LOG.warn("Failed to find relative path for folder " + dir + " and file " + file + ". " + e, e);
                 }
-            }
-            if (buildersFound.size() == 1) {
-                // lets trim the builder prefix from the labels
-                for (String first : buildersFound) {
-                    String prefix = first + "/";
-                    for (PipelineDTO pipeline : pipelines) {
-                        String label = pipeline.getLabel();
-                        if (label.startsWith(prefix)) {
-                            label = label.substring(prefix.length());
-                            pipeline.setLabel(label);
+                if (buildersFound.size() == 1) {
+                    // lets trim the builder prefix from the labels
+                    for (String first : buildersFound) {
+                        String prefix = first + "/";
+                        for (PipelineDTO pipeline : pipelines) {
+                            String label = pipeline.getLabel();
+                            if (label.startsWith(prefix)) {
+                                label = label.substring(prefix.length());
+                                pipeline.setLabel(label);
+                            }
                         }
+                        break;
                     }
-                    break;
                 }
+                Collections.sort(pipelines);
+                return pipelines;
+            } else {
+                LOG.warn("No jenkinsfilesFolder!");
+                return new ArrayList<>();
             }
-            Collections.sort(pipelines);
-            return pipelines;
-        } else {
-            LOG.warn("No jenkinsfilesFolder!");
-            return new ArrayList<>();
+        } finally {
+            log.info("getPipelines took " + watch.taken());
         }
     }
 

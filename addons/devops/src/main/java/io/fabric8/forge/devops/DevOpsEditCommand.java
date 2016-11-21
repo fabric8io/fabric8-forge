@@ -16,6 +16,7 @@
 package io.fabric8.forge.devops;
 
 import io.fabric8.forge.addon.utils.ProfilesProjectHelper;
+import io.fabric8.forge.addon.utils.StopWatch;
 import io.fabric8.forge.devops.setup.Fabric8SetupStep;
 import io.fabric8.forge.devops.setup.SetupProjectHelper;
 import org.jboss.forge.addon.projects.Project;
@@ -48,6 +49,7 @@ public class DevOpsEditCommand extends AbstractDevOpsCommand implements UIWizard
 
     @Override
     public void initializeUI(UIBuilder builder) throws Exception {
+        StopWatch watch = new StopWatch();
         try {
             Project project = getSelectedProject(builder.getUIContext());
             if (project != null) {
@@ -62,6 +64,7 @@ public class DevOpsEditCommand extends AbstractDevOpsCommand implements UIWizard
         } catch (IllegalStateException e) {
             // ignore lack of project
         }
+        log.info("initializeUI took " + watch.taken());
     }
 
     @Override

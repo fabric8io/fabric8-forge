@@ -28,10 +28,14 @@ import org.jboss.forge.addon.projects.Projects;
 import org.jboss.forge.addon.projects.ui.AbstractProjectCommand;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class AbstractFabricProjectCommand extends AbstractProjectCommand {
 
     public static String CATEGORY = "Fabric";
+
+    final transient Logger log = LoggerFactory.getLogger(this.getClass());
 
     @Inject
     protected ProjectFactory projectFactory;
