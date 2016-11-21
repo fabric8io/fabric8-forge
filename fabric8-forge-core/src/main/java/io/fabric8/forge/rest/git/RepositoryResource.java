@@ -21,6 +21,7 @@ import io.fabric8.forge.rest.git.dto.CommitTreeInfo;
 import io.fabric8.forge.rest.git.dto.DiffInfo;
 import io.fabric8.forge.rest.git.dto.FileDTO;
 import io.fabric8.forge.rest.git.dto.StatusDTO;
+import io.fabric8.forge.rest.utils.StopWatch;
 import io.fabric8.project.support.GitUtils;
 import io.fabric8.forge.rest.main.MD5Util;
 import io.fabric8.forge.rest.main.ProjectFileSystem;
@@ -832,12 +833,14 @@ public class RepositoryResource {
     }
 
     protected void doPull(Git git, GitContext context) throws GitAPIException {
+        StopWatch watch = new StopWatch();
+
         LOG.info("Performing a pull in git repository " + this.gitFolder + " on remote URL: " + this.remoteRepository);
         CredentialsProvider cp = userDetails.createCredentialsProvider();
         PullCommand command = git.pull();
         configureCommand(command, userDetails);
         command.setCredentialsProvider(cp).setRebase(true).call();
-        LOG.info("Completed pull in git repository " + this.gitFolder + " on remote URL: " + this.remoteRepository);
+        LOG.info("Took " + watch.taken() + " to complete pull in git repository " + this.gitFolder + " on remote URL: " + this.remoteRepository);
     }
 
     protected Response uploadFile(final String path, final String message, final InputStream body) throws Exception {
