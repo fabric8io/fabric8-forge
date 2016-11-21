@@ -21,6 +21,6 @@ import io.fabric8.forge.camel.commands.project.archetype.Fabric8ArchetypeCatalog
  */
 public class VertxProjectArchetypeStep extends Fabric8ArchetypeCatalogStep {
     public VertxProjectArchetypeStep() {
-        setArchetypeArtifactId("vertx-web-archetype");
+        setArchetypeArtifactId("vertx-simple-archetype");
     }
 }
