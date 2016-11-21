@@ -15,11 +15,12 @@
  */
 package io.fabric8.forge.devops;
 
-import io.fabric8.forge.addon.utils.ProfilesProjectHelper;
+import java.io.File;
+import java.io.FileInputStream;
+
 import io.fabric8.forge.addon.utils.StopWatch;
 import io.fabric8.forge.devops.setup.Fabric8SetupStep;
-import io.fabric8.forge.devops.setup.SetupProjectHelper;
-import org.jboss.forge.addon.projects.Project;
+import io.fabric8.forge.devops.springboot.IOHelper;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
@@ -33,11 +34,9 @@ import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
 import org.jboss.forge.addon.ui.wizard.UIWizard;
 
-import static io.fabric8.forge.devops.setup.Fabric8SetupStep.setupSitePlugin;
-
 public class DevOpsEditCommand extends AbstractDevOpsCommand implements UIWizard {
 
-    private volatile boolean needFabric8Setup;
+    private volatile boolean needFabric8Setup = true;
 
     @Override
     public UICommandMetadata getMetadata(UIContext context) {
@@ -47,6 +46,37 @@ public class DevOpsEditCommand extends AbstractDevOpsCommand implements UIWizard
                 .description("Edit the DevOps configuration for this project");
     }
 
+    @Override
+    public void initializeUI(UIBuilder builder) throws Exception {
+        StopWatch watch = new StopWatch();
+
+        // load maven pom.xml
+        File rootFolder = getSelectionFolder(builder.getUIContext());
+        if (rootFolder != null) {
+            File pom = new File(rootFolder, "pom.xml");
+            if (pom.exists() && pom.isFile()) {
+                String text = IOHelper.loadText(new FileInputStream(pom));
+                if (text.contains("fabric8-profiles")) {
+                    // no need for fabric8 for fuse projects
+                    needFabric8Setup = false;
+                } else if (text.contains("io.fabric8.funktion")) {
+                    // no need for fabric8 for funktion projects
+                    needFabric8Setup = false;
+                } else if (text.contains("fabric8-maven-plugin")) {
+                    // no need for fabric8 if we have f-m-p plugin
+                    needFabric8Setup = false;
+                }
+            }
+        }
+
+        log.info("Need fabric8 setup? " + needFabric8Setup);
+
+        log.info("initializeUI took " + watch.taken());
+    }
+
+    // the following old code is slow so we optimize in a different way
+    // https://github.com/fabric8io/fabric8-forge/issues/704
+    /*
     @Override
     public void initializeUI(UIBuilder builder) throws Exception {
         StopWatch watch = new StopWatch();
@@ -68,7 +98,7 @@ public class DevOpsEditCommand extends AbstractDevOpsCommand implements UIWizard
             // ignore lack of project
         }
         log.info("initializeUI took " + watch.taken());
-    }
+    }*/
 
     @Override
     public NavigationResult next(UINavigationContext context) throws Exception {
