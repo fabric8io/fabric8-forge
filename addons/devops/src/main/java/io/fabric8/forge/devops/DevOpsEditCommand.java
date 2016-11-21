@@ -1,17 +1,17 @@
 /**
- *  Copyright 2005-2015 Red Hat, Inc.
- *
- *  Red Hat licenses this file to you under the Apache License, version
- *  2.0 (the "License"); you may not use this file except in compliance
- *  with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
- *  implied.  See the License for the specific language governing
- *  permissions and limitations under the License.
+ * Copyright 2005-2015 Red Hat, Inc.
+ * <p>
+ * Red Hat licenses this file to you under the Apache License, version
+ * 2.0 (the "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+ * implied.  See the License for the specific language governing
+ * permissions and limitations under the License.
  */
 package io.fabric8.forge.devops;
 
@@ -19,6 +19,7 @@ import io.fabric8.forge.addon.utils.ProfilesProjectHelper;
 import io.fabric8.forge.devops.setup.Fabric8SetupStep;
 import io.fabric8.forge.devops.setup.SetupProjectHelper;
 import org.jboss.forge.addon.projects.Project;
+import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
 import org.jboss.forge.addon.ui.context.UINavigationContext;
@@ -35,6 +36,8 @@ import static io.fabric8.forge.devops.setup.Fabric8SetupStep.setupSitePlugin;
 
 public class DevOpsEditCommand extends AbstractDevOpsCommand implements UIWizard {
 
+    private volatile boolean needFabric8Setup;
+
     @Override
     public UICommandMetadata getMetadata(UIContext context) {
         return Metadata.forCommand(getClass())
@@ -44,22 +47,28 @@ public class DevOpsEditCommand extends AbstractDevOpsCommand implements UIWizard
     }
 
     @Override
-    public NavigationResult next(UINavigationContext context) throws Exception {
-        NavigationResultBuilder builder = NavigationResultBuilder.create();
+    public void initializeUI(UIBuilder builder) throws Exception {
         try {
-            Project project = getSelectedProject(context.getUIContext());
+            Project project = getSelectedProject(builder.getUIContext());
             if (project != null) {
                 setupSitePlugin(project);
 
-                if( ProfilesProjectHelper.isProfilesProject(project) ) {
-                    // TODO: in the future we might want to verify the setup
-                    // of a profiles project here.
+                if (ProfilesProjectHelper.isProfilesProject(project)) {
+                    // TODO: in the future we might want to verify the setup of a profiles project here.
                 } else if (!SetupProjectHelper.fabric8ProjectSetupCorrectly(project)) {
-                    builder.add(Fabric8SetupStep.class);
+                    needFabric8Setup = true;
                 }
             }
         } catch (IllegalStateException e) {
             // ignore lack of project
+        }
+    }
+
+    @Override
+    public NavigationResult next(UINavigationContext context) throws Exception {
+        NavigationResultBuilder builder = NavigationResultBuilder.create();
+        if (needFabric8Setup) {
+            builder.add(Fabric8SetupStep.class);
         }
         builder.add(DevOpsEditStep.class);
         builder.add(SaveDevOpsStep.class);

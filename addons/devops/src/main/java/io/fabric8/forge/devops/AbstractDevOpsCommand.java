@@ -19,9 +19,9 @@ import io.fabric8.devops.ProjectConfig;
 import io.fabric8.devops.ProjectConfigs;
 import io.fabric8.forge.addon.utils.CommandHelpers;
 import io.fabric8.forge.addon.utils.MavenHelpers;
-import io.fabric8.forge.addon.utils.ProfilesProjectHelper;
 import io.fabric8.forge.devops.dto.PipelineDTO;
 import io.fabric8.forge.devops.dto.ProjectOverviewDTO;
+import io.fabric8.forge.devops.springboot.IOHelper;
 import io.fabric8.kubernetes.api.Controller;
 import io.fabric8.kubernetes.client.ConfigBuilder;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
@@ -58,13 +58,12 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import static io.fabric8.forge.addon.utils.CamelProjectHelper.findCamelCoreDependency;
-import static io.fabric8.forge.addon.utils.CamelProjectHelper.hasFunktionDependency;
 
 /**
  * An abstract base class for DevOps related commands
@@ -280,30 +279,40 @@ public abstract class AbstractDevOpsCommand extends AbstractProjectCommand imple
             List<GetOverviewCommand.FileProcessor> processors = loadFileMatches();
             scanProject(rootFolder, processors, projectOverview, 0, 3);
         }
-        if (hasProjectFile(uiContext, "pom.xml")) {
-            projectOverview.addBuilder("maven");
-            projectOverview.addPerspective("forge");
-
-            if (containsProject(uiContext)) {
-                Project project = getSelectedProject(uiContext);
-                if (findCamelCoreDependency(project) != null) {
-                    if (hasFunktionDependency(project)) {
-                        projectOverview.addPerspective("funktion");
-                    } else {
-                    }
-                    // TOD should we show funktion instead of camel?
-                    projectOverview.addPerspective("camel");
-                }
-                if (ProfilesProjectHelper.isProfilesProject(project)) {
-                    projectOverview.addPerspective("fabric8-profiles");
-                }
-            }
-        }
         return projectOverview;
     }
 
     protected List<GetOverviewCommand.FileProcessor> loadFileMatches() {
         List<GetOverviewCommand.FileProcessor> answer = new ArrayList<>();
+
+        answer.add(new GetOverviewCommand.FileProcessor() {
+                       @Override
+                       public boolean processes(ProjectOverviewDTO overview, File file, String name, String extension, int level) {
+                           if (level == ROOT_LEVEL && java.util.Objects.equals(name, "pom.xml")) {
+                               overview.addBuilder("maven");
+                               overview.addPerspective("forge");
+                               // check if we have camel/funktion/and others in the maven project
+                               try {
+                                   String text = IOHelper.loadText(new FileInputStream(file));
+                                   // just do a quick scan for dependency names as using forge project API is slower
+                                   if (text.contains("org.apache.camel")) {
+                                       overview.addPerspective("camel");
+                                   }
+                                   if (text.contains("io.fabric8.funktion")) {
+                                       overview.addPerspective("funktion");
+                                   }
+                                   if (text.contains("fabric8-profiles")) {
+                                       overview.addPerspective("fabric8-profiles");
+                                   }
+                               } catch (IOException e) {
+                                   // ignore
+                               }
+                               return true;
+                           }
+                           return false;
+                       }
+                   }
+        );
         answer.add(new GetOverviewCommand.FileProcessor() {
                        @Override
                        public boolean processes(ProjectOverviewDTO overview, File file, String name, String extension, int level) {
@@ -403,7 +412,7 @@ public abstract class AbstractDevOpsCommand extends AbstractProjectCommand imple
                        }
                    }
         );
-        
+
         return answer;
     }
 
