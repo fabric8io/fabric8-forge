@@ -114,10 +114,15 @@ public class GitUserHelper {
         if (Strings.isNullOrEmpty(namespace)) {
             namespace = KubernetesHelper.defaultNamespace();
         }
-        String answer = KubernetesHelper.getServiceURL(kubernetesClient, GOGS, namespace, "http", external);
+        String serviceName = GOGS;
+        String answer = KubernetesHelper.getServiceURL(kubernetesClient, serviceName, namespace, "http", external);
         if (Strings.isNullOrEmpty(answer)) {
             String kind = external ? "external" : "internal";
             throw new IllegalStateException("Could not find external URL for " + kind + " service: gogs!");
+        }
+        if (!external) {
+            // lets stick with the service name instead as its easier to grok
+            return "http://" + serviceName + "/";
         }
 
         LOG.info("getGogsURL took " + watch.taken());

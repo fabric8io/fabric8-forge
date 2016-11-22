@@ -455,6 +455,7 @@ public class CommandsResource {
             attributeMap.put("gitAuthorEmail", userDetails.getEmail());
             attributeMap.put("gitAddress", userDetails.getAddress());
             attributeMap.put("gitUrl", userDetails.getAddress());
+            attributeMap.put("localGitUrl", userDetails.getInternalAddress());
             attributeMap.put("gitBranch", userDetails.getBranch());
             attributeMap.put("projectName", executionRequest.getProjectName());
             attributeMap.put("buildName", executionRequest.getProjectName());

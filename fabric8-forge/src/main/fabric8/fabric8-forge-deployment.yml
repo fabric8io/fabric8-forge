@@ -37,6 +37,11 @@ spec:
             configMapKeyRef:
               key: "jenkinsfile-library-git-repository"
               name: "fabric8-forge"
+        - name: "USE_EXTERNAL_GIT_ADDRESS"
+          valueFrom:
+            configMapKeyRef:
+              key: "use-external-git-address"
+              name: "fabric8-forge"
         - name: "KUBERNETES_TRUST_CERTIFICATES"
           value: "true"
         - name: "SKIP_TLS_VERIFY"
