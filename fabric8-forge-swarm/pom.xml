@@ -29,10 +29,10 @@
 
   <artifactId>fabric8-forge-swarm</artifactId>
   <packaging>war</packaging>
-  <name>Fabric8 :: Forge :: WildFly Swarm</name>
+  <name>Fabric8 :: Forge :: WildFly Swarm (deprecated)</name>
 
   <properties>
-    <version.wildfly.swarm>1.0.5.Final</version.wildfly.swarm>
+    <version.wildfly.swarm>2016.11.0.Final</version.wildfly.swarm>
     <failOnMissingWebXml>false</failOnMissingWebXml>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
