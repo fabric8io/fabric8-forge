@@ -23,7 +23,6 @@ import io.fabric8.forge.rest.ui.RestUIContext;
 import io.fabric8.forge.rest.utils.StopWatch;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.project.support.BuildConfigHelper;
-import io.fabric8.project.support.GitUtils;
 import io.fabric8.project.support.UserDetails;
 import org.jboss.forge.addon.ui.controller.CommandController;
 import org.jboss.forge.furnace.util.Strings;
@@ -48,6 +47,7 @@ public class GitCommandCompletePostProcessor implements CommandCompletePostProce
     private final KubernetesClient kubernetes;
     private final GitUserHelper gitUserHelper;
     private final ProjectFileSystem projectFileSystem;
+    private boolean useLocalGitHost;
 
     @Inject
     public GitCommandCompletePostProcessor(KubernetesClient kubernetes,
@@ -56,6 +56,12 @@ public class GitCommandCompletePostProcessor implements CommandCompletePostProce
         this.kubernetes = kubernetes;
         this.gitUserHelper = gitUserHelper;
         this.projectFileSystem = projectFileSystem;
+        this.useLocalGitHost = true;
+        String useExternalGit = System.getenv("USE_EXTERNAL_GIT_ADDRESS");
+        if (!Strings.isNullOrEmpty(useExternalGit) && useExternalGit.toLowerCase().equals("true")){
+            useLocalGitHost = false;
+        }
+        LOG.info("Using " + (useLocalGitHost ? "internal" : "external") + " URLs for hosted git repositories");
     }
 
     @Override
@@ -121,7 +127,7 @@ public class GitCommandCompletePostProcessor implements CommandCompletePostProce
                         String projectName = firstNotBlank(named, context.getProjectName(), executionRequest.getProjectName());
                         String message = ExecutionRequest.createCommitMessage(name, executionRequest);
 
-                        BuildConfigHelper.CreateGitProjectResults createProjectResults = BuildConfigHelper.importNewGitProject(this.kubernetes, userDetails, basedir, namespace, projectName, origin, message, true);
+                        BuildConfigHelper.CreateGitProjectResults createProjectResults = BuildConfigHelper.importNewGitProject(this.kubernetes, userDetails, basedir, namespace, projectName, origin, message, true, useLocalGitHost);
 
                         results.setOutputProperty("fullName", createProjectResults.getFullName());
                         results.setOutputProperty("cloneUrl", createProjectResults.getCloneUrl());

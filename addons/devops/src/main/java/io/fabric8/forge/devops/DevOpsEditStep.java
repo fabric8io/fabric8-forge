@@ -65,6 +65,9 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -285,6 +288,8 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
         UIContext uiContext = context.getUIContext();
         Map<Object, Object> attributeMap = uiContext.getAttributeMap();
 
+
+        String localGitUrl = getStringAttribute(attributeMap, "localGitUrl");
         String gitUrl = getStringAttribute(attributeMap, "gitUrl");
         if (Strings.isNullOrBlank(gitUrl)) {
             gitUrl = getStringAttribute(attributeMap, "gitAddress");
@@ -293,7 +298,7 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
         Object object = attributeMap.get(Project.class);
         String user = getStringAttribute(attributeMap, "gitUser");
         String named = getStringAttribute(attributeMap, "projectName");
-        ;
+
         File basedir = CommandHelpers.getBaseDir(project);
         if (basedir == null && configFile != null) {
             basedir = configFile.getParentFile();
@@ -324,6 +329,8 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
                 }
             }
         }
+
+
         // lets default the environments from the pipeline
         PipelineDTO pipelineValue = pipeline.getValue();
         LOG.info("Using pipeline " + pipelineValue);
@@ -402,6 +409,26 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
             }
         }
 
+        // lets check that the localGitUrl has a path
+        if (Strings.isNotBlank(localGitUrl) && Strings.isNotBlank(gitUrl)) {
+            try {
+                URL localURL = new URL(localGitUrl);
+                URL remoteURL = new URL(gitUrl);
+
+                String localPath = localURL.getPath();
+                if (isEmptyUrlPath(localPath)) {
+                    String remotePath = remoteURL.getPath();
+                    if (!isEmptyUrlPath(remotePath)) {
+                        localGitUrl = localURL.toURI().resolve(remotePath).toString();
+                        LOG.info("using cluster local git URL: " + localGitUrl);
+                    }
+                }
+            } catch (Exception e) {
+                LOG.warn("Failed to add path to the localGitUrl: " + e, e);
+                localGitUrl = null;
+            }
+        }
+
         final DevOpsConnector connector = new DevOpsConnector();
         connector.setProjectConfig(config);
         connector.setTryLoadConfigFileFromRemoteGit(false);
@@ -410,6 +437,7 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
         connector.setBranch(getStringAttribute(attributeMap, "gitBranch", "master"));
         connector.setBasedir(basedir);
         connector.setGitUrl(gitUrl);
+        connector.setLocalGitUrl(localGitUrl);
         connector.setRepoName(named);
 
         connector.setRegisterWebHooks(true);
@@ -436,6 +464,10 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
 
         log.info("execute took " + watch.taken());
         return Results.success(message);
+    }
+
+    protected static boolean isEmptyUrlPath(String localPath) {
+        return localPath.length() == 0 || "/".equals(localPath);
     }
 
 
