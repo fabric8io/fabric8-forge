@@ -19,6 +19,8 @@ import java.io.StringReader;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.enterprise.context.ApplicationScoped;
+
 import org.apache.camel.catalog.DefaultCamelCatalog;
 import org.apache.maven.archetype.catalog.ArchetypeCatalog;
 import org.apache.maven.archetype.catalog.io.xpp3.ArchetypeCatalogXpp3Reader;
@@ -27,6 +29,7 @@ import org.jboss.forge.addon.maven.archetype.ArchetypeCatalogFactory;
 /**
  * The Apache Camel archetypes
  */
+@ApplicationScoped
 public class CamelArchetypeCatalogFactory implements ArchetypeCatalogFactory {
 
     private final Logger logger = Logger.getLogger(getClass().getName());

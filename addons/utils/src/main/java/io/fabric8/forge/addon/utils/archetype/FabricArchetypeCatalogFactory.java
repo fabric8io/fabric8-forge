@@ -20,6 +20,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
 import io.fabric8.forge.addon.utils.VersionHelper;
@@ -36,6 +37,7 @@ import org.jboss.forge.furnace.services.Imported;
 /**
  * The Fabric8 archetypes
  */
+@ApplicationScoped
 public class FabricArchetypeCatalogFactory implements ArchetypeCatalogFactory {
 
     private static final Logger LOG = Logger.getLogger(FabricArchetypeCatalogFactory.class.getName());
