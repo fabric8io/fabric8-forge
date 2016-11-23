@@ -209,9 +209,9 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
             CommandHelpers.setInitialComponentValue(codeReview, config.getCodeReview());
         }
         inputComponents = new ArrayList<>();
-        File jenkinsFile = CommandHelpers.getProjectContextFile(context, project, "Jenkinsfile");
-        boolean hasJenkinsFile = Files.isFile(jenkinsFile);
-        LOG.debug("Has Jenkinsfile " + hasJenkinsFile + " with file: " + jenkinsFile);
+
+        boolean hasJenkinsFile = hasLocalJenkinsfile(context, project);
+
         if (!hasJenkinsFile) {
             inputComponents.addAll(CommandHelpers.addInputComponents(builder, pipeline));
         }
@@ -219,6 +219,14 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
 
         log.info("initializeUI took " + watch.taken());
     }
+
+    private boolean hasLocalJenkinsfile(UIContext context, Project project) {
+        File jenkinsFile = CommandHelpers.getProjectContextFile(context, project, "Jenkinsfile");
+        boolean hasJenkinsFile = Files.isFile(jenkinsFile);
+        LOG.debug("Has Jenkinsfile " + hasJenkinsFile + " with file: " + jenkinsFile);
+        return hasJenkinsFile;
+    }
+
 
     public static Iterable<String> filterCompletions(Iterable<String> values, String inputValue) {
         boolean ignoreFilteringAsItBreaksHawtio = true;
@@ -382,7 +390,14 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
             }
         }
 
-        if (copyPipelineToProject) {
+        // if we already have a Jenkinsfile after importing...
+        // otherwise copy the selected flow if it was selected and is
+        // eligible for copying
+        if (pipelineValue == null && hasLocalJenkinsfile(uiContext, project)
+                && !config.isUseLocalFlow()) {
+            config.setUseLocalFlow(true);
+        }
+        else if (copyPipelineToProject) {
             if (basedir == null || !basedir.isDirectory()) {
                 LOG.warn("Cannot copy the pipeline to the project as no basedir!");
             } else {
@@ -393,6 +408,8 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
                 }
                 if (Strings.isNullOrBlank(flow)) {
                     LOG.warn("Cannot copy the pipeline to the project as no pipeline selected!");
+                } else if (config.isUseLocalFlow()) {
+                    LOG.warn("Cannot copy the pipeline to the project as it already exists in the project!");
                 } else {
                     String flowText = getFlowContent(flow, uiContext);
                     if (Strings.isNullOrBlank(flowText))  {
@@ -447,15 +464,6 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
 
         LOG.info("Using connector: " + connector);
 
-/*
-        attributeMap.put("registerWebHooks", new Runnable() {
-            @Override
-            public void run() {
-                LOG.info("Now registering webhooks!");
-                connector.registerWebHooks();
-            }
-        });
-*/
         try {
             connector.execute();
         } catch (Exception e) {
