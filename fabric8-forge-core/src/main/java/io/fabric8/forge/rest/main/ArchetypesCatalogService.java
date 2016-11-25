@@ -15,11 +15,16 @@
  */
 package io.fabric8.forge.rest.main;
 
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
 import org.apache.maven.archetype.catalog.Archetype;
+import org.jboss.forge.addon.dependencies.Dependency;
 import org.jboss.forge.addon.dependencies.DependencyQuery;
 import org.jboss.forge.addon.dependencies.DependencyResolver;
 import org.jboss.forge.addon.dependencies.builder.DependencyQueryBuilder;
@@ -29,7 +34,7 @@ import org.jboss.forge.furnace.Furnace;
 import org.jboss.forge.furnace.addons.AddonRegistry;
 
 @ApplicationScoped
-public class DownloadArchetypesService {
+public class ArchetypesCatalogService {
 
     @Inject
     Furnace furnace;
@@ -37,8 +42,10 @@ public class DownloadArchetypesService {
     @Inject
     DependencyResolver resolver;
 
-    public void downloadArchetypes() {
+    public Map<String, Set<String>> getArchetypeCatalogs() {
         System.out.println("Downloading Maven archetypes +++ start +++");
+
+        Map<String, Set<String>> catalogs = new LinkedHashMap();
 
         AddonRegistry addonRegistry = furnace.getAddonRegistry();
         ArchetypeCatalogFactoryRegistry factory = addonRegistry.getServices(ArchetypeCatalogFactoryRegistry.class).get();
@@ -46,13 +53,21 @@ public class DownloadArchetypesService {
             Iterable<ArchetypeCatalogFactory> it = factory.getArchetypeCatalogFactories();
             for (ArchetypeCatalogFactory cat : it) {
                 System.out.println("Found ArchetypeCatalog: " + cat.getName());
+
+                Set<String> coords = new LinkedHashSet<>();
+                catalogs.put(cat.getName(), coords);
+
                 List<Archetype> archetypes = cat.getArchetypeCatalog().getArchetypes();
                 for (Archetype arc : archetypes) {
                     String coord = arc.getGroupId() + ":" + arc.getArtifactId() + ":" + arc.getVersion();
                     DependencyQuery dq = DependencyQueryBuilder.create(coord);
                     try {
                         System.out.println("Downloading Maven archetype: " + coord);
-                        resolver.resolveArtifact(dq);
+                        Dependency dep = resolver.resolveArtifact(dq);
+
+                        // remember archetype
+                        coords.add(coord);
+
                     } catch (Throwable e) {
                         System.err.println("Cannot download Maven archetype: " + coord + " due " + e.getMessage());
                     }
@@ -60,5 +75,7 @@ public class DownloadArchetypesService {
             }
         }
         System.out.println("Downloading Maven archetypes +++ end +++");
+
+        return catalogs;
     }
 }

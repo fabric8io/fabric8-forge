@@ -15,18 +15,18 @@
  */
 package io.fabric8.forge.rest.main;
 
-import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
-import io.fabric8.forge.rest.RootResource;
-import org.apache.cxf.feature.LoggingFeature;
-import io.fabric8.forge.rest.CommandsResource;
-import io.fabric8.forge.rest.git.RepositoriesResource;
-
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import javax.inject.Inject;
 import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.core.Application;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+
+import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
+import io.fabric8.forge.rest.CommandsResource;
+import io.fabric8.forge.rest.RootResource;
+import io.fabric8.forge.rest.git.RepositoriesResource;
 
 @ApplicationPath("/")
 public class ForgeRestApplication extends Application {
@@ -34,7 +34,7 @@ public class ForgeRestApplication extends Application {
     ForgeInitialiser forgeInitialiser;
 
     @Inject
-    DownloadArchetypesService download;
+    ArchetypesCatalogService download;
 
     @Inject
     RootResource rootResource;
@@ -51,8 +51,11 @@ public class ForgeRestApplication extends Application {
     public Set<Object> getSingletons() {
         if (!preloaded) {
             preloaded = true;
+            Map<String, Set<String>> catalogs = download.getArchetypeCatalogs();
             forgeInitialiser.preloadCommands(commandsResource);
-            download.downloadArchetypes();
+            // TODO: do not work due forge classloading issue
+            // forgeInitialiser.preloadProjects(commandsResource, catalogs);
+
         }
 
         return new HashSet<Object>(

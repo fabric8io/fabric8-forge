@@ -32,11 +32,13 @@ import javax.inject.Singleton;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Initialises Forge add on repository
@@ -81,76 +83,79 @@ public class ForgeInitialiser {
             LOG.error("Failed to preload commands! " + e, e);
         }
 
-        // TODO: remove this code if DownloadArchetypesService works
+        LOG.info("preloadCommands took " + watch.taken());
+    }
 
-        // lets try preload the archetypes
-        LOG.info("Preloading archetypes");
-        String tempDir = "/tmp/startupNewProject";
-        try {
-            File file = File.createTempFile("startupNewProject", "tmp");
-            file.delete();
-            file.mkdirs();
-            tempDir = file.getPath();
-        } catch (IOException e) {
-            LOG.error("Failed to create temp directory: " + e, e);
-        }
-        LOG.info("Preloaded archetypes!");
+    public void preloadProjects(CommandsResource commandsResource, Map<String, Set<String>> catalogs)  {
+        StopWatch watch = new StopWatch();
 
-        boolean precreateProjects = false;
-        if (precreateProjects) {
-            ExecutionRequest executionRequest = new ExecutionRequest();
-            Map<String, Object> step1Inputs = new HashMap<>();
-            step1Inputs.put("buildSystem", "Maven");
-            String projectName = "dummy";
-            step1Inputs.put("named", projectName);
-            step1Inputs.put("targetLocation", tempDir);
-            step1Inputs.put("topLevelPackage", "org.example");
-            step1Inputs.put("type", "From Archetype Catalog");
-            step1Inputs.put("version", "1.0.0-SNAPSHOT");
+        LOG.info("Preloading projects");
+        int i = 0;
 
+        // TODO: do not work due forge classloading issues
+        // java.lang.ClassCastException: org.jboss.forge.addon.maven.archetype.ArchetypeCatalogFactory_$$_javassist_52422bd7-4060-45af-87db-4d3a6e9b5664 cannot be cast to org.jboss.forge.addon.maven.archetype.ArchetypeCatalogFactory
 
-            Map<String, Object> step2Inputs = new HashMap<>();
-            step2Inputs.put("catalog", "fabric8");
-            step2Inputs.put("archetype", "io.fabric8.archetypes:java-camel-cdi-archetype:" + getArchetypesVersion());
+        for (Map.Entry<String, Set<String>> entry : catalogs.entrySet()) {
 
-            List<Map<String, Object>> inputList = new ArrayList<>();
-            inputList.add(step1Inputs);
-            inputList.add(step2Inputs);
-            executionRequest.setInputList(inputList);
-            executionRequest.setWizardStep(2);
-            UserDetails userDetails = new UserDetails("someAddress", "someInternalAddress", "dummyUser", "dummyPassword", "dummy@doesNotExist.com");
-            try {
-                LOG.info("Now trying to create a new project in: " + tempDir);
-                CommandCompletePostProcessor postProcessor = null;
-                dumpResult(commandsResource.doExecute("project-new", executionRequest, postProcessor, userDetails, commandsResource.createUIContext(new File(tempDir))));
+            String catalogName = entry.getKey();
 
-                LOG.info("Created project!");
-                LOG.info("Now lets try validate the devops-edit command");
-                executionRequest = new ExecutionRequest();
-                step1Inputs = new HashMap<>();
-                step1Inputs.put("from", "fabric8/java");
-                step1Inputs.put("main", "org.apache.camel.cdi.Main");
-                //step1Inputs.put("test", "true");
+            for (String archetype : entry.getValue()) {
 
-/*
-            step2Inputs = new HashMap<>();
-            step2Inputs.put("pipeline", "maven/Deploy.groovy");
-*/
+                String tempDir = createTempDirectory();
+                if (tempDir == null) {
+                    LOG.warn("Cannot create temporary directory");
+                    continue;
+                }
 
-                inputList = new ArrayList<>();
+                i++;
+
+                ExecutionRequest executionRequest = new ExecutionRequest();
+                Map<String, Object> step1Inputs = new HashMap<>();
+                step1Inputs.put("buildSystem", "Maven");
+                String projectName = "dummy-" + i;
+                step1Inputs.put("named", projectName);
+                step1Inputs.put("targetLocation", tempDir);
+                step1Inputs.put("topLevelPackage", "org.example");
+                step1Inputs.put("type", "From Archetype Catalog");
+                step1Inputs.put("version", "1.0.0-SNAPSHOT");
+
+                Map<String, Object> step2Inputs = new HashMap<>();
+                step2Inputs.put("catalog", catalogName);
+                step2Inputs.put("archetype", archetype);
+
+                List<Map<String, Object>> inputList = new ArrayList<>();
                 inputList.add(step1Inputs);
-                //inputList.add(step2Inputs);
+                inputList.add(step2Inputs);
                 executionRequest.setInputList(inputList);
-                executionRequest.setWizardStep(1);
+                executionRequest.setWizardStep(2);
+                UserDetails userDetails = new UserDetails("someAddress", "someInternalAddress", "dummyUser", "dummyPassword", "dummy@doesNotExist.com");
+                try {
+                    LOG.info("Now trying to create a new project: " + projectName + " from archetype: " + archetype + " in directory: " + tempDir);
+                    CommandCompletePostProcessor postProcessor = null;
+                    dumpResult(commandsResource.doExecute("project-new", executionRequest, postProcessor, userDetails, commandsResource.createUIContext(new File(tempDir))));
 
-                dumpResult(commandsResource.doExecute("devops-edit", executionRequest, postProcessor, userDetails, commandsResource.createUIContext(new File(tempDir, projectName))));
-                LOG.info("Dev-Ops!");
-            } catch (Exception e) {
-                LOG.error("Failed to execute command: " + e, e);
+                    LOG.info("Created project done!");
+
+                } catch (Exception e) {
+                    LOG.error("Failed to execute command: " + e, e);
+                }
             }
         }
 
-        LOG.info("preloadCommands took " + watch.taken());
+        LOG.info("preloadProjects took " + watch.taken());
+    }
+
+    protected String createTempDirectory() {
+        try {
+            File file = File.createTempFile("project-new", "tmp");
+            file.delete();
+            file.mkdirs();
+            return file.getPath();
+        } catch (IOException e) {
+            LOG.error("Failed to create temp directory: " + e, e);
+        }
+
+        return null;
     }
 
     protected void dumpResult(Response response) {
@@ -168,4 +173,21 @@ public class ForgeInitialiser {
         }
         return answer;
     }
+
+    public static void removeDir(File d) {
+        String[] list = d.list();
+        if (list == null) {
+            list = new String[0];
+        }
+        for (String s : list) {
+            File f = new File(d, s);
+            if (f.isDirectory()) {
+                removeDir(f);
+            } else {
+                f.delete();
+            }
+        }
+        d.delete();
+    }
+
 }
