@@ -24,7 +24,10 @@ import io.fabric8.forge.rest.dto.CommandInputDTO;
 import io.fabric8.forge.rest.dto.ExecutionRequest;
 import io.fabric8.forge.rest.dto.ExecutionResult;
 import io.fabric8.forge.rest.dto.ValidationResult;
+import io.fabric8.kubernetes.api.Controller;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.openshift.client.OpenShiftClient;
 import io.fabric8.utils.Strings;
 import io.fabric8.utils.URLUtils;
 import io.fabric8.utils.cxf.JsonHelper;
@@ -45,6 +48,7 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.util.List;
 
+import static io.fabric8.forge.rest.client.EnvironmentVariables.getEnvironmentValue;
 import static io.fabric8.utils.cxf.WebClients.disableSslChecks;
 
 /**
@@ -53,20 +57,31 @@ import static io.fabric8.utils.cxf.WebClients.disableSslChecks;
 public class ForgeClient {
     private static final transient Logger LOG = LoggerFactory.getLogger(ForgeClient.class);
 
-    private String address = "http://fabric8-forge/";
+    private String address = getEnvironmentValue(EnvironmentVariables.FORGE_URL, "http://fabric8-forge/");
     private CommandsAPI clientAPI;
     private String namespace;
     private String secret = "default-gogs-git";
     private String secretNamespace = "user-secrets-source-admin";
     private String kubeUserName = "admin";
     private boolean debugResponses;
+    private KubernetesClient kubernetesClient = new DefaultKubernetesClient();
 
     public ForgeClient() {
-        String addressEnv = System.getenv("FABRIC8_FORGE_URL");
-        if (Strings.isNotBlank(addressEnv)) {
-            address = addressEnv;
-        }
     }
+
+    public KubernetesClient getKubernetesClient() {
+        return kubernetesClient;
+    }
+
+    public void setKubernetesClient(KubernetesClient kubernetesClient) {
+        this.kubernetesClient = kubernetesClient;
+    }
+
+
+    public OpenShiftClient getOpenShiftOrJenkinshiftClient() {
+        return new Controller(kubernetesClient).getOpenShiftClientOrJenkinshift();
+    }
+
 
     public boolean isDebugResponses() {
         return debugResponses;
@@ -78,7 +93,7 @@ public class ForgeClient {
 
     public String getNamespace() {
         if (Strings.isNullOrBlank(namespace)) {
-            namespace = new DefaultKubernetesClient().getNamespace();
+            namespace = kubernetesClient.getNamespace();
         }
         return namespace;
     }
