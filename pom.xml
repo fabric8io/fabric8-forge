@@ -82,7 +82,7 @@
 
     <furnace.version>2.24.3.Final</furnace.version>
     <jboss.forge.version>3.4.0.Final</jboss.forge.version>
-    <jboss.roaster.version>2.19.2.Final</jboss.roaster.version>
+    <jboss.roaster.version>2.19.3.Final</jboss.roaster.version>
     <gitective.version>0.9.17</gitective.version>
 
     <!-- NOTE these properties are used to generate the addons/utils/src/main/resources/io/fabric8/forge/addon/utils/versions.properties file -->
