@@ -15,6 +15,7 @@
  */
 package io.fabric8.forge.rest.producer;
 
+import org.jboss.forge.addon.dependencies.DependencyResolver;
 import org.jboss.forge.addon.ui.command.CommandFactory;
 import org.jboss.forge.addon.ui.controller.CommandControllerFactory;
 import org.jboss.forge.furnace.Furnace;
@@ -38,6 +39,8 @@ public class FurnaceProducer {
 
 	private CommandControllerFactory controllerFactory;
 
+    private DependencyResolver dependencyResolver;
+
 	public void setup(File repoDir) {
 		furnace = FurnaceFactory.getInstance(Thread.currentThread()
 				.getContextClassLoader(), Thread.currentThread()
@@ -55,6 +58,8 @@ public class FurnaceProducer {
 		commandFactory = addonRegistry.getServices(CommandFactory.class).get();
 		controllerFactory = (CommandControllerFactory) addonRegistry
 				.getServices(CommandControllerFactory.class.getName()).get();
+        dependencyResolver = (DependencyResolver) addonRegistry
+                .getServices(DependencyResolver.class.getName()).get();
 	}
 
 	@Produces
@@ -70,6 +75,11 @@ public class FurnaceProducer {
 	@Produces
 	public CommandControllerFactory getControllerFactory() {
 		return controllerFactory;
+	}
+
+	@Produces
+	public DependencyResolver getDependencyResolver() {
+		return dependencyResolver;
 	}
 
 	@PreDestroy

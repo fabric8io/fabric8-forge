@@ -81,6 +81,8 @@ public class ForgeInitialiser {
             LOG.error("Failed to preload commands! " + e, e);
         }
 
+        // TODO: remove this code if DownloadArchetypesService works
+
         // lets try preload the archetypes
         LOG.info("Preloading archetypes");
         String tempDir = "/tmp/startupNewProject";

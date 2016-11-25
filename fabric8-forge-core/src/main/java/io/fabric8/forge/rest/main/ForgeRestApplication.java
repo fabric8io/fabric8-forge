@@ -34,6 +34,9 @@ public class ForgeRestApplication extends Application {
     ForgeInitialiser forgeInitialiser;
 
     @Inject
+    DownloadArchetypesService download;
+
+    @Inject
     RootResource rootResource;
 
     @Inject
@@ -49,6 +52,7 @@ public class ForgeRestApplication extends Application {
         if (!preloaded) {
             preloaded = true;
             forgeInitialiser.preloadCommands(commandsResource);
+            download.downloadArchetypes();
         }
 
         return new HashSet<Object>(
