@@ -19,12 +19,15 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class CommandInfoDTO {
-    private final String id;
-    private final String name;
-    private final String description;
-    private final String category;
-    private final String docLocation;
-    private final boolean enabled;
+    private String id;
+    private String name;
+    private String description;
+    private String category;
+    private String docLocation;
+    private boolean enabled;
+
+    public CommandInfoDTO() {
+    }
 
     public CommandInfoDTO(String id, String name, String description, String category, String docLocation, boolean enabled) {
         this.id = id;
@@ -67,5 +70,29 @@ public class CommandInfoDTO {
 
     public boolean isEnabled() {
         return enabled;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public void setDocLocation(String docLocation) {
+        this.docLocation = docLocation;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 }

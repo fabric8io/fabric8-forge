@@ -152,6 +152,7 @@
   <!-- TODO: work in progress, swarm fail due CXF issue 
     <module>fabric8-forge-swarm</module>
   -->
+    <module>fabric8-forge-rest-client</module>
     <module>fabric8-forge-web</module>
     <module>fabric8-forge</module>
     <module>packages</module>

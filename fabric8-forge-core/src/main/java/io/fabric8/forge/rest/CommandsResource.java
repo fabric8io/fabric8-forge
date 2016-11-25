@@ -87,7 +87,7 @@ import static io.fabric8.forge.rest.Constants.TARGET_LOCATION_PROPERTY;
 @Singleton
 @Path("/api/forge")
 @Stateless
-public class CommandsResource {
+public class CommandsResource implements CommandsAPI {
     private static final transient Logger LOG = LoggerFactory.getLogger(CommandsResource.class);
 
     protected static final Set<String> ignoreCommands = new HashSet<>(Arrays.asList(
@@ -145,6 +145,7 @@ public class CommandsResource {
         return furnace.getVersion().toString();
     }
 
+    @Override
     @GET
     @Path("/commandNames")
     @Produces(MediaType.APPLICATION_JSON)
@@ -158,6 +159,7 @@ public class CommandsResource {
         return answer;
     }
 
+    @Override
     @GET
     @Path("/commands")
     @Produces(MediaType.APPLICATION_JSON)
@@ -165,6 +167,7 @@ public class CommandsResource {
         return getCommands(null, null, null);
     }
 
+    @Override
     @GET
     @Path("/commands/{namespace}/{projectName}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -172,6 +175,7 @@ public class CommandsResource {
         return getCommands(namespace, projectName, null);
     }
 
+    @Override
     @GET
     @Path("/commands/{namespace}/{projectName}/{path: .*}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -195,6 +199,7 @@ public class CommandsResource {
         });
     }
 
+    @Override
     @GET
     @Path("/command/{name}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -202,6 +207,7 @@ public class CommandsResource {
         return getCommandInfo(name, null, null, null);
     }
 
+    @Override
     @GET
     @Path("/command/{name}/{namespace}/{projectName}/{path: .*}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -220,6 +226,7 @@ public class CommandsResource {
         });
     }
 
+    @Override
     @GET
     @Path("/commandInput/{name}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -227,6 +234,7 @@ public class CommandsResource {
         return getCommandInput(name, null, null, null);
     }
 
+    @Override
     @GET
     @Path("/commandInput/{name}/{namespace}/{projectName}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -234,6 +242,7 @@ public class CommandsResource {
         return getCommandInput(name, namespace, projectName, null);
     }
 
+    @Override
     @GET
     @Path("/commandInput/{name}/{namespace}/{projectName}/{path: .*}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -262,6 +271,7 @@ public class CommandsResource {
     /**
      * Provides a simple way to execute a command via a single GET
      */
+    @Override
     @GET
     @Path("/invoke/{name}/{namespace}/{projectName}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -276,6 +286,7 @@ public class CommandsResource {
     /**
      * Provides a simple way to execute a command via a single GET
      */
+    @Override
     @GET
     @Path("/invoke/{name}/{namespace}/{projectName}/{path: .*}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -314,6 +325,7 @@ public class CommandsResource {
     }
 
 
+    @Override
     @POST
     @Path("/command/execute/{name}")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -466,6 +478,7 @@ public class CommandsResource {
     }
 
 
+    @Override
     @POST
     @Path("/command/validate/{name}")
     @Consumes(MediaType.APPLICATION_JSON)
