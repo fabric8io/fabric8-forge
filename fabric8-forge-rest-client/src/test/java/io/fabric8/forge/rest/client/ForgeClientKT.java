@@ -51,7 +51,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  */
-public class ForgeClientTest {
+public class ForgeClientKT {
     protected ForgeClient forgeClient = new ForgeClient();
 
     @Test
