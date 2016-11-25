@@ -24,9 +24,12 @@ import java.util.Map;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class CommandInputDTO {
-    private final CommandInfoDTO info;
+    private CommandInfoDTO info;
     private Map<String,PropertyDTO> properties = new LinkedHashMap<>();
     private List<String> required = new ArrayList<>();
+
+    public CommandInputDTO() {
+    }
 
     public CommandInputDTO(CommandInfoDTO info) {
         this.info = info;
@@ -57,5 +60,17 @@ public class CommandInputDTO {
 
     public List<String> getRequired() {
         return required;
+    }
+
+    public void setInfo(CommandInfoDTO info) {
+        this.info = info;
+    }
+
+    public void setProperties(Map<String, PropertyDTO> properties) {
+        this.properties = properties;
+    }
+
+    public void setRequired(List<String> required) {
+        this.required = required;
     }
 }

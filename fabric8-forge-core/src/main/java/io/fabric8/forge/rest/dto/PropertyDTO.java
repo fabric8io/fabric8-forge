@@ -15,6 +15,7 @@
  */
 package io.fabric8.forge.rest.dto;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -22,18 +23,21 @@ import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class PropertyDTO {
-    private final String name;
-    private final String description;
-    private final String title;
-    private final String requiredMessage;
-    private final Object value;
-    private final String javaType;
-    private final String type;
-    private final boolean enabled;
-    private final boolean required;
+    private String name;
+    private String description;
+    private String title;
+    private String requiredMessage;
+    private Object value;
+    private String javaType;
+    private String type;
+    private boolean enabled;
+    private boolean required;
     @JsonProperty("enum")
-    private final List<Object> valueChoices;
-    private final List<Object> typeaheadData;
+    private List<Object> valueChoices;
+    private List<Object> typeaheadData;
+
+    public PropertyDTO() {
+    }
 
     public PropertyDTO(String name, String description, String title, String requiredMessage, Object value, String javaType, String type, boolean enabled, boolean required, List<Object> valueChoices, List<Object> typeaheadData) {
         this.name = name;
@@ -100,5 +104,49 @@ public class PropertyDTO {
 
     public List<Object> getTypeaheadData() {
         return typeaheadData;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public void setRequiredMessage(String requiredMessage) {
+        this.requiredMessage = requiredMessage;
+    }
+
+    public void setValue(Object value) {
+        this.value = value;
+    }
+
+    public void setJavaType(String javaType) {
+        this.javaType = javaType;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    public void setRequired(boolean required) {
+        this.required = required;
+    }
+
+    public void setValueChoices(List<Object> valueChoices) {
+        this.valueChoices = valueChoices;
+    }
+
+    public void setTypeaheadData(List<Object> typeaheadData) {
+        this.typeaheadData = typeaheadData;
     }
 }

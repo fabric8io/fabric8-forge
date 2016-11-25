@@ -20,9 +20,12 @@ import java.util.List;
 /**
  */
 public class WizardResultsDTO {
-    private final List<CommandInputDTO> stepInputs;
-    private final List<ValidationResult> stepValidations;
-    private final List<ExecutionResult> stepResults;
+    private List<CommandInputDTO> stepInputs;
+    private List<ValidationResult> stepValidations;
+    private List<ExecutionResult> stepResults;
+
+    public WizardResultsDTO() {
+    }
 
     public WizardResultsDTO(List<CommandInputDTO> stepInputs, List<ValidationResult> stepValidations, List<ExecutionResult> stepResults) {
         this.stepInputs = stepInputs;
@@ -48,5 +51,17 @@ public class WizardResultsDTO {
 
     public List<ExecutionResult> getStepResults() {
         return stepResults;
+    }
+
+    public void setStepInputs(List<CommandInputDTO> stepInputs) {
+        this.stepInputs = stepInputs;
+    }
+
+    public void setStepValidations(List<ValidationResult> stepValidations) {
+        this.stepValidations = stepValidations;
+    }
+
+    public void setStepResults(List<ExecutionResult> stepResults) {
+        this.stepResults = stepResults;
     }
 }

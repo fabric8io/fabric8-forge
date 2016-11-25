@@ -23,9 +23,12 @@ import java.util.List;
 /**
  */
 public class UIMessageDTO {
-    private final String description;
-    private final String inputName;
-    private final UIMessage.Severity severity;
+    private String description;
+    private String inputName;
+    private UIMessage.Severity severity;
+
+    public UIMessageDTO() {
+    }
 
     public static List<UIMessageDTO> toDtoList(Iterable<UIMessage> messages) {
         List<UIMessageDTO> answer = new ArrayList<>();
@@ -66,5 +69,17 @@ public class UIMessageDTO {
 
     public UIMessage.Severity getSeverity() {
         return severity;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public void setInputName(String inputName) {
+        this.inputName = inputName;
+    }
+
+    public void setSeverity(UIMessage.Severity severity) {
+        this.severity = severity;
     }
 }
