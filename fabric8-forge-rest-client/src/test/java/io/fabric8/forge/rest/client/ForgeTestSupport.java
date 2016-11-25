@@ -22,8 +22,8 @@ import io.fabric8.forge.rest.dto.ExecutionResult;
 import io.fabric8.forge.rest.dto.PropertyDTO;
 import io.fabric8.forge.rest.dto.ValidationResult;
 import org.apache.cxf.helpers.IOUtils;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
@@ -39,9 +39,6 @@ import java.util.Map;
 import static io.fabric8.forge.rest.client.CommandConstants.DevopsEdit;
 import static io.fabric8.forge.rest.client.CommandConstants.DevopsEditProperties.Pipeline.CanaryReleaseAndStage;
 import static io.fabric8.forge.rest.client.CommandConstants.ProjectNew;
-import static io.fabric8.forge.rest.client.CommandConstants.ProjectNewProperties.Catalog.Fabric8;
-import static io.fabric8.forge.rest.client.CommandConstants.ProjectNewProperties.Type.FromArchetypeCatalog;
-import static io.fabric8.forge.rest.client.CommandConstants.ProjectNewProperties.Type.Microservice;
 import static io.fabric8.forge.rest.client.ForgeClientAsserts.assertChooseValue;
 import static io.fabric8.forge.rest.client.ForgeClientHelpers.addPage;
 import static io.fabric8.forge.rest.client.ForgeClientHelpers.createPage;
@@ -51,12 +48,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  */
-public class ForgeClientKT {
+public class ForgeTestSupport {
+    private static final transient Logger LOG = LoggerFactory.getLogger(ForgeTestSupport.class);
+
     protected ForgeClient forgeClient = new ForgeClient();
 
-    @Test
-    public void testNewProject() throws Exception {
-        String projectName = generateProjectName();
+    public static String generateProjectName(String prefix) {
+        SimpleDateFormat format = new SimpleDateFormat("yy-MM-dd-'at'-mm-ss");
+        String answer = prefix + format.format(new Date()).toLowerCase();
+        LOG.info("Creating project: " + answer);
+        return answer;
+    }
+
+    public void assertCreateAndBuildProject(String prefix, final String projectType) throws Exception {
+        String projectName = generateProjectName(prefix);
+
         String commandName = ProjectNew;
 
         ValueProvider projectTypeValues = new ValueProvider() {
@@ -68,7 +74,7 @@ public class ForgeClientKT {
                     case "targetLocation":
                         return null;
                     case "type":
-                        return assertChooseValue(propertyName, property, pageNumber, Microservice);
+                        return assertChooseValue(propertyName, property, pageNumber, projectType);
                 }
                 return super.getValue(propertyName, property, pageNumber);
 
@@ -91,64 +97,7 @@ public class ForgeClientKT {
 
         executeWizardCommand(projectName, DevopsEdit, pipelineValues, 1);
 
-    }
-
-    protected String generateProjectName() {
-        SimpleDateFormat format = new SimpleDateFormat("EEE-dd-MM-yy-kk-mm-ss");
-        return format.format(new Date()).toLowerCase();
-    }
-
-    /**
-     * TODO posting the archetype catalog generates:
-     * <p>
-     * java.lang.ClassCastException: org.jboss.forge.furnace.proxy.ForgeProxy_$$_javassist_4511e8db-4647-48b3-aa6c-b5ba9f325205 cannot be cast to org.jboss.forge.addon.maven.archetype.ArchetypeCatalogFactory
-     * at org.jboss.forge.addon.maven.projects.archetype.ui.ArchetypeCatalogSelectionWizardStep$1.convert(ArchetypeCatalogSelectionWizardStep.java:79)
-     * at sun.reflect.GeneratedMethodAccessor586.invoke(Unknown Source)
-     * at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)[:1.8.0_101]
-     * at java.lang.reflect.Method.invoke(Method.java:498)[:1.8.0_101]
-     * at org.jboss.forge.furnace.proxy.ClassLoaderAdapterCallback$2.call(ClassLoaderAdapterCallback.java:124)[furnace-proxy-2.24.2.Final.jar:2.24.2.Final]
-     * at org.jboss.forge.furnace.util.ClassLoaders.executeIn(ClassLoaders.java:42)[furnace-api-2.24.2.Final.jar:2.24.2.Final]
-     * at org.jboss.forge.furnace.proxy.ClassLoaderAdapterCallback.invoke(ClassLoaderAdapterCallback.java:97)[furnace-proxy-2.24.2.Final.jar:2.24.2.Final]
-     * at org.jboss.forge.addon.convert.Converter_$$_javassist_f8ce79f6-7527-458e-8b8d-37ea1872b873.convert(Converter_$$_javassist_f8ce79f6-7527-458e-8b8d-37ea1872b873.java)[convert-api-3.3.3.Final.jar:3.3.3.Final]
-     * at org.jboss.forge.addon.ui.util.InputComponents.convertToUIInputValue(InputComponents.java:205)[ui-api-3.3.3.Final.jar:3.3.3.Final]
-     * at org.jboss.forge.addon.ui.util.InputComponents.setSingleInputValue(InputComponents.java:118)[ui-api-3.3.3.Final.jar:3.3.3.Final]
-     * at org.jboss.forge.addon.ui.util.InputComponents.setValueFor(InputComponents.java:84)[ui-api-3.3.3.Final.jar:3.3.3.Final]
-     * at io.fabric8.forge.rest.dto.UICommands.populateController(UICommands.java:337)[fabric8-forge-core-2.3.77.jar:2.3.77]
-     */
-    @Ignore
-    public void testNewArchetypeProject() throws Exception {
-        String projectName = "cheese4";
-        String commandName = ProjectNew;
-
-        ValueProvider valueProvider = new ValueProvider() {
-            @Override
-            public Object getValue(String propertyName, PropertyDTO property, int pageNumber) {
-                switch (pageNumber) {
-                    case 0:
-                        switch (propertyName) {
-                            case "named":
-                                return projectName;
-                            case "targetLocation":
-                                return null;
-                            case "type":
-                                return assertChooseValue(propertyName, property, pageNumber, FromArchetypeCatalog);
-                        }
-                        break;
-
-                    case 1:
-                        switch (propertyName) {
-                            case "catalog":
-                                return assertChooseValue(propertyName, property, pageNumber, Fabric8);
-                        }
-                        break;
-                }
-                return super.getValue(propertyName, property, pageNumber);
-
-            }
-        };
-
-        executeWizardCommand(projectName, commandName, valueProvider, 3);
-
+        ForgeClientAsserts.assertBuildCompletes(forgeClient, projectName);
     }
 
     protected ExecutionRequest executeWizardCommand(String projectName, String commandName, ValueProvider valueProvider, int numberOfPages) throws Exception {
@@ -184,15 +133,14 @@ public class ForgeClientKT {
             ForgeClientAsserts.assertExecutionWorked(executionResult);
             return executionRequest;
         } catch (WebApplicationException e) {
-            System.out.println("Failed: " + e);
+            LOG.error("Failed: " + e, e);
             Response response = e.getResponse();
             if (response != null) {
-                System.out.println("Response entity: " + entityToString(response.getEntity()));
+                LOG.error("Response entity: " + entityToString(response.getEntity()));
             }
             throw e;
         }
     }
-
 
     public void addNextPage(String commandName, ExecutionRequest executionRequest, ValueProvider valueProvider, List<Map<String, Object>> inputList, ExecutionResult executionResult) throws Exception {
         Map<String, PropertyDTO> commandProperties = getCommandProperties(executionResult);
@@ -209,7 +157,6 @@ public class ForgeClientKT {
             Map<String, Object> page = createPage(inputList, commandProperties, valueProvider);
             emptyPage.remove(dummyKey);
             emptyPage.putAll(page);
-            System.out.println("Now page is: " + page);
         } else {
             addPage(inputList, commandProperties, valueProvider);
         }
@@ -229,17 +176,11 @@ public class ForgeClientKT {
         }
     }
 
-    @Ignore
-    public void testListCommands() throws Exception {
-        List<String> commandNames = forgeClient.getCommandNames();
-        System.out.println("Command names: " + commandNames);
-    }
-
     protected ExecutionResult validateAndExecute(String commandName, ExecutionRequest executionRequest, ValueProvider valueProvider) throws Exception {
         Map<String, Object> page = ForgeClientHelpers.getLastPage(executionRequest);
-        System.out.println("Page inputs: " + page);
+        LOG.info("Forge wizard step inputs: " + page);
         ValidationResult result = forgeClient.validateCommand(commandName, executionRequest);
-        System.out.println("Result: " + result);
+        LOG.info("Forge Result: " + result);
         Map<String, PropertyDTO> commandProperties = getCommandProperties(result);
 
         // lets update the page with any completed values
@@ -248,5 +189,4 @@ public class ForgeClientKT {
         ForgeClientAsserts.assertValidAndExecutable(result);
         return forgeClient.executeCommand(commandName, executionRequest);
     }
-
 }

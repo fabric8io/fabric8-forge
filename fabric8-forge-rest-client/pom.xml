@@ -51,6 +51,11 @@
       <artifactId>fabric8-forge-core</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>com.offbytwo.jenkins</groupId>
+      <artifactId>jenkins-client</artifactId>
+      <version>${jenkins-client.version}</version>
+    </dependency>
 
 
     <!-- testing -->

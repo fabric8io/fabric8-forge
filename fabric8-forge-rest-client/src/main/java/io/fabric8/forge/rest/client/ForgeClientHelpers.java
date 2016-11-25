@@ -16,21 +16,36 @@
  */
 package io.fabric8.forge.rest.client;
 
+import com.offbytwo.jenkins.JenkinsServer;
 import io.fabric8.forge.rest.dto.CommandInputDTO;
 import io.fabric8.forge.rest.dto.ExecutionRequest;
 import io.fabric8.forge.rest.dto.ExecutionResult;
 import io.fabric8.forge.rest.dto.PropertyDTO;
 import io.fabric8.forge.rest.dto.ValidationResult;
 import io.fabric8.forge.rest.dto.WizardResultsDTO;
+import io.fabric8.utils.Function;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static io.fabric8.forge.rest.client.EnvironmentVariables.getEnvironmentValue;
+
 /**
  */
 public class ForgeClientHelpers {
+    private static final transient Logger LOG = LoggerFactory.getLogger(ForgeClientHelpers.class);
+
     public static Map<String, Object> getLastPage(ExecutionRequest executionRequest) {
         Map<String, Object> page = null;
         List<Map<String, Object>> inputList = executionRequest.getInputList();
@@ -108,4 +123,35 @@ public class ForgeClientHelpers {
         }
     }
 
+    public static JenkinsServer createJenkinsServer() throws URISyntaxException {
+        String url = getJenkinsURL();
+        return new JenkinsServer(new URI(url));
+    }
+
+    public static String getJenkinsURL() {
+        return getEnvironmentValue(EnvironmentVariables.JENKINS_URL, "http://jenkins/");
+    }
+
+
+    /**
+     * Tails the log of the given URL such as a build log, processing all new lines since the last results
+     */
+    public static TailResults tailLog(String uri, TailResults previousResults, Function<String, Void> lineProcessor) throws IOException {
+        URL logURL = new URL(uri);
+        try (InputStream inputStream = logURL.openStream()) {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+            int count = 0;
+            String lastLine = null;
+            while (true) {
+                String line = reader.readLine();
+                if (line == null) break;
+                lastLine = line;
+                if (previousResults.isNewLine(line, count)) {
+                    lineProcessor.apply(line);
+                }
+                count++;
+            }
+            return new TailResults(count, lastLine);
+        }
+    }
 }
