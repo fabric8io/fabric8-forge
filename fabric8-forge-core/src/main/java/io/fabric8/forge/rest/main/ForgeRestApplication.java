@@ -53,8 +53,7 @@ public class ForgeRestApplication extends Application {
             preloaded = true;
             Map<String, Set<String>> catalogs = download.getArchetypeCatalogs();
             forgeInitialiser.preloadCommands(commandsResource);
-            // TODO: do not work due forge classloading issue
-            // forgeInitialiser.preloadProjects(commandsResource, catalogs);
+            forgeInitialiser.preloadProjects(commandsResource, catalogs);
 
         }
 

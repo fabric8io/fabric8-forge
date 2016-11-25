@@ -15,6 +15,19 @@
  */
 package io.fabric8.forge.rest.main;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import javax.ws.rs.core.Response;
+
 import io.fabric8.forge.rest.CommandsResource;
 import io.fabric8.forge.rest.dto.CommandInfoDTO;
 import io.fabric8.forge.rest.dto.ExecutionRequest;
@@ -23,22 +36,14 @@ import io.fabric8.forge.rest.producer.FurnaceProducer;
 import io.fabric8.forge.rest.utils.StopWatch;
 import io.fabric8.project.support.UserDetails;
 import org.apache.deltaspike.core.api.config.ConfigProperty;
+import org.apache.maven.shared.invoker.DefaultInvocationRequest;
+import org.apache.maven.shared.invoker.DefaultInvoker;
+import org.apache.maven.shared.invoker.InvocationRequest;
+import org.apache.maven.shared.invoker.Invoker;
+import org.apache.maven.shared.invoker.MavenInvocationException;
 import org.jboss.forge.furnace.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.ws.rs.core.Response;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Initialises Forge add on repository
@@ -87,6 +92,51 @@ public class ForgeInitialiser {
     }
 
     public void preloadProjects(CommandsResource commandsResource, Map<String, Set<String>> catalogs)  {
+        preloadProjectsMaven(catalogs);
+    }
+
+    private void preloadProjectsMaven(Map<String, Set<String>> catalogs)  {
+        StopWatch watch = new StopWatch();
+
+        LOG.info("Preloading projects");
+        int i = 0;
+
+        String tempDir = createTempDirectory();
+        if (tempDir == null) {
+            LOG.warn("Cannot create temporary directory");
+            return;
+        }
+
+        for (Map.Entry<String, Set<String>> entry : catalogs.entrySet()) {
+            for (String archetype : entry.getValue()) {
+                i++;
+                String folder = "dummy-" + i;
+
+                String[] coord = archetype.split(":");
+                String goal = String.format("archetype:generate -DarchetypeGroupId=%s -DarchetypeArtifactId=%s -DarchetypeVersion=%s -DgroupId=com.foo -DartifactId=%s", coord[0], coord[1], coord[2], folder);
+
+                InvocationRequest request = new DefaultInvocationRequest();
+                request.setPomFile(null);
+                request.setGoals(Arrays.asList(goal));
+                request.setBaseDirectory(new File(tempDir));
+                request.setInteractive(false);
+                request.setShowErrors(true);
+
+                System.out.println("Creating project from archetype: " + archetype + " in directory: " + tempDir + "/" + folder);
+
+                Invoker invoker = new DefaultInvoker();
+                try {
+                    invoker.execute(request);
+                } catch (MavenInvocationException e) {
+                    System.err.println("Error creating project due " + e.getMessage());
+                }
+            }
+        }
+
+        LOG.info("preloadProjects took " + watch.taken());
+    }
+
+    private void preloadProjectsForge(CommandsResource commandsResource, Map<String, Set<String>> catalogs)  {
         StopWatch watch = new StopWatch();
 
         LOG.info("Preloading projects");
