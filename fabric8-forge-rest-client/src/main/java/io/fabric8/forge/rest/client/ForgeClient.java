@@ -28,6 +28,7 @@ import io.fabric8.kubernetes.api.Controller;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.openshift.client.OpenShiftClient;
+import io.fabric8.project.support.UserDetails;
 import io.fabric8.utils.Strings;
 import io.fabric8.utils.URLUtils;
 import io.fabric8.utils.cxf.JsonHelper;
@@ -37,6 +38,8 @@ import org.apache.cxf.jaxrs.client.JAXRSClientFactory;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.cxf.transport.http.HTTPConduit;
 import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
+import org.eclipse.jgit.lib.PersonIdent;
+import org.eclipse.jgit.transport.CredentialsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,6 +71,10 @@ public class ForgeClient {
     private boolean debugResponses;
     private KubernetesClient kubernetesClient = new DefaultKubernetesClient();
     private long connectionTimeoutMillis = 10 * 60 * 1000L;
+    private PersonIdent personIdent;
+    private String gitUser = "gogsadmin";
+    private String gitPassword = "RedHat$1";
+    private String gitEmail = "gogsadmin@acme.com";
 
     public ForgeClient() {
     }
@@ -134,6 +141,42 @@ public class ForgeClient {
 
     public void setKubeUserName(String kubeUserName) {
         this.kubeUserName = kubeUserName;
+    }
+
+
+    public PersonIdent getPersonIdent() {
+        if (personIdent == null) {
+            personIdent = new PersonIdent(gitUser, gitEmail);
+        }
+        return personIdent;
+    }
+
+    public void setPersonIdent(PersonIdent personIdent) {
+        this.personIdent = personIdent;
+    }
+
+    public String getGitUser() {
+        return gitUser;
+    }
+
+    public void setGitUser(String gitUser) {
+        this.gitUser = gitUser;
+    }
+
+    public String getGitPassword() {
+        return gitPassword;
+    }
+
+    public void setGitPassword(String gitPassword) {
+        this.gitPassword = gitPassword;
+    }
+
+    public String getGitEmail() {
+        return gitEmail;
+    }
+
+    public void setGitEmail(String gitEmail) {
+        this.gitEmail = gitEmail;
     }
 
     public ExecutionResult executeCommand(String name, ExecutionRequest executionRequest) throws Exception {
@@ -276,5 +319,11 @@ public class ForgeClient {
         } else {
             throw new IllegalArgumentException("Could not parse the returned entity of class " + entity.getClass().getName() + " = " + entity);
         }
+    }
+
+    public CredentialsProvider createCredentialsProvider() {
+        String address = "gogs";
+        String internalAddress = "gogs";
+        return new UserDetails(address, internalAddress, gitUser, gitPassword, gitEmail).createCredentialsProvider();
     }
 }
