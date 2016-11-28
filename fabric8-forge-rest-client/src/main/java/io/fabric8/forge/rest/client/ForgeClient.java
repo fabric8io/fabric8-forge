@@ -35,6 +35,8 @@ import io.fabric8.utils.cxf.WebClients;
 import org.apache.cxf.helpers.IOUtils;
 import org.apache.cxf.jaxrs.client.JAXRSClientFactory;
 import org.apache.cxf.jaxrs.client.WebClient;
+import org.apache.cxf.transport.http.HTTPConduit;
+import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,6 +67,7 @@ public class ForgeClient {
     private String kubeUserName = "admin";
     private boolean debugResponses;
     private KubernetesClient kubernetesClient = new DefaultKubernetesClient();
+    private long connectionTimeoutMillis = 10 * 60 * 1000L;
 
     public ForgeClient() {
     }
@@ -82,6 +85,13 @@ public class ForgeClient {
         return new Controller(kubernetesClient).getOpenShiftClientOrJenkinshift();
     }
 
+    public long getConnectionTimeoutMillis() {
+        return connectionTimeoutMillis;
+    }
+
+    public void setConnectionTimeoutMillis(long connectionTimeoutMillis) {
+        this.connectionTimeoutMillis = connectionTimeoutMillis;
+    }
 
     public boolean isDebugResponses() {
         return debugResponses;
@@ -221,6 +231,12 @@ public class ForgeClient {
         String commandsAddress = URLUtils.pathJoin(this.address, "/api/forge" + queryString);
         WebClient webClient = WebClient.create(commandsAddress, providers);
         disableSslChecks(webClient);
+        HTTPConduit conduit = WebClient.getConfig(webClient).getHttpConduit();
+        HTTPClientPolicy httpClientPolicy = new HTTPClientPolicy();
+        httpClientPolicy.setConnectionTimeout(connectionTimeoutMillis);
+        httpClientPolicy.setReceiveTimeout(connectionTimeoutMillis);
+        conduit.setClient(httpClientPolicy);
+
         return JAXRSClientFactory.fromClient(webClient, clientType);
     }
 

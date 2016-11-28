@@ -54,7 +54,7 @@ public class ForgeTestSupport {
     protected ForgeClient forgeClient = new ForgeClient();
 
     public static String generateProjectName(String prefix) {
-        SimpleDateFormat format = new SimpleDateFormat("yy-MM-dd-'at'-mm-ss");
+        SimpleDateFormat format = new SimpleDateFormat("MMM-dd-'at'-HH-mm-ss");
         String answer = prefix + format.format(new Date()).toLowerCase();
         LOG.info("Creating project: " + answer);
         return answer;
