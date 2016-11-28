@@ -21,6 +21,7 @@ import io.fabric8.forge.systest.support.Furnaces;
 import io.fabric8.utils.Files;
 import io.fabric8.utils.Strings;
 import org.jboss.forge.furnace.Furnace;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +47,7 @@ import static org.assertj.core.api.Assertions.fail;
 
 /**
  */
+@Ignore("We have a maven plugin now to download the repository")
 public class PopulateMavenRepositoryTest {
     private static final transient Logger LOG = LoggerFactory.getLogger(PopulateMavenRepositoryTest.class);
     public static final String TEST_ARCHETYPE_SYSTEM_PROPERTY = "test.archetype";

@@ -22,10 +22,12 @@ import io.fabric8.forge.systest.support.FurnaceCallback;
 import io.fabric8.forge.systest.support.Furnaces;
 import io.fabric8.utils.Files;
 import org.jboss.forge.furnace.Furnace;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Ignore("We have a maven plugin now to download the repository")
 public class SpringBootFabric8SetupTest {
 
     private static final transient Logger LOG = LoggerFactory.getLogger(PopulateMavenRepositoryTest.class);
