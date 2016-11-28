@@ -41,11 +41,15 @@
     </fileSet>
     <fileSet>
       <directory>${basedir}/localMavenRepo</directory>
-      <outputDirectory>/root/.m2/repository</outputDirectory>
+      <outputDirectory>/opt/jboss/.m2/repository</outputDirectory>
     </fileSet>
     <fileSet>
       <directory>${basedir}/src/main/docker/m2</directory>
-      <outputDirectory>/root/.m2</outputDirectory>
+      <outputDirectory>/opt/jboss/.m2</outputDirectory>
+    </fileSet>
+    <fileSet>
+      <directory>${basedir}/src/main/forge</directory>
+      <outputDirectory>/opt/jboss/.forge</outputDirectory>
     </fileSet>
   </fileSets>
 </assembly>

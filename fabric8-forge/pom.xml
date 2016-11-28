@@ -202,20 +202,20 @@
     </resources>
     <plugins>
 
-      <plugin>
-        <groupId>io.fabric8.forge</groupId>
-        <artifactId>fabric8-forge-maven-plugin</artifactId>
-        <version>${project.version}</version>
-        <executions>
-          <execution>
-            <id>prepare</id>
-            <goals>
-              <goal>download</goal>
-            </goals>
-            <phase>prepare-package</phase>
-          </execution>
-        </executions>
-      </plugin>
+      <!--<plugin>-->
+        <!--<groupId>io.fabric8.forge</groupId>-->
+        <!--<artifactId>fabric8-forge-maven-plugin</artifactId>-->
+        <!--<version>${project.version}</version>-->
+        <!--<executions>-->
+          <!--<execution>-->
+            <!--<id>prepare</id>-->
+            <!--<goals>-->
+              <!--<goal>download</goal>-->
+            <!--</goals>-->
+            <!--<phase>prepare-package</phase>-->
+          <!--</execution>-->
+        <!--</executions>-->
+      <!--</plugin>-->
 
       <plugin>
         <groupId>org.jboss.forge.furnace</groupId>
@@ -249,6 +249,7 @@
         <version>${maven.surefire.plugin.version}</version>
         <configuration>
           <forkMode>perTest</forkMode>
+          <failIfNoTests>false</failIfNoTests>
           <systemPropertyVariables>
             <fabric8ArchetypeVersion>${fabric8.archetypes.release.version}</fabric8ArchetypeVersion>
           </systemPropertyVariables>
