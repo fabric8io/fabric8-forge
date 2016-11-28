@@ -149,6 +149,7 @@
 
   <modules>
     <module>addons</module>
+    <module>fabric8-forge-maven-plugin</module>
     <module>fabric8-forge-core</module>
   <!-- TODO: work in progress, swarm fail due CXF issue 
     <module>fabric8-forge-swarm</module>
