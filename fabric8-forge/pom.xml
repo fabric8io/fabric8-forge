@@ -201,6 +201,22 @@
       </resource>
     </resources>
     <plugins>
+
+      <plugin>
+        <groupId>io.fabric8.forge</groupId>
+        <artifactId>fabric8-forge-maven-plugin</artifactId>
+        <version>${project.version}</version>
+        <executions>
+          <execution>
+            <id>prepare</id>
+            <goals>
+              <goal>download</goal>
+            </goals>
+            <phase>prepare-package</phase>
+          </execution>
+        </executions>
+      </plugin>
+
       <plugin>
         <groupId>org.jboss.forge.furnace</groupId>
         <artifactId>furnace-maven-plugin</artifactId>

@@ -144,13 +144,6 @@
       <artifactId>deltaspike-core-api</artifactId>
     </dependency>
 
-    <!-- maven invoker -->
-    <dependency>
-      <groupId>org.apache.maven.shared</groupId>
-      <artifactId>maven-invoker</artifactId>
-      <version>2.2</version>
-    </dependency>
-
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-log4j12</artifactId>
@@ -159,7 +152,6 @@
       <groupId>org.slf4j</groupId>
       <artifactId>jul-to-slf4j</artifactId>
     </dependency>
-
 
     <!-- testing -->
     <dependency>
@@ -186,23 +178,6 @@
         <filtering>false</filtering>
       </testResource>
     </testResources>
-
-    <plugins>
-      <plugin>
-        <groupId>io.fabric8.forge</groupId>
-        <artifactId>fabric8-forge-maven-plugin</artifactId>
-        <version>${project.version}</version>
-        <executions>
-          <execution>
-            <id>prepare</id>
-            <goals>
-              <goal>download</goal>
-            </goals>
-            <phase>generate-resources</phase>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
 
   </build>
 
