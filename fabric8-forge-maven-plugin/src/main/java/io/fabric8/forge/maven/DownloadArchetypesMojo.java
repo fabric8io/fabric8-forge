@@ -92,6 +92,8 @@ public class DownloadArchetypesMojo extends AbstractMojo {
             }
 
             if (catalog != null) {
+                getLog().info("Catalog contains " + catalog.getArchetypes().size() + " archetypes");
+
                 for (Archetype a : catalog.getArchetypes()) {
                     try {
                         download(repo, a);
@@ -145,6 +147,11 @@ public class DownloadArchetypesMojo extends AbstractMojo {
             return;
         }
 
+        // skip redhat only as they are not in maven central
+        if (archetype.getArtifactId().startsWith("karaf2-")) {
+            getLog().warn("Skipping Red Hat JBoss Fuse archetype: " + archetype);
+            return;
+        }
 
         // delete dummy directory
         FileUtils.deleteDirectory(new File("target/dummy"));
