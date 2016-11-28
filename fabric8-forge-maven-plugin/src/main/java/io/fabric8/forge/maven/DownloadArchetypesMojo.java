@@ -16,11 +16,12 @@
 package io.fabric8.forge.maven;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Iterator;
 
+import org.apache.maven.archetype.catalog.Archetype;
+import org.apache.maven.archetype.catalog.ArchetypeCatalog;
+import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -38,7 +39,7 @@ import org.codehaus.plexus.util.FileUtils;
  */
 public class DownloadArchetypesMojo extends AbstractMojo {
 
-    private static final String M2_DIR = "target/local-m2";
+    private static final String M2_DIR = "localMavenRepo";
 
     /**
      * The maven project.
@@ -68,45 +69,70 @@ public class DownloadArchetypesMojo extends AbstractMojo {
         getLog().info("Download Maven Artifacts from Camel and fabric8 catalogs to local m2 repository ...");
 
         File repo = init();
-        List<CatalogDTO> catalogs = findCatalogs();
-        for (CatalogDTO dto : catalogs) {
+
+        // find the fabric8 artifact
+        Artifact artifact = findFabric8Archetype(project);
+
+        if (artifact != null) {
+            ArchetypeCatalog catalog;
             try {
-                download(repo, dto);
+                catalog = FabricArchetypeCatalogFactory.getArchetypeCatalog(artifact);
             } catch (Exception e) {
-                throw new MojoFailureException("Error downloading " + dto + " due " + e.getMessage(), e);
+                throw new MojoFailureException("Error downloading archetype catalog due " + e.getMessage(), e);
+            }
+
+            if (catalog != null) {
+                for (Archetype a : catalog.getArchetypes()) {
+                    try {
+                        download(repo, a);
+                    } catch (Exception e) {
+                        throw new MojoFailureException("Error downloading " + a + " due " + e.getMessage(), e);
+                    }
+                }
             }
         }
 
         getLog().info("Done");
     }
 
+    private Artifact findFabric8Archetype(MavenProject project) {
+        Iterator it = project.getDependencyArtifacts().iterator();
+        while (it.hasNext()) {
+            Artifact a = (Artifact) it.next();
+            if ("io.fabric8.archetypes".equals(a.getGroupId()) && "archetypes-catalog".equals(a.getArtifactId())) {
+                return a;
+            }
+        }
+        return null;
+    }
+
     private File init() throws MojoFailureException {
         File m2 = new File(M2_DIR);
-
-        // delete directory
-        try {
-            FileUtils.deleteDirectory(m2);
-        } catch (IOException e) {
-            throw new MojoFailureException("Error deleting directory: " + M2_DIR);
+        if (!m2.exists()) {
+            m2.mkdir();
         }
-
-        // create empty dir
-        m2.mkdir();
-
         return m2;
     }
 
-    /**
-     * Find the fabric8 and camel catalogs to use
-     */
-    private List<CatalogDTO> findCatalogs() {
-        List<CatalogDTO> answer = new ArrayList<>();
-        answer.add(new CatalogDTO("org.apache.camel.archetypes", "camel-archetype-blueprint", "2.18.0"));
-        return answer;
-    }
+    private void download(File repo, Archetype archetype) throws Exception {
+        getLog().info("Downloading... " + archetype);
 
-    private void download(File repo, CatalogDTO dto) throws Exception {
-        getLog().info("Downloading... " + dto);
+        // TODO: look at these later
+        if (archetype.getArtifactId().equals("django-example-archetype")
+                || archetype.getArtifactId().equals("dotnet-example-archetype")
+                || archetype.getArtifactId().equals("golang-example-archetype")
+                || archetype.getArtifactId().equals("php-example-archetype")
+                || archetype.getArtifactId().equals("swift-example-archetype")) {
+            getLog().warn("Skipping not working archetype: " + archetype);
+            return;
+        }
+
+        // TODO: This is flaky until next release where its fixed
+        if (archetype.getArtifactId().equals("swarm-camel-archetype")) {
+            getLog().warn("Skipping not working archetype: " + archetype);
+            return;
+        }
+
 
         // delete dummy directory
         FileUtils.deleteDirectory(new File("target/dummy"));
@@ -114,7 +140,7 @@ public class DownloadArchetypesMojo extends AbstractMojo {
         InvocationRequest request = new DefaultInvocationRequest();
         request.setPomFile(null);
 
-        String goal = String.format("archetype:generate -DarchetypeGroupId=%s -DarchetypeArtifactId=%s -DarchetypeVersion=%s -DgroupId=com.foo -DartifactId=dummy", dto.getGroupId(), dto.getArtifactId(), dto.getVersion());
+        String goal = String.format("archetype:generate -DarchetypeGroupId=%s -DarchetypeArtifactId=%s -DarchetypeVersion=%s -DgroupId=com.foo -DartifactId=dummy", archetype.getGroupId(), archetype.getArtifactId(), archetype.getVersion());
 
         request.setGoals(Arrays.asList(goal));
         request.setBaseDirectory(new File("target"));
