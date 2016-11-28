@@ -39,8 +39,6 @@ import org.codehaus.plexus.util.FileUtils;
  */
 public class DownloadArchetypesMojo extends AbstractMojo {
 
-    private static final String M2_DIR = "localMavenRepo";
-
     /**
      * The maven project.
      *
@@ -59,6 +57,13 @@ public class DownloadArchetypesMojo extends AbstractMojo {
     private MavenProjectHelper projectHelper;
 
     /**
+     * Local maven repository directory
+     *
+     * @parameter default-value="localMavenRepo"
+     */
+    private String localRepositoryDirectory;
+
+    /**
      * Execute goal.
      *
      * @throws org.apache.maven.plugin.MojoExecutionException execution of the main class or one of the
@@ -66,7 +71,7 @@ public class DownloadArchetypesMojo extends AbstractMojo {
      * @throws org.apache.maven.plugin.MojoFailureException   something bad happened...
      */
     public void execute() throws MojoExecutionException, MojoFailureException {
-        getLog().info("Download Maven Artifacts from Camel and fabric8 catalogs to local m2 repository ...");
+        getLog().info("Downloading fabric8 maven artifacts to local repository: " + localRepositoryDirectory);
 
         File repo = init();
 
@@ -92,7 +97,7 @@ public class DownloadArchetypesMojo extends AbstractMojo {
             }
         }
 
-        getLog().info("Done");
+        getLog().info("Download complete");
     }
 
     private Artifact findFabric8Archetype(MavenProject project) {
@@ -107,7 +112,7 @@ public class DownloadArchetypesMojo extends AbstractMojo {
     }
 
     private File init() throws MojoFailureException {
-        File m2 = new File(M2_DIR);
+        File m2 = new File(localRepositoryDirectory);
         if (!m2.exists()) {
             m2.mkdir();
         }
@@ -121,7 +126,9 @@ public class DownloadArchetypesMojo extends AbstractMojo {
         if (archetype.getArtifactId().equals("django-example-archetype")
                 || archetype.getArtifactId().equals("dotnet-example-archetype")
                 || archetype.getArtifactId().equals("golang-example-archetype")
+                || archetype.getArtifactId().equals("node-example-archetype")
                 || archetype.getArtifactId().equals("php-example-archetype")
+                || archetype.getArtifactId().equals("rails-example-archetype")
                 || archetype.getArtifactId().equals("swift-example-archetype")) {
             getLog().warn("Skipping not working archetype: " + archetype);
             return;
