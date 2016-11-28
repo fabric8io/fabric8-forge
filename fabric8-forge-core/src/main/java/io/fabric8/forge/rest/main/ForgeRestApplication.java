@@ -33,9 +33,6 @@ public class ForgeRestApplication extends Application {
     @Inject
     ForgeInitialiser forgeInitialiser;
 
-    //@Inject
-    //ArchetypesCatalogService download;
-
     @Inject
     RootResource rootResource;
 
@@ -51,10 +48,7 @@ public class ForgeRestApplication extends Application {
     public Set<Object> getSingletons() {
         if (!preloaded) {
             preloaded = true;
-            // Map<String, Set<String>> catalogs = download.getArchetypeCatalogs();
             forgeInitialiser.preloadCommands(commandsResource);
-            // forgeInitialiser.preloadProjects(commandsResource, catalogs);
-
         }
 
         return new HashSet<Object>(
