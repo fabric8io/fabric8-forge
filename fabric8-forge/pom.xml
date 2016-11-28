@@ -193,18 +193,21 @@
       <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
       <scope>test</scope>
     </dependency>
-
-
   </dependencies>
+
   <build>
+
     <resources>
       <resource>
         <filtering>true</filtering>
         <directory>src/main/resources</directory>
       </resource>
     </resources>
+
     <plugins>
 
+      <!-- pre-download all maven artifacts into the local maven repo which gets embedded into the docker image -->
+      <!-- run this manually with mvn fabric8-forge:download -->
       <plugin>
         <groupId>io.fabric8.forge</groupId>
         <artifactId>fabric8-forge-maven-plugin</artifactId>
@@ -212,15 +215,6 @@
         <configuration>
           <localRepositoryDirectory>localMavenRepo</localRepositoryDirectory>
         </configuration>
-        <executions>
-          <execution>
-            <id>prepare</id>
-            <goals>
-              <goal>download</goal>
-            </goals>
-            <phase>prepare-package</phase>
-          </execution>
-        </executions>
       </plugin>
 
       <plugin>
@@ -303,11 +297,31 @@
   </build>
 
   <profiles>
-    <!-- TODO: to embed the localMavenRepo we need to make this release profile similar to above -->
+
     <profile>
       <id>release</id>
       <build>
         <plugins>
+
+          <!-- pre-download all maven artifacts into the local maven repo which gets embedded into the docker image -->
+          <plugin>
+            <groupId>io.fabric8.forge</groupId>
+            <artifactId>fabric8-forge-maven-plugin</artifactId>
+            <version>${project.version}</version>
+            <configuration>
+              <localRepositoryDirectory>localMavenRepo</localRepositoryDirectory>
+            </configuration>
+            <executions>
+              <execution>
+                <id>prepare</id>
+                <goals>
+                  <goal>download</goal>
+                </goals>
+                <phase>prepare-package</phase>
+              </execution>
+            </executions>
+          </plugin>
+
           <plugin>
             <groupId>io.fabric8</groupId>
             <artifactId>fabric8-maven-plugin</artifactId>
@@ -323,10 +337,33 @@
                 </goals>
               </execution>
             </executions>
+            <configuration>
+              <images>
+                <image>
+                  <name>${docker.image}</name>
+                  <build>
+                    <from>${docker.from}</from>
+                    <assembly>
+                      <descriptor>${docker.assemblyDescriptor}</descriptor>
+                      <basedir>/</basedir>
+                    </assembly>
+                    <env>
+                      <FORGE_ADDON_DIRECTORY>${docker.env.FORGE_ADDON_DIRECTORY}</FORGE_ADDON_DIRECTORY>
+                      <FABRIC8_ARCHETYPES_VERSION>${fabric8.archetypes.release.version}</FABRIC8_ARCHETYPES_VERSION>
+                    </env>
+                    <ports>
+                      <port>8080</port>
+                      <port>8778</port>
+                    </ports>
+                  </build>
+                </image>
+              </images>
+            </configuration>
           </plugin>
         </plugins>
       </build>
     </profile>
+
     <profile>
       <id>debug</id>
       <properties>
@@ -335,6 +372,7 @@
         <fabric8.env.JAVA_OPTIONS>-Xdebug -agentlib:jdwp=transport=dt_socket,address=9999,server=y,suspend=n</fabric8.env.JAVA_OPTIONS>
       </properties>
     </profile>
+
     <profile>
       <id>kit</id>
       <activation/>
