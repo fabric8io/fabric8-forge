@@ -34,6 +34,7 @@ import org.jboss.forge.furnace.Furnace;
 import org.jboss.forge.furnace.addons.AddonRegistry;
 
 @ApplicationScoped
+@Deprecated
 public class ArchetypesCatalogService {
 
     @Inject

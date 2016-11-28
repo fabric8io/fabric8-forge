@@ -17,7 +17,6 @@ package io.fabric8.forge.rest.main;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -31,11 +30,6 @@ import io.fabric8.forge.rest.producer.FurnaceProducer;
 import io.fabric8.forge.rest.utils.StopWatch;
 import org.apache.commons.io.FileUtils;
 import org.apache.deltaspike.core.api.config.ConfigProperty;
-import org.apache.maven.shared.invoker.DefaultInvocationRequest;
-import org.apache.maven.shared.invoker.DefaultInvoker;
-import org.apache.maven.shared.invoker.InvocationRequest;
-import org.apache.maven.shared.invoker.Invoker;
-import org.apache.maven.shared.invoker.MavenInvocationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,55 +79,7 @@ public class ForgeInitialiser {
     }
 
     public void preloadProjects(CommandsResource commandsResource, Map<String, Set<String>> catalogs)  {
-        preloadProjectsMaven(catalogs);
-    }
-
-    private void preloadProjectsMaven(Map<String, Set<String>> catalogs)  {
-        StopWatch watch = new StopWatch();
-
-        LOG.info("Preloading projects");
-        int i = 0;
-
-        File tempDir = createTempDirectory();
-        if (tempDir == null) {
-            LOG.warn("Cannot create temporary directory");
-            return;
-        }
-
-        for (Map.Entry<String, Set<String>> entry : catalogs.entrySet()) {
-            for (String archetype : entry.getValue()) {
-                i++;
-                String folder = "dummy-" + i;
-
-                String[] coord = archetype.split(":");
-                String goal = String.format("archetype:generate -DarchetypeGroupId=%s -DarchetypeArtifactId=%s -DarchetypeVersion=%s -DgroupId=com.foo -DartifactId=%s", coord[0], coord[1], coord[2], folder);
-
-                InvocationRequest request = new DefaultInvocationRequest();
-                request.setPomFile(null);
-                request.setGoals(Arrays.asList(goal));
-                request.setBaseDirectory(tempDir);
-                request.setInteractive(false);
-                request.setShowErrors(true);
-
-                System.out.println("Creating project from archetype: " + archetype + " in directory: " + tempDir + "/" + folder);
-
-                Invoker invoker = new DefaultInvoker();
-                try {
-                    invoker.execute(request);
-                } catch (MavenInvocationException e) {
-                    System.err.println("Error creating project due " + e.getMessage());
-                }
-            }
-        }
-
-        // cleanup temporary directory
-        try {
-            FileUtils.deleteDirectory(tempDir);
-        } catch (IOException e) {
-            // ignore
-        }
-
-        LOG.info("Preloading projects took " + watch.taken());
+        // does not work well with forge
     }
 
     protected File createTempDirectory() {
