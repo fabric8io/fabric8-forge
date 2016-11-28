@@ -31,8 +31,14 @@ public class MavenEmbeddedTest {
     @Test
     public void testMavenEmbedded() throws Exception {
 
+        File m2 = new File("target/local-m2");
+
         // delete directory
+        FileUtils.deleteDirectory(m2);
         FileUtils.deleteDirectory(new File("target/dummy"));
+
+        // create empty dir
+        m2.mkdir();
 
         InvocationRequest request = new DefaultInvocationRequest();
         request.setPomFile(null);
@@ -40,12 +46,13 @@ public class MavenEmbeddedTest {
         request.setBaseDirectory(new File("target"));
         request.setInteractive(false);
         request.setShowErrors(true);
+        request.setLocalRepositoryDirectory(m2);
 
         Invoker invoker = new DefaultInvoker();
         invoker.execute(request);
 
         // should create project
         File pom = new File("target/dummy/pom.xml");
-        Assert.assertTrue("Should craete project", pom.exists());
+        Assert.assertTrue("Should create the project", pom.exists());
     }
 }
