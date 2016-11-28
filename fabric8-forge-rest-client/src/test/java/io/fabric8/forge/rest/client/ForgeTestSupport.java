@@ -16,19 +16,31 @@
  */
 package io.fabric8.forge.rest.client;
 
+import com.offbytwo.jenkins.model.Build;
+import com.offbytwo.jenkins.model.JobWithDetails;
 import io.fabric8.forge.rest.dto.CommandInputDTO;
 import io.fabric8.forge.rest.dto.ExecutionRequest;
 import io.fabric8.forge.rest.dto.ExecutionResult;
 import io.fabric8.forge.rest.dto.PropertyDTO;
 import io.fabric8.forge.rest.dto.ValidationResult;
+import io.fabric8.utils.Asserts;
+import io.fabric8.utils.Block;
+import io.fabric8.utils.Files;
+import io.fabric8.utils.IOHelpers;
 import org.apache.cxf.helpers.IOUtils;
+import org.eclipse.jgit.api.AddCommand;
+import org.eclipse.jgit.api.CommitCommand;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.PushCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -39,7 +51,10 @@ import java.util.Map;
 import static io.fabric8.forge.rest.client.CommandConstants.DevopsEdit;
 import static io.fabric8.forge.rest.client.CommandConstants.DevopsEditProperties.Pipeline.CanaryReleaseAndStage;
 import static io.fabric8.forge.rest.client.CommandConstants.ProjectNew;
+import static io.fabric8.forge.rest.client.ForgeClientAsserts.asserGetAppGitCloneURL;
 import static io.fabric8.forge.rest.client.ForgeClientAsserts.assertChooseValue;
+import static io.fabric8.forge.rest.client.ForgeClientAsserts.assertJob;
+import static io.fabric8.forge.rest.client.ForgeClientAsserts.getBasedir;
 import static io.fabric8.forge.rest.client.ForgeClientHelpers.addPage;
 import static io.fabric8.forge.rest.client.ForgeClientHelpers.createPage;
 import static io.fabric8.forge.rest.client.ForgeClientHelpers.getCommandProperties;
@@ -97,7 +112,59 @@ public class ForgeTestSupport {
 
         executeWizardCommand(projectName, DevopsEdit, pipelineValues, 1);
 
-        ForgeClientAsserts.assertBuildCompletes(forgeClient, projectName);
+        Build firstBuild = ForgeClientAsserts.assertBuildCompletes(forgeClient, projectName);
+
+        assertCodeChangeTriggersWorkingBuild(projectName, firstBuild);
+    }
+
+    protected Build assertCodeChangeTriggersWorkingBuild(final String projectName, Build firstBuild) throws Exception {
+        File cloneDir = new File(getBasedir(), "target/projects/" + projectName);
+
+        String gitUrl = asserGetAppGitCloneURL(forgeClient, projectName);
+        Git git = ForgeClientAsserts.assertGitCloneRepo(gitUrl, cloneDir);
+
+        // lets make a dummy commit...
+        File readme = new File(cloneDir, "ReadMe.md");
+        boolean mustAdd = false;
+        String text = "";
+        if (readme.exists()) {
+            text = IOHelpers.readFully(readme);
+        } else {
+            mustAdd = true;
+        }
+        text += "\nupdated at: " + new Date();
+        Files.writeToFile(readme, text, Charset.defaultCharset());
+
+        if (mustAdd) {
+            AddCommand add = git.add().addFilepattern("*").addFilepattern(".");
+            add.call();
+        }
+
+
+        LOG.info("Committing change to " + readme);
+
+        CommitCommand commit = git.commit().setAll(true).setAuthor(forgeClient.getPersonIdent()).setMessage("dummy commit to trigger a rebuild");
+        commit.call();
+        PushCommand command = git.push();
+        command.setCredentialsProvider(forgeClient.createCredentialsProvider());
+        command.setRemote("origin").call();
+
+        LOG.info("Git pushed change to " + readme);
+
+        // now lets wait for the next build to start
+        int nextBuildNumber = firstBuild.getNumber() + 1;
+
+
+        Asserts.assertWaitFor(10 * 60 * 1000, new Block() {
+            @Override
+            public void invoke() throws Exception {
+                JobWithDetails job = assertJob(projectName);
+                Build lastBuild = job.getLastBuild();
+                assertThat(lastBuild.getNumber()).describedAs("Waiting for latest build for job " + projectName + " to start").isGreaterThanOrEqualTo(nextBuildNumber);
+            }
+        });
+
+        return ForgeClientAsserts.assertBuildCompletes(forgeClient, projectName);
     }
 
     protected ExecutionRequest executeWizardCommand(String projectName, String commandName, ValueProvider valueProvider, int numberOfPages) throws Exception {

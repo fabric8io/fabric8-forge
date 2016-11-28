@@ -24,13 +24,24 @@ import com.offbytwo.jenkins.model.JobWithDetails;
 import io.fabric8.forge.rest.dto.ExecutionResult;
 import io.fabric8.forge.rest.dto.PropertyDTO;
 import io.fabric8.forge.rest.dto.ValidationResult;
+import io.fabric8.kubernetes.api.Annotations;
+import io.fabric8.kubernetes.api.model.HasMetadata;
+import io.fabric8.kubernetes.api.model.HasMetadataAssert;
+import io.fabric8.openshift.api.model.BuildConfig;
+import io.fabric8.openshift.api.model.BuildConfigAssert;
+import io.fabric8.openshift.client.OpenShiftClient;
 import io.fabric8.utils.Closeables;
+import io.fabric8.utils.Files;
 import io.fabric8.utils.Function;
 import io.fabric8.utils.URLUtils;
+import org.eclipse.jgit.api.CloneCommand;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -42,6 +53,7 @@ import java.util.Map;
 import static io.fabric8.forge.rest.client.ForgeClientHelpers.createJenkinsServer;
 import static io.fabric8.forge.rest.client.ForgeClientHelpers.getJenkinsURL;
 import static io.fabric8.forge.rest.client.ForgeClientHelpers.tailLog;
+import static io.fabric8.kubernetes.api.KubernetesHelper.getOrCreateAnnotations;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -52,6 +64,11 @@ public class ForgeClientAsserts {
     private static final long DEFAULT_TIMEOUT_MILLIS = 60 * 60 * 1000;
 
     protected static boolean doAssert = true;
+
+    public static File getBasedir() {
+        String basedir = System.getProperty("basedir", ".");
+        return new File(basedir);
+    }
 
     public static void assertValidAndExecutable(ValidationResult result) {
         assertThat(result).isNotNull();
@@ -115,25 +132,66 @@ public class ForgeClientAsserts {
     /**
      * Asserts that a Build is created and that it completes successfully within the default time period
      */
-    public static void assertBuildCompletes(ForgeClient forgeClient, String projectName) throws IOException, URISyntaxException {
-        assertBuildCompletes(forgeClient, projectName, DEFAULT_TIMEOUT_MILLIS);
+    public static Build assertBuildCompletes(ForgeClient forgeClient, String projectName) throws IOException, URISyntaxException {
+        return assertBuildCompletes(forgeClient, projectName, DEFAULT_TIMEOUT_MILLIS);
     }
 
 
+    public static String asserGetAppGitCloneURL(ForgeClient forgeClient, String projectName) throws URISyntaxException, IOException {
+        BuildConfig buildConfig = assertGetBuildConfig(forgeClient, projectName);
+
+        BuildConfigAssert.assertThat(buildConfig).metadata().annotations().isNotEmpty();
+
+        return assertAnnotation(buildConfig, Annotations.Builds.GIT_CLONE_URL);
+    }
+
     /**
-     * Asserts that a Build is created and that it completes successfully within the given time period
+     * Asserts that the given resource has the given annotation and returns the value
      */
-    public static void assertBuildCompletes(ForgeClient forgeClient, String projectName, long timeoutMillis) throws URISyntaxException, IOException {
-/*
+    public static String assertAnnotation(HasMetadata hasMetadata, String annotationKey) {
+        HasMetadataAssert.assertThat(hasMetadata).isNotNull().metadata().annotations().isNotEmpty();
+        Map<String, String> annotations = getOrCreateAnnotations(hasMetadata);
+
+        String answer = annotations.get(annotationKey);
+        assertThat(answer).describedAs("" + hasMetadata + " does not have annotation '" + annotationKey + "' but has annotations: " + annotations).isNotEmpty();
+        return answer;
+    }
+
+    public static BuildConfig assertGetBuildConfig(ForgeClient forgeClient, String projectName) throws URISyntaxException, IOException {
         OpenShiftClient openShiftClient = forgeClient.getOpenShiftOrJenkinshiftClient();
         String namespace = forgeClient.getNamespace();
         BuildConfig buildConfig = openShiftClient.buildConfigs().inNamespace(namespace).withName(projectName).get();
         assertThat(buildConfig).describedAs("No BuildConfig found in " + namespace + " called " + projectName).isNotNull();
-*/
+        return buildConfig;
+    }
 
-        JenkinsServer jenkins = createJenkinsServer();
-        JobWithDetails job = jenkins.getJob(projectName);
-        assertThat(job).describedAs("No Jenkins Job found for name: " + projectName).isNotNull();
+    /**
+     * Asserts that we can git clone the given repository
+     */
+    public static Git assertGitCloneRepo(String cloneUrl, File outputFolder) throws GitAPIException, IOException {
+        LOG.info("Cloning git repo: " + cloneUrl + " to folder: " + outputFolder);
+
+        Files.recursiveDelete(outputFolder);
+        outputFolder.mkdirs();
+
+        CloneCommand command = Git.cloneRepository();
+        command = command.setCloneAllBranches(false).setURI(cloneUrl).setDirectory(outputFolder).setRemote("origin");
+
+        Git git;
+        try {
+            git = command.call();
+        } catch (Exception e) {
+            LOG.error("Failed to git clone remote repo " + cloneUrl + " due: " + e.getMessage(), e);
+            throw e;
+        }
+        return git;
+    }
+
+    /**
+     * Asserts that a Build is created and that it completes successfully within the given time period
+     */
+    public static Build assertBuildCompletes(ForgeClient forgeClient, String projectName, long timeoutMillis) throws URISyntaxException, IOException {
+        JobWithDetails job = assertJob(projectName);
 
         Build lastBuild = job.getLastBuild();
         assertThat(lastBuild).describedAs("No Jenkins Build for Job: " + projectName).isNotNull();
@@ -181,6 +239,15 @@ public class ForgeClientAsserts {
         BuildResult result = details.getResult();
         assertThat(result).describedAs("Status of " + description).isEqualTo(BuildResult.SUCCESS);
         assertThat(details.isBuilding()).describedAs("Build not finshed for " + description).isFalse();
+
+        return lastBuild;
+    }
+
+    public static JobWithDetails assertJob(String projectName) throws URISyntaxException, IOException {
+        JenkinsServer jenkins = createJenkinsServer();
+        JobWithDetails job = jenkins.getJob(projectName);
+        assertThat(job).describedAs("No Jenkins Job found for name: " + projectName).isNotNull();
+        return job;
     }
 
     public static void dumpBuildLog(Build lastBuild, String description) throws IOException {
