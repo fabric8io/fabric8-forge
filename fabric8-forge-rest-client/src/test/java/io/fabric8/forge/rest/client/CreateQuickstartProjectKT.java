@@ -52,7 +52,8 @@ public class CreateQuickstartProjectKT extends ForgeTestSupport {
      */
     @Ignore
     public void testNewArchetypeProject() throws Exception {
-        String projectName = "cheese4";
+        String projectName = generateProjectName("qs");
+
         String commandName = ProjectNew;
 
         ValueProvider valueProvider = new ValueProvider() {
