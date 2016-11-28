@@ -35,6 +35,10 @@ import org.apache.maven.shared.invoker.MavenInvocationException;
 import org.codehaus.plexus.util.FileUtils;
 
 /**
+ * Maven plugin to download all the fabric8 artifacts from the fabric8 archetype catalog
+ * into a local maven repository which can be embedded in the docker image, so the
+ * artifacts are pre-downloaded in fabric8-forge.
+ *
  * @goal download
  */
 public class DownloadArchetypesMojo extends AbstractMojo {
@@ -83,7 +87,8 @@ public class DownloadArchetypesMojo extends AbstractMojo {
             try {
                 catalog = FabricArchetypeCatalogFactory.getArchetypeCatalog(artifact);
             } catch (Exception e) {
-                throw new MojoFailureException("Error downloading archetype catalog due " + e.getMessage(), e);
+                getLog().warn("Error downloading archetype catalog due " + e.getMessage(), e);
+                return;
             }
 
             if (catalog != null) {
@@ -91,7 +96,7 @@ public class DownloadArchetypesMojo extends AbstractMojo {
                     try {
                         download(repo, a);
                     } catch (Exception e) {
-                        throw new MojoFailureException("Error downloading " + a + " due " + e.getMessage(), e);
+                        getLog().warn("Error downloading " + a + " due " + e.getMessage(), e);
                     }
                 }
             }
@@ -162,7 +167,8 @@ public class DownloadArchetypesMojo extends AbstractMojo {
 
         File dummy = new File("target/dummy/pom.xml");
         if (!dummy.exists()) {
-            throw new MavenInvocationException("Created project in target/dummy does not have a pom.xml file");
+            getLog().warn("Created project in target/dummy does not have a pom.xml file");
+            return;
         }
 
         request = new DefaultInvocationRequest();
