@@ -22,6 +22,7 @@ Or if you are running locally against a remote cluster then you can setup your l
 export TERM=dumb
 export JENKINS_URL=`gofabric8 service jenkins -u`
 export FABRIC8_FORGE_URL=`gofabric8 service fabric8-forge -u`
+export JENKINSHIFT_URL=`gofabric8 service jenkinshift -u --retry=false`
 ```
 
 Then to run the tests you can just run this script:

@@ -30,6 +30,8 @@ import io.fabric8.kubernetes.api.model.HasMetadataAssert;
 import io.fabric8.openshift.api.model.BuildConfig;
 import io.fabric8.openshift.api.model.BuildConfigAssert;
 import io.fabric8.openshift.client.OpenShiftClient;
+import io.fabric8.utils.Asserts;
+import io.fabric8.utils.Block;
 import io.fabric8.utils.Closeables;
 import io.fabric8.utils.Files;
 import io.fabric8.utils.Function;
@@ -132,7 +134,7 @@ public class ForgeClientAsserts {
     /**
      * Asserts that a Build is created and that it completes successfully within the default time period
      */
-    public static Build assertBuildCompletes(ForgeClient forgeClient, String projectName) throws IOException, URISyntaxException {
+    public static Build assertBuildCompletes(ForgeClient forgeClient, String projectName) throws Exception {
         return assertBuildCompletes(forgeClient, projectName, DEFAULT_TIMEOUT_MILLIS);
     }
 
@@ -190,8 +192,18 @@ public class ForgeClientAsserts {
     /**
      * Asserts that a Build is created and that it completes successfully within the given time period
      */
-    public static Build assertBuildCompletes(ForgeClient forgeClient, String projectName, long timeoutMillis) throws URISyntaxException, IOException {
+    public static Build assertBuildCompletes(ForgeClient forgeClient, String projectName, long timeoutMillis) throws Exception {
         JobWithDetails job = assertJob(projectName);
+
+        Asserts.assertWaitFor(10 * 60 * 1000, new Block() {
+            @Override
+            public void invoke() throws Exception {
+                Build lastBuild = job.getLastBuild();
+                assertThat(lastBuild.getNumber()).describedAs("Waiting for latest build for job " + projectName + " to have a valid build number").isGreaterThan(0);
+                String buildUrl = lastBuild.getUrl();
+                assertThat(buildUrl).describedAs("Waiting for latest build for job " + projectName + " to have a valid URL").isNotEmpty().doesNotContain("UNKNOWN");
+            }
+        });
 
         Build lastBuild = job.getLastBuild();
         assertThat(lastBuild).describedAs("No Jenkins Build for Job: " + projectName).isNotNull();

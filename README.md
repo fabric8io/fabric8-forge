@@ -10,6 +10,10 @@ This project contains the Fabric8 extensions for [JBoss Forge](http://forge.jbos
 
 For more details see the [Fabric8 Forge Documentation](http://fabric8.io/guide/forge.html)
 
+### Fabric8 Forge based system tests
+
+To check out the systems tests check out the [system test documentation](systest/ReadMe.md)
+
 ### Building the addons
 
 To try out addons:
@@ -37,17 +41,10 @@ To remove any of them type:
 
 To build everything and run it in your local OpenShift installation on your laptop try:
 
-    mvn -Pf8-local-deploy
-
-To push the docker image first then provision it onto a remote OpenShift cluster try:
-
-    mvn -Pf8-deploy
-
-If you just want to build the docker image and kubernetes resources but not deploy them use:
-
-    mvn -Pf8-build
-
-
+    mvn -Dtest=false install 
+    cd fabric8-forge
+    mvn fabric8:resource-apply
+    
 The test case in the [fabric8-forge](fabric8-forge) module takes a while to build as it pre-populates the local maven repository with all the required jars for the Forge tooling.
     
 So you might want to only include tests in the [fabric8-forge](fabric8-forge) module the first build of the day, then disable tests after that?

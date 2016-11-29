@@ -68,10 +68,10 @@ public class ForgeTestSupport {
 
     protected ForgeClient forgeClient = new ForgeClient();
 
-    public static String generateProjectName(String prefix) {
+    public String generateProjectName(String prefix) {
         SimpleDateFormat format = new SimpleDateFormat("MMM-dd-'at'-HH-mm-ss");
         String answer = prefix + format.format(new Date()).toLowerCase();
-        LOG.info("Creating project: " + answer);
+        LOG.info("Creating project: " + answer + " in namespace: " + forgeClient.getNamespace());
         return answer;
     }
 
