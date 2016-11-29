@@ -25,6 +25,7 @@ import io.fabric8.forge.rest.dto.ExecutionRequest;
 import io.fabric8.forge.rest.dto.ExecutionResult;
 import io.fabric8.forge.rest.dto.ValidationResult;
 import io.fabric8.kubernetes.api.Controller;
+import io.fabric8.kubernetes.api.KubernetesHelper;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.openshift.client.OpenShiftClient;
@@ -111,6 +112,12 @@ public class ForgeClient {
     public String getNamespace() {
         if (Strings.isNullOrBlank(namespace)) {
             namespace = kubernetesClient.getNamespace();
+        }
+        if (Strings.isNullOrBlank(namespace)) {
+            namespace = KubernetesHelper.defaultNamespace();
+        }
+        if (Strings.isNullOrBlank(namespace)) {
+            namespace = "default";
         }
         return namespace;
     }
