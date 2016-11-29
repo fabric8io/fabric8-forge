@@ -193,11 +193,11 @@ public class ForgeClientAsserts {
      * Asserts that a Build is created and that it completes successfully within the given time period
      */
     public static Build assertBuildCompletes(ForgeClient forgeClient, String projectName, long timeoutMillis) throws Exception {
-        JobWithDetails job = assertJob(projectName);
 
         Asserts.assertWaitFor(10 * 60 * 1000, new Block() {
             @Override
             public void invoke() throws Exception {
+                JobWithDetails job = assertJob(projectName);
                 Build lastBuild = job.getLastBuild();
                 assertThat(lastBuild.getNumber()).describedAs("Waiting for latest build for job " + projectName + " to have a valid build number").isGreaterThan(0);
                 String buildUrl = lastBuild.getUrl();
@@ -205,6 +205,7 @@ public class ForgeClientAsserts {
             }
         });
 
+        JobWithDetails job = assertJob(projectName);
         Build lastBuild = job.getLastBuild();
         assertThat(lastBuild).describedAs("No Jenkins Build for Job: " + projectName).isNotNull();
         BuildWithDetails details = null;
