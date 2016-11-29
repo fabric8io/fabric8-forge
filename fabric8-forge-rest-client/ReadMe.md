@@ -7,8 +7,15 @@ These system tests run inside a test fabric8 cluster and try to generate project
 If you are connected to a kubernetes cluster so that you can type:
 
     kubectl get node
+
+The quick way to run the system tests locally on your laptop against a local cluster is:
+
+
+```bash
+./systest-local.sh
+```    
     
-Then type the following to setup your local environment to connect to the current kubernetes cluster:
+Or if you are running locally against a remote cluster then you can setup your local environment to connect to the current kubernetes cluster:
     
 
 ```bash
