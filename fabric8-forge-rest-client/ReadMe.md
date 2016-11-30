@@ -46,3 +46,20 @@ You can run individual test cases directly via:
 cd fabric8-forge-rest-client
 mvn test -Dtest=CreateMicroserviceProjectKT
 ```
+
+#### Testing minikube or minishift
+
+To test out creating a new minikube or minishift, using `gofabric8 start` then running the system tests try these scripts:
+
+To recreate minikube, deploy fabric8 and run the system tests:
+
+
+```bash
+./systest-minikube.sh
+```
+
+To recreate minishift, deploy fabric8 and run the system tests:
+
+```bash
+./systest-minishift.sh
+```
