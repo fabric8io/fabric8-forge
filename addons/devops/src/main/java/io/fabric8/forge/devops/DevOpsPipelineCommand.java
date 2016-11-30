@@ -41,7 +41,8 @@ public class DevOpsPipelineCommand extends AbstractDevOpsCommand implements UIWi
     public NavigationResult next(UINavigationContext context) throws Exception {
         NavigationResultBuilder builder = NavigationResultBuilder.create();
         builder.add(DevOpsEditStep.class);
-        builder.add(SaveDevOpsStep.class);
+        builder.add(DevOpsEditTwoStep.class);
+        builder.add(DevOpsSaveStep.class);
         return builder.build();
     }
 
