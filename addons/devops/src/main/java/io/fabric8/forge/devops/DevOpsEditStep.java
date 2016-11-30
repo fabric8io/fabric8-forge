@@ -75,7 +75,7 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
     public UICommandMetadata getMetadata(UIContext context) {
         return Metadata.forCommand(getClass())
                 .category(Categories.create(AbstractDevOpsCommand.CATEGORY))
-                .name(AbstractDevOpsCommand.CATEGORY + ": Configure")
+                .name(AbstractDevOpsCommand.CATEGORY + ": Configure Pipeline")
                 .description("Configure the Pipeline for the new project");
     }
 
@@ -84,18 +84,8 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
         StopWatch watch = new StopWatch();
 
         final UIContext context = builder.getUIContext();
-        pipeline.setCompleter(new UICompleter<PipelineDTO>() {
-            @Override
-            public Iterable<PipelineDTO> getCompletionProposals(UIContext context, InputComponent<?, PipelineDTO> input, String value) {
-                return getPipelines(context, true);
-            }
-        });
-        pipeline.setValueConverter(new Converter<String, PipelineDTO>() {
-            @Override
-            public PipelineDTO convert(String text) {
-                return getPipelineForValue(context, text);
-            }
-        });
+        pipeline.setCompleter((context1, input, value) -> getPipelines(context1, true));
+        pipeline.setValueConverter(text -> getPipelineForValue(context, text));
         if (getCurrentSelectedProject(context) != null) {
             PipelineDTO defaultValue = getPipelineForValue(context, DEFAULT_MAVEN_FLOW);
             if (defaultValue != null) {
@@ -116,11 +106,11 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
             if (flow != null) {
                 CommandHelpers.setInitialComponentValue(this.pipeline, flow);
             }
+            context.getAttributeMap().put("projectConfig", config);
         }
         inputComponents = new ArrayList<>();
 
         hasJenkinsFile = hasLocalJenkinsFile(context, project);
-
         if (!hasJenkinsFile) {
             inputComponents.addAll(CommandHelpers.addInputComponents(builder, pipeline));
         }

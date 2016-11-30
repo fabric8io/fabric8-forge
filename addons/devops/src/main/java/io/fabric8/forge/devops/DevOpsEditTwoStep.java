@@ -15,7 +15,6 @@
  */
 package io.fabric8.forge.devops;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -23,7 +22,6 @@ import java.util.TreeSet;
 import javax.inject.Inject;
 
 import io.fabric8.devops.ProjectConfig;
-import io.fabric8.devops.ProjectConfigs;
 import io.fabric8.forge.addon.utils.CommandHelpers;
 import io.fabric8.forge.addon.utils.StopWatch;
 import io.fabric8.kubernetes.api.KubernetesHelper;
@@ -74,7 +72,7 @@ public class DevOpsEditTwoStep extends AbstractDevOpsCommand implements UIWizard
     public UICommandMetadata getMetadata(UIContext context) {
         return Metadata.forCommand(getClass())
                 .category(Categories.create(AbstractDevOpsCommand.CATEGORY))
-                .name(AbstractDevOpsCommand.CATEGORY + ": Configure")
+                .name(AbstractDevOpsCommand.CATEGORY + ": Configure Tooling")
                 .description("Configure the Project Tooling for the new project");
     }
 
@@ -83,7 +81,7 @@ public class DevOpsEditTwoStep extends AbstractDevOpsCommand implements UIWizard
         StopWatch watch = new StopWatch();
 
         final UIContext context = builder.getUIContext();
-        chatRoom.setCompleter(new UICompleter<String>() {
+/*        chatRoom.setCompleter(new UICompleter<String>() {
             @Override
             public Iterable<String> getCompletionProposals(UIContext context, InputComponent<?, String> input, String value) {
                 // TODO: call only once to init getChatRoomNames
@@ -96,14 +94,10 @@ public class DevOpsEditTwoStep extends AbstractDevOpsCommand implements UIWizard
                 // TODO: call only once to init getIssueProjectNames
                 return filterCompletions(getIssueProjectNames(), value);
             }
-        });
+        });*/
 
         // lets initialise the data from the current config if it exists
-        ProjectConfig config = null;
-        File configFile = getProjectConfigFile(context, getSelectedProject(context));
-        if (configFile != null && configFile.exists()) {
-            config = ProjectConfigs.parseProjectConfig(configFile);
-        }
+        ProjectConfig config = (ProjectConfig) context.getAttributeMap().get("projectConfig");
         if (config != null) {
             CommandHelpers.setInitialComponentValue(chatRoom, config.getChatRoom());
             CommandHelpers.setInitialComponentValue(issueProjectName, config.getIssueProjectName());
@@ -114,7 +108,7 @@ public class DevOpsEditTwoStep extends AbstractDevOpsCommand implements UIWizard
 
         inputComponents.addAll(CommandHelpers.addInputComponents(builder, chatRoom, issueProjectName, codeReview));
 
-        log.info("initializeUI took " + watch.taken());
+        LOG.info("initializeUI took " + watch.taken());
     }
 
     public static Iterable<String> filterCompletions(Iterable<String> values, String inputValue) {
