@@ -310,34 +310,15 @@ public class UICommands {
     }
 
     public static void populateController(Map<String, Object> requestedInputs, CommandController controller, ConverterFactory converterFactory) {
-        Map<String, InputComponent<?, ?>> inputs = controller.getInputs();
-        Set<String> inputKeys = new HashSet<>(inputs.keySet());
         if (requestedInputs != null) {
+            Map<String, InputComponent<?, ?>> inputs = controller.getInputs();
+            Set<String> inputKeys = new HashSet<>(inputs.keySet());
             inputKeys.retainAll(requestedInputs.keySet());
             Set<Map.Entry<String, InputComponent<?, ?>>> entries = inputs.entrySet();
             for (Map.Entry<String, InputComponent<?, ?>> entry : entries) {
                 String key = entry.getKey();
-                InputComponent<?, ?> component = entry.getValue();
                 Object value = requestedInputs.get(key);
-                String textValue = null;
-                if (value instanceof String || value instanceof Number || value instanceof Date) {
-                    textValue = value.toString();
-                }
-                if (component != null && textValue != null) {
-                    Converter<String, ?> valueConverter = component.getValueConverter();
-                    if (valueConverter != null) {
-                        value = valueConverter.convert(textValue);
-                    } else {
-                        Class<?> valueType = component.getValueType();
-                        if (valueType.isEnum()) {
-                            Class<? extends Enum> enumType = (Class<? extends Enum>) valueType;
-                            value = Enum.valueOf(enumType, textValue);
-                        }
-                    }
-                    InputComponents.setValueFor(converterFactory, component, value);
-                } else {
-                    controller.setValueFor(key, value);
-                }
+                controller.setValueFor(key, Proxies.unwrap(value));
             }
         }
     }
