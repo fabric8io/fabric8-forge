@@ -82,7 +82,6 @@ public class DevOpsEditCommand extends AbstractDevOpsCommand implements UIWizard
         }
         builder.add(DevOpsEditStep.class);
         builder.add(DevOpsEditTwoStep.class);
-        builder.add(DevOpsSaveStep.class);
         return builder.build();
     }
 

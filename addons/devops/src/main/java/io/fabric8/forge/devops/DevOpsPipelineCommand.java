@@ -42,7 +42,6 @@ public class DevOpsPipelineCommand extends AbstractDevOpsCommand implements UIWi
         NavigationResultBuilder builder = NavigationResultBuilder.create();
         builder.add(DevOpsEditStep.class);
         builder.add(DevOpsEditTwoStep.class);
-        builder.add(DevOpsSaveStep.class);
         return builder.build();
     }
 
