@@ -22,13 +22,11 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 import io.fabric8.devops.ProjectConfig;
 import io.fabric8.devops.ProjectConfigs;
 import io.fabric8.devops.connector.DevOpsConnector;
 import io.fabric8.forge.addon.utils.CommandHelpers;
-import io.fabric8.forge.addon.utils.MavenHelpers;
 import io.fabric8.forge.addon.utils.StopWatch;
 import io.fabric8.forge.devops.dto.PipelineDTO;
 import io.fabric8.kubernetes.api.KubernetesHelper;
@@ -36,8 +34,6 @@ import io.fabric8.utils.Files;
 import io.fabric8.utils.GitHelpers;
 import io.fabric8.utils.IOHelpers;
 import io.fabric8.utils.Strings;
-import org.apache.maven.model.Model;
-import org.jboss.forge.addon.maven.projects.MavenFacet;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.facets.MetadataFacet;
 import org.jboss.forge.addon.ui.context.UIBuilder;
@@ -106,7 +102,7 @@ public class DevOpsSaveStep extends AbstractDevOpsCommand implements UIWizardSte
         }
 
         updateConfiguration(context, config);
-        LOG.info("Result: " + config);
+        LOG.info("Using ProjectConfig: " + config);
 
         String message;
         if (config.isEmpty() && !hasFile) {
@@ -197,26 +193,7 @@ public class DevOpsSaveStep extends AbstractDevOpsCommand implements UIWizardSte
             projectName = named;
             config.setBuildName(projectName);
         }
-
         LOG.info("Project name is: " + projectName);
-        if (Strings.isNotBlank(projectName) && project != null) {
-            MavenFacet maven = project.getFacet(MavenFacet.class);
-            Model pom = maven.getModel();
-            if (pom != null && !isFunktionParentPom(project) && !isFabric8MavenPlugin3OrGreater(project)) {
-                Properties properties = pom.getProperties();
-                boolean updated = false;
-                updated = MavenHelpers.updatePomProperty(properties, "fabric8.label.project", projectName, updated);
-                updated = MavenHelpers.updatePomProperty(properties, "fabric8.label.version", "${project.version}", updated);
-                if (updated) {
-                    LOG.info("Updating pom.xml properties!");
-                    maven.setModel(pom);
-                } else {
-                    LOG.warn("Did not update pom.xml properties!");
-                }
-            } else {
-                LOG.warn("No pom.xml found!");
-            }
-        }
 
         // if we already have a Jenkinsfile after importing...
         // otherwise copy the selected flow if it was selected and is
@@ -291,11 +268,11 @@ public class DevOpsSaveStep extends AbstractDevOpsCommand implements UIWizardSte
         connector.setTriggerJenkinsJob(false);
 
         LOG.info("Using connector: " + connector);
-
         try {
             connector.execute();
         } catch (Exception e) {
             LOG.error("Failed to update DevOps resources: " + e, e);
+            return Results.fail("Cannot update dev-ops configuration due " + e.getMessage() + ". See more details in the logs from the fabric8-forge pod.");
         }
 
         LOG.info("Execute took " + watch.taken());
