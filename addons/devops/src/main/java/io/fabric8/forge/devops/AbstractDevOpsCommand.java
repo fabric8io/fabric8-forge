@@ -266,7 +266,7 @@ public abstract class AbstractDevOpsCommand extends AbstractProjectCommand imple
     protected void updateConfiguration(UIExecutionContext context, ProjectConfig config) {
         Map<Object, Object> attributeMap = context.getUIContext().getAttributeMap();
         ProjectConfigs.configureProperties(config, attributeMap);
-        Object pipelineValue = attributeMap.get("pipeline");
+        Object pipelineValue = attributeMap.get("selectedPipeline");
         if (pipelineValue instanceof PipelineDTO) {
             PipelineDTO pipeline = (PipelineDTO) pipelineValue;
             if (pipeline != null) {

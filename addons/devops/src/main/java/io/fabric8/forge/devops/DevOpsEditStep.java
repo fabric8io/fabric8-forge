@@ -31,20 +31,16 @@ import io.fabric8.forge.addon.utils.StopWatch;
 import io.fabric8.forge.devops.dto.PipelineDTO;
 import io.fabric8.forge.devops.dto.PipelineMetadata;
 import io.fabric8.forge.devops.dto.ProjectOverviewDTO;
-import io.fabric8.kubernetes.api.KubernetesHelper;
 import io.fabric8.utils.Files;
 import io.fabric8.utils.Filter;
 import io.fabric8.utils.IOHelpers;
 import io.fabric8.utils.Objects;
 import io.fabric8.utils.Strings;
-import org.jboss.forge.addon.convert.Converter;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
 import org.jboss.forge.addon.ui.context.UINavigationContext;
-import org.jboss.forge.addon.ui.input.InputComponent;
-import org.jboss.forge.addon.ui.input.UICompleter;
 import org.jboss.forge.addon.ui.input.UIInput;
 import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
 import org.jboss.forge.addon.ui.metadata.WithAttributes;
@@ -68,8 +64,7 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
     @WithAttributes(label = "Pipeline", description = "The Jenkinsfile used to define the Continous Delivery pipeline")
     private UIInput<PipelineDTO> pipeline;
 
-    private List<InputComponent> inputComponents;
-    boolean hasJenkinsFile;
+    private boolean hasJenkinsFile;
 
     @Override
     public UICommandMetadata getMetadata(UIContext context) {
@@ -108,11 +103,10 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
             }
             context.getAttributeMap().put("projectConfig", config);
         }
-        inputComponents = new ArrayList<>();
 
         hasJenkinsFile = hasLocalJenkinsFile(context, project);
         if (!hasJenkinsFile) {
-            inputComponents.addAll(CommandHelpers.addInputComponents(builder, pipeline));
+            builder.add(pipeline);
         }
 
         log.info("initializeUI took " + watch.taken());
@@ -133,7 +127,10 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
     @Override
     public Result execute(UIExecutionContext context) throws Exception {
         context.getUIContext().getAttributeMap().put("hasJenkinsFile", hasJenkinsFile);
-        CommandHelpers.putComponentValuesInAttributeMap(context, inputComponents);
+
+        // store the pipeline in a special place to avoid weird web console painting
+        context.getUIContext().getAttributeMap().put("selectedPipeline", pipeline.getValue());
+
         return null;
     }
 

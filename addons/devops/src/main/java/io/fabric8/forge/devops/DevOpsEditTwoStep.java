@@ -48,18 +48,13 @@ import org.jboss.forge.addon.projects.facets.MetadataFacet;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
-import org.jboss.forge.addon.ui.context.UINavigationContext;
-import org.jboss.forge.addon.ui.input.InputComponent;
-import org.jboss.forge.addon.ui.input.UICompleter;
 import org.jboss.forge.addon.ui.input.UIInput;
 import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
 import org.jboss.forge.addon.ui.metadata.WithAttributes;
-import org.jboss.forge.addon.ui.result.NavigationResult;
 import org.jboss.forge.addon.ui.result.Result;
 import org.jboss.forge.addon.ui.result.Results;
 import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
-import org.jboss.forge.addon.ui.wizard.UIWizardStep;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,22 +64,20 @@ public class DevOpsEditTwoStep extends AbstractDevOpsCommand {
     private static final boolean copyPipelineToProject = true;
 
     @Inject
-    @WithAttributes(label = "Chat room", required = false, description = "Name of chat room to use for this project")
+    @WithAttributes(label = "Chat room2222", description = "Name of chat room to use for this project")
     private UIInput<String> chatRoom;
 
     @Inject
-    @WithAttributes(label = "IssueTracker Project name", required = false, description = "Name of the issue tracker project")
+    @WithAttributes(label = "IssueTracker Project name", description = "Name of the issue tracker project")
     private UIInput<String> issueProjectName;
 
     @Inject
-    @WithAttributes(label = "Code review", required = false, description = "Enable code review of all commits")
+    @WithAttributes(label = "Code review", description = "Enable code review of all commits")
     private UIInput<Boolean> codeReview;
 
     private String namespace = KubernetesHelper.defaultNamespace();
     private LetsChatClient letsChat;
     private TaigaClient taiga;
-    private List<InputComponent> inputComponents;
-
 
     @Override
     public UICommandMetadata getMetadata(UIContext context) {
@@ -122,9 +115,9 @@ public class DevOpsEditTwoStep extends AbstractDevOpsCommand {
             CommandHelpers.setInitialComponentValue(codeReview, config.getCodeReview());
         }
 
-        inputComponents = new ArrayList<>();
-
-        inputComponents.addAll(CommandHelpers.addInputComponents(builder, chatRoom, issueProjectName, codeReview));
+        builder.add(chatRoom);
+        builder.add(issueProjectName);
+        builder.add(codeReview);
 
         LOG.info("initializeUI took " + watch.taken());
     }
@@ -153,7 +146,11 @@ public class DevOpsEditTwoStep extends AbstractDevOpsCommand {
 
         LOG.info("Configuring project with selected dev-ops settings. This can take a while ...");
 
-        CommandHelpers.putComponentValuesInAttributeMap(context, inputComponents);
+        // need to store these on the context attribute map as updateConfiguration will use those to
+        // configure the ProjectConfig which gets saved as fabric8.yaml file
+        context.getUIContext().getAttributeMap().put("chatRoom", chatRoom.getValue());
+        context.getUIContext().getAttributeMap().put("issueProjectName", issueProjectName.getValue());
+        context.getUIContext().getAttributeMap().put("codeReview", codeReview.getValue());
 
         String fileName = ProjectConfigs.FILE_NAME;
         Project project = getSelectedProject(context);
@@ -234,8 +231,7 @@ public class DevOpsEditTwoStep extends AbstractDevOpsCommand {
         }
 
         // lets default the environments from the pipeline
-        context.getUIContext().getAttributeMap().get("pipeline");
-        PipelineDTO pipelineValue = (PipelineDTO) context.getUIContext().getAttributeMap().get("pipeline");
+        PipelineDTO pipelineValue = (PipelineDTO) context.getUIContext().getAttributeMap().get("selectedPipeline");
         LOG.info("Using pipeline " + pipelineValue);
         String buildName = config.getBuildName();
         if (Strings.isNotBlank(buildName)) {
@@ -278,9 +274,8 @@ public class DevOpsEditTwoStep extends AbstractDevOpsCommand {
                 LOG.warn("Cannot copy the pipeline to the project as no basedir!");
             } else {
                 String flow = null;
-                PipelineDTO pipelineDTO = pipelineValue;
-                if (pipelineDTO != null) {
-                    flow = pipelineDTO.getValue();
+                if (pipelineValue != null) {
+                    flow = pipelineValue.getValue();
                 }
                 if (Strings.isNullOrBlank(flow)) {
                     LOG.warn("Cannot copy the pipeline to the project as no pipeline selected!");
