@@ -22,9 +22,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
-import javax.inject.Inject;
 
 import io.fabric8.devops.ProjectConfig;
 import io.fabric8.devops.ProjectConfigs;
@@ -32,129 +29,34 @@ import io.fabric8.devops.connector.DevOpsConnector;
 import io.fabric8.forge.addon.utils.CommandHelpers;
 import io.fabric8.forge.addon.utils.StopWatch;
 import io.fabric8.forge.devops.dto.PipelineDTO;
-import io.fabric8.kubernetes.api.KubernetesHelper;
-import io.fabric8.letschat.LetsChatClient;
-import io.fabric8.letschat.LetsChatKubernetes;
-import io.fabric8.letschat.RoomDTO;
-import io.fabric8.taiga.ProjectDTO;
-import io.fabric8.taiga.TaigaClient;
-import io.fabric8.taiga.TaigaKubernetes;
 import io.fabric8.utils.Files;
 import io.fabric8.utils.GitHelpers;
 import io.fabric8.utils.IOHelpers;
 import io.fabric8.utils.Strings;
 import org.jboss.forge.addon.projects.Project;
 import org.jboss.forge.addon.projects.facets.MetadataFacet;
-import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
-import org.jboss.forge.addon.ui.input.UIInput;
-import org.jboss.forge.addon.ui.metadata.UICommandMetadata;
-import org.jboss.forge.addon.ui.metadata.WithAttributes;
 import org.jboss.forge.addon.ui.result.Result;
 import org.jboss.forge.addon.ui.result.Results;
-import org.jboss.forge.addon.ui.util.Categories;
-import org.jboss.forge.addon.ui.util.Metadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DevOpsEditTwoStep extends AbstractDevOpsCommand {
-    private static final transient Logger LOG = LoggerFactory.getLogger(DevOpsEditTwoStep.class);
+import static io.fabric8.forge.devops.AbstractDevOpsCommand.getProjectConfigFile;
+
+public class DevOpsSave {
+
+    private static final transient Logger LOG = LoggerFactory.getLogger(DevOpsEditOptionalStep.class);
 
     private static final boolean copyPipelineToProject = true;
 
-    @Inject
-    @WithAttributes(label = "Chat room2222", description = "Name of chat room to use for this project")
-    private UIInput<String> chatRoom;
-
-    @Inject
-    @WithAttributes(label = "IssueTracker Project name", description = "Name of the issue tracker project")
-    private UIInput<String> issueProjectName;
-
-    @Inject
-    @WithAttributes(label = "Code review", description = "Enable code review of all commits")
-    private UIInput<Boolean> codeReview;
-
-    private String namespace = KubernetesHelper.defaultNamespace();
-    private LetsChatClient letsChat;
-    private TaigaClient taiga;
-
-    @Override
-    public UICommandMetadata getMetadata(UIContext context) {
-        return Metadata.forCommand(getClass())
-                .category(Categories.create(AbstractDevOpsCommand.CATEGORY))
-                .name(AbstractDevOpsCommand.CATEGORY + ": Configure Tooling")
-                .description("Configure the Project Tooling for the new project");
-    }
-
-    @Override
-    public void initializeUI(UIBuilder builder) throws Exception {
-        StopWatch watch = new StopWatch();
-
-        final UIContext context = builder.getUIContext();
-/*        chatRoom.setCompleter(new UICompleter<String>() {
-            @Override
-            public Iterable<String> getCompletionProposals(UIContext context, InputComponent<?, String> input, String value) {
-                // TODO: call only once to init getChatRoomNames
-                return filterCompletions(getChatRoomNames(), value);
-            }
-        });
-        issueProjectName.setCompleter(new UICompleter<String>() {
-            @Override
-            public Iterable<String> getCompletionProposals(UIContext context, InputComponent<?, String> input, String value) {
-                // TODO: call only once to init getIssueProjectNames
-                return filterCompletions(getIssueProjectNames(), value);
-            }
-        });*/
-
-        // lets initialise the data from the current config if it exists
-        ProjectConfig config = (ProjectConfig) context.getAttributeMap().get("projectConfig");
-        if (config != null) {
-            CommandHelpers.setInitialComponentValue(chatRoom, config.getChatRoom());
-            CommandHelpers.setInitialComponentValue(issueProjectName, config.getIssueProjectName());
-            CommandHelpers.setInitialComponentValue(codeReview, config.getCodeReview());
-        }
-
-        builder.add(chatRoom);
-        builder.add(issueProjectName);
-        builder.add(codeReview);
-
-        LOG.info("initializeUI took " + watch.taken());
-    }
-
-    public static Iterable<String> filterCompletions(Iterable<String> values, String inputValue) {
-        boolean ignoreFilteringAsItBreaksHawtio = true;
-        if (ignoreFilteringAsItBreaksHawtio) {
-            return values;
-        } else {
-            List<String> answer = new ArrayList<>();
-            String lowerInputValue = inputValue.toLowerCase();
-            for (String value : values) {
-                if (value != null) {
-                    if (value.toLowerCase().contains(lowerInputValue)) {
-                        answer.add(value);
-                    }
-                }
-            }
-            return answer;
-        }
-    }
-
-    @Override
-    public Result execute(UIExecutionContext context) throws Exception {
+    public static Result execute(UIExecutionContext context, Project project, String namespace) throws Exception {
         StopWatch watch = new StopWatch();
 
         LOG.info("Configuring project with selected dev-ops settings. This can take a while ...");
 
-        // need to store these on the context attribute map as updateConfiguration will use those to
-        // configure the ProjectConfig which gets saved as fabric8.yaml file
-        context.getUIContext().getAttributeMap().put("chatRoom", chatRoom.getValue());
-        context.getUIContext().getAttributeMap().put("issueProjectName", issueProjectName.getValue());
-        context.getUIContext().getAttributeMap().put("codeReview", codeReview.getValue());
-
         String fileName = ProjectConfigs.FILE_NAME;
-        Project project = getSelectedProject(context);
-        File configFile = getProjectConfigFile(context.getUIContext(), getSelectedProject(context));
+        File configFile = getProjectConfigFile(context.getUIContext(), project);
         if (configFile == null) {
             // lets not fail as we typically want to execute SaveDevOpsStep next...
             return Results.success();
@@ -347,12 +249,16 @@ public class DevOpsEditTwoStep extends AbstractDevOpsCommand {
         return Results.success(message);
     }
 
-    private String getStringAttribute(Map<Object, Object> attributeMap, String name, String defaultValue) {
+    private static boolean isEmptyUrlPath(String localPath) {
+        return localPath.length() == 0 || "/".equals(localPath);
+    }
+
+    private static String getStringAttribute(Map<Object, Object> attributeMap, String name, String defaultValue) {
         String answer = getStringAttribute(attributeMap, name);
         return Strings.isNullOrBlank(answer) ? defaultValue : answer;
     }
 
-    private String getStringAttribute(Map<Object, Object> attributeMap, String name) {
+    private static String getStringAttribute(Map<Object, Object> attributeMap, String name) {
         Object value = attributeMap.get(name);
         if (value != null) {
             return value.toString();
@@ -360,7 +266,7 @@ public class DevOpsEditTwoStep extends AbstractDevOpsCommand {
         return null;
     }
 
-    private String getFlowContent(String flow, UIContext context) {
+    private static String getFlowContent(String flow, UIContext context) {
         File dir = getJenkinsWorkflowFolder(context);
         if (dir != null) {
             File file = new File(dir, flow);
@@ -375,7 +281,7 @@ public class DevOpsEditTwoStep extends AbstractDevOpsCommand {
         return null;
     }
 
-    private File getJenkinsWorkflowFolder(UIContext context) {
+    private static File getJenkinsWorkflowFolder(UIContext context) {
         File dir = null;
         Object workflowFolder = context.getAttributeMap().get("jenkinsfilesFolder");
         if (workflowFolder instanceof File) {
@@ -384,82 +290,16 @@ public class DevOpsEditTwoStep extends AbstractDevOpsCommand {
         return dir;
     }
 
-    private static boolean isEmptyUrlPath(String localPath) {
-        return localPath.length() == 0 || "/".equals(localPath);
-    }
-
-    private Iterable<String> getIssueProjectNames() {
-        Set<String> answer = new TreeSet<>();
-        try {
-            TaigaClient letschat = getTaiga();
-            if (letschat != null) {
-                List<ProjectDTO> projects = null;
-                try {
-                    projects = letschat.getProjects();
-                } catch (Exception e) {
-                    LOG.warn("Failed to load chat projects! " + e, e);
-                }
-                if (projects != null) {
-                    for (ProjectDTO project : projects) {
-                        String name = project.getName();
-                        if (name != null) {
-                            answer.add(name);
-                        }
-                    }
-                }
+    private static void updateConfiguration(UIExecutionContext context, ProjectConfig config) {
+        Map<Object, Object> attributeMap = context.getUIContext().getAttributeMap();
+        ProjectConfigs.configureProperties(config, attributeMap);
+        Object pipelineValue = attributeMap.get("selectedPipeline");
+        if (pipelineValue instanceof PipelineDTO) {
+            PipelineDTO pipeline = (PipelineDTO) pipelineValue;
+            if (pipeline != null) {
+                config.setPipeline(pipeline.getValue());
             }
-        } catch (Exception e) {
-            LOG.warn("Failed to get issue project names: " + e, e);
         }
-        return answer;
-    }
-
-    private Iterable<String> getChatRoomNames() {
-        Set<String> answer = new TreeSet<>();
-        try {
-            LetsChatClient letschat = getLetsChat();
-            if (letschat != null) {
-                List<RoomDTO> rooms = null;
-                try {
-                    rooms = letschat.getRooms();
-                } catch (Exception e) {
-                    LOG.warn("Failed to load chat rooms! " + e, e);
-                }
-                if (rooms != null) {
-                    for (RoomDTO room : rooms) {
-                        String name = room.getSlug();
-                        if (name != null) {
-                            answer.add(name);
-                        }
-                    }
-                }
-            }
-        } catch (Exception e) {
-            LOG.warn("Failed to find chat room names: " + e, e);
-        }
-        return answer;
-    }
-
-    public LetsChatClient getLetsChat() {
-        if (letsChat == null) {
-            letsChat = LetsChatKubernetes.createLetsChat(getKubernetes());
-        }
-        return letsChat;
-    }
-
-    public void setLetsChat(LetsChatClient letsChat) {
-        this.letsChat = letsChat;
-    }
-
-    public TaigaClient getTaiga() {
-        if (taiga == null) {
-            taiga = TaigaKubernetes.createTaiga(getKubernetes(), namespace);
-        }
-        return taiga;
-    }
-
-    public void setTaiga(TaigaClient taiga) {
-        this.taiga = taiga;
     }
 
 }

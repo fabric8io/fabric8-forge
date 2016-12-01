@@ -37,6 +37,7 @@ import org.jboss.forge.addon.ui.wizard.UIWizard;
 public class DevOpsEditCommand extends AbstractDevOpsCommand implements UIWizard {
 
     private volatile boolean needFabric8Setup = true;
+    private volatile boolean needOptionalStep = false;
 
     @Override
     public UICommandMetadata getMetadata(UIContext context) {
@@ -69,7 +70,10 @@ public class DevOpsEditCommand extends AbstractDevOpsCommand implements UIWizard
             }
         }
 
+        // TODO: find out if tagia/letschat is running and then enable optional step
+
         log.info("Need fabric8 setup? " + needFabric8Setup);
+        log.info("Need optional setup? " + needOptionalStep);
 
         log.info("initializeUI took " + watch.taken());
     }
@@ -80,8 +84,10 @@ public class DevOpsEditCommand extends AbstractDevOpsCommand implements UIWizard
         if (needFabric8Setup) {
             builder.add(Fabric8SetupStep.class);
         }
+        if (needOptionalStep) {
+            builder.add(DevOpsEditOptionalStep.class);
+        }
         builder.add(DevOpsEditStep.class);
-        builder.add(DevOpsEditTwoStep.class);
         return builder.build();
     }
 

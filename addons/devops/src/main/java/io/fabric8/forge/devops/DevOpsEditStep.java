@@ -31,6 +31,7 @@ import io.fabric8.forge.addon.utils.StopWatch;
 import io.fabric8.forge.devops.dto.PipelineDTO;
 import io.fabric8.forge.devops.dto.PipelineMetadata;
 import io.fabric8.forge.devops.dto.ProjectOverviewDTO;
+import io.fabric8.kubernetes.api.KubernetesHelper;
 import io.fabric8.utils.Files;
 import io.fabric8.utils.Filter;
 import io.fabric8.utils.IOHelpers;
@@ -63,6 +64,8 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
     @Inject
     @WithAttributes(label = "Pipeline", description = "The Jenkinsfile used to define the Continous Delivery pipeline")
     private UIInput<PipelineDTO> pipeline;
+
+    private String namespace = KubernetesHelper.defaultNamespace();
 
     private boolean hasJenkinsFile;
 
@@ -131,7 +134,9 @@ public class DevOpsEditStep extends AbstractDevOpsCommand implements UIWizardSte
         // store the pipeline in a special place to avoid weird web console painting
         context.getUIContext().getAttributeMap().put("selectedPipeline", pipeline.getValue());
 
-        return null;
+        // execute and save
+        Project project = getSelectedProject(context);
+        return DevOpsSave.execute(context, project, namespace);
     }
 
     protected PipelineDTO getPipelineForValue(UIContext context, String value) {
