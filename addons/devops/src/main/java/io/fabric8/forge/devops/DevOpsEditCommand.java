@@ -62,7 +62,10 @@ public class DevOpsEditCommand extends AbstractDevOpsCommand implements UIWizard
         File rootFolder = getSelectionFolder(builder.getUIContext());
         if (rootFolder != null) {
             File pom = new File(rootFolder, "pom.xml");
-            if (pom.exists() && pom.isFile()) {
+            if (!pom.exists()) {
+                // not a maven project so no need for fabric8
+                needFabric8Setup = false;
+            } else {
                 String text = IOHelper.loadText(new FileInputStream(pom));
                 if (text.contains("fabric8-profiles")) {
                     // no need for fabric8 for fuse projects
