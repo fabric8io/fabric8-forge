@@ -14,10 +14,9 @@
 
   <properties>
     <addon.repository>${project.build.directory}/addon-repository</addon.repository>
-    <docker.assemblyDescriptor>${basedir}/src/main/fabric8/assembly.xml</docker.assemblyDescriptor>
-    <docker.assemblyDescriptorRef>artifact-with-dependencies</docker.assemblyDescriptorRef>
+    <docker.assemblyDescriptor>assembly.xml</docker.assemblyDescriptor>
     <docker.env.FORGE_ADDON_DIRECTORY>/forge-addon-repo</docker.env.FORGE_ADDON_DIRECTORY>
-    <docker.from>docker.io/fabric8/jetty-9:1.1.10</docker.from>
+    <docker.from>docker.io/fabric8/jetty-9:1.2.1</docker.from>
     <docker.image>fabric8/${project.artifactId}:${project.version}</docker.image>
     <guava.version>15.0</guava.version>
     <wildfly.swarm.version>1.0.5.Final</wildfly.swarm.version>
@@ -278,6 +277,7 @@
                 <from>${docker.from}</from>
                 <assembly>
                   <descriptor>${docker.assemblyDescriptor}</descriptor>
+                  <user>jboss:jboss:jboss</user>
                   <basedir>/</basedir>
                 </assembly>
                 <env>
@@ -345,6 +345,7 @@
                     <from>${docker.from}</from>
                     <assembly>
                       <descriptor>${docker.assemblyDescriptor}</descriptor>
+                      <user>jboss:jboss:jboss</user>
                       <basedir>/</basedir>
                     </assembly>
                     <env>
