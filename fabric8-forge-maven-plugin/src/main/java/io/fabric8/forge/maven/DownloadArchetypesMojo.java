@@ -31,7 +31,6 @@ import org.apache.maven.shared.invoker.DefaultInvocationRequest;
 import org.apache.maven.shared.invoker.DefaultInvoker;
 import org.apache.maven.shared.invoker.InvocationRequest;
 import org.apache.maven.shared.invoker.Invoker;
-import org.apache.maven.shared.invoker.MavenInvocationException;
 import org.codehaus.plexus.util.FileUtils;
 
 /**
@@ -129,18 +128,6 @@ public class DownloadArchetypesMojo extends AbstractMojo {
     private void download(File repo, Archetype archetype) throws Exception {
         getLog().info("Downloading... " + archetype);
 
-        // TODO: look at these later
-        if (archetype.getArtifactId().equals("django-example-archetype")
-                || archetype.getArtifactId().equals("dotnet-example-archetype")
-                || archetype.getArtifactId().equals("golang-example-archetype")
-                || archetype.getArtifactId().equals("node-example-archetype")
-                || archetype.getArtifactId().equals("php-example-archetype")
-                || archetype.getArtifactId().equals("rails-example-archetype")
-                || archetype.getArtifactId().equals("swift-example-archetype")) {
-            getLog().warn("Skipping not working archetype: " + archetype);
-            return;
-        }
-
         // TODO: This is flaky until next release where its fixed
         if (archetype.getArtifactId().equals("swarm-camel-archetype")) {
             getLog().warn("Skipping not working archetype: " + archetype);
@@ -170,8 +157,18 @@ public class DownloadArchetypesMojo extends AbstractMojo {
         Invoker invoker = new DefaultInvoker();
         invoker.execute(request);
 
-        // assert the project is created
+        // these are non java projects and therefore do not have a pom.xml file
+        if (archetype.getArtifactId().equals("django-example-archetype")
+                || archetype.getArtifactId().equals("dotnet-example-archetype")
+                || archetype.getArtifactId().equals("golang-example-archetype")
+                || archetype.getArtifactId().equals("node-example-archetype")
+                || archetype.getArtifactId().equals("php-example-archetype")
+                || archetype.getArtifactId().equals("rails-example-archetype")
+                || archetype.getArtifactId().equals("swift-example-archetype")) {
+            return;
+        }
 
+        // assert the Java project is created with a maven pom.xml file
         File dummy = new File("target/dummy/pom.xml");
         if (!dummy.exists()) {
             getLog().warn("Created project in target/dummy does not have a pom.xml file");
@@ -192,8 +189,6 @@ public class DownloadArchetypesMojo extends AbstractMojo {
 
         invoker = new DefaultInvoker();
         invoker.execute(request);
-
-        // after creating the project then need to do a maven build to force download
     }
 
 }
