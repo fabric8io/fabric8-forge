@@ -21,6 +21,11 @@ import java.io.FileInputStream;
 import io.fabric8.forge.addon.utils.StopWatch;
 import io.fabric8.forge.devops.setup.Fabric8SetupStep;
 import io.fabric8.forge.devops.springboot.IOHelper;
+import io.fabric8.kubernetes.api.KubernetesHelper;
+import io.fabric8.letschat.LetsChatClient;
+import io.fabric8.letschat.LetsChatKubernetes;
+import io.fabric8.taiga.TaigaClient;
+import io.fabric8.taiga.TaigaKubernetes;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
@@ -36,7 +41,10 @@ import org.jboss.forge.addon.ui.wizard.UIWizard;
 
 public class DevOpsEditCommand extends AbstractDevOpsCommand implements UIWizard {
 
+    private String namespace = KubernetesHelper.defaultNamespace();
+
     private volatile boolean needFabric8Setup = true;
+    private volatile boolean needOptionalStep = false;
 
     @Override
     public UICommandMetadata getMetadata(UIContext context) {
@@ -69,36 +77,23 @@ public class DevOpsEditCommand extends AbstractDevOpsCommand implements UIWizard
             }
         }
 
+        // need optional step for chat/issue tracker
+        LetsChatClient letsChatClient = LetsChatKubernetes.createLetsChat(getKubernetes());
+        if (letsChatClient != null) {
+            needOptionalStep = true;
+            builder.getUIContext().getAttributeMap().put("letsChatClient", letsChatClient);
+        }
+        TaigaClient taigaClient = TaigaKubernetes.createTaiga(getKubernetes(), namespace);
+        if (taigaClient != null) {
+            needOptionalStep = true;
+            builder.getUIContext().getAttributeMap().put("taigaClient", taigaClient);
+        }
+
         log.info("Need fabric8 setup? " + needFabric8Setup);
+        log.info("Need optional setup? " + needOptionalStep);
 
         log.info("initializeUI took " + watch.taken());
     }
-
-    // the following old code is slow so we optimize in a different way
-    // https://github.com/fabric8io/fabric8-forge/issues/704
-    /*
-    @Override
-    public void initializeUI(UIBuilder builder) throws Exception {
-        StopWatch watch = new StopWatch();
-        try {
-            Project project = getSelectedProject(builder.getUIContext());
-            log.info("initializeUI#getSelectedProject taken " + watch.taken());
-            if (project != null) {
-                setupSitePlugin(project);
-                log.info("initializeUI#setupSitePlugin taken " + watch.taken());
-
-                if (ProfilesProjectHelper.isProfilesProject(project)) {
-                    // TODO: in the future we might want to verify the setup of a profiles project here.
-                } else if (!SetupProjectHelper.fabric8ProjectSetupCorrectly(project)) {
-                    needFabric8Setup = true;
-                }
-                log.info("initializeUI#fabric8ProjectSetupCorrectly taken " + watch.taken());
-            }
-        } catch (IllegalStateException e) {
-            // ignore lack of project
-        }
-        log.info("initializeUI took " + watch.taken());
-    }*/
 
     @Override
     public NavigationResult next(UINavigationContext context) throws Exception {
@@ -106,8 +101,10 @@ public class DevOpsEditCommand extends AbstractDevOpsCommand implements UIWizard
         if (needFabric8Setup) {
             builder.add(Fabric8SetupStep.class);
         }
+        if (needOptionalStep) {
+            builder.add(DevOpsEditOptionalStep.class);
+        }
         builder.add(DevOpsEditStep.class);
-        builder.add(SaveDevOpsStep.class);
         return builder.build();
     }
 
