@@ -24,13 +24,10 @@ import javax.inject.Inject;
 import io.fabric8.devops.ProjectConfig;
 import io.fabric8.forge.addon.utils.CommandHelpers;
 import io.fabric8.forge.addon.utils.StopWatch;
-import io.fabric8.kubernetes.api.KubernetesHelper;
 import io.fabric8.letschat.LetsChatClient;
-import io.fabric8.letschat.LetsChatKubernetes;
 import io.fabric8.letschat.RoomDTO;
 import io.fabric8.taiga.ProjectDTO;
 import io.fabric8.taiga.TaigaClient;
-import io.fabric8.taiga.TaigaKubernetes;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
@@ -58,16 +55,15 @@ public class DevOpsEditOptionalStep extends AbstractDevOpsCommand {
     @WithAttributes(label = "Code review", description = "Enable code review of all commits")
     private UIInput<Boolean> codeReview;
 
-    private String namespace = KubernetesHelper.defaultNamespace();
     private LetsChatClient letsChat;
-    private TaigaClient taiga;
+    private TaigaClient taigaClient;
 
     @Override
     public UICommandMetadata getMetadata(UIContext context) {
         return Metadata.forCommand(getClass())
                 .category(Categories.create(AbstractDevOpsCommand.CATEGORY))
-                .name(AbstractDevOpsCommand.CATEGORY + ": Configure Tooling")
-                .description("Configure the Project Tooling for the new project");
+                .name(AbstractDevOpsCommand.CATEGORY + ": Configure Optional")
+                .description("Configure the Project options for the new project");
     }
 
     @Override
@@ -75,6 +71,10 @@ public class DevOpsEditOptionalStep extends AbstractDevOpsCommand {
         StopWatch watch = new StopWatch();
 
         final UIContext context = builder.getUIContext();
+
+        letsChat = (LetsChatClient) builder.getUIContext().getAttributeMap().get("letsChatClient");
+        taigaClient = (TaigaClient) builder.getUIContext().getAttributeMap().get("taigaClient");
+
 /*        chatRoom.setCompleter(new UICompleter<String>() {
             @Override
             public Iterable<String> getCompletionProposals(UIContext context, InputComponent<?, String> input, String value) {
@@ -135,11 +135,10 @@ public class DevOpsEditOptionalStep extends AbstractDevOpsCommand {
     private Iterable<String> getIssueProjectNames() {
         Set<String> answer = new TreeSet<>();
         try {
-            TaigaClient letschat = getTaiga();
-            if (letschat != null) {
+            if (taigaClient != null) {
                 List<ProjectDTO> projects = null;
                 try {
-                    projects = letschat.getProjects();
+                    projects = taigaClient.getProjects();
                 } catch (Exception e) {
                     LOG.warn("Failed to load chat projects! " + e, e);
                 }
@@ -161,11 +160,10 @@ public class DevOpsEditOptionalStep extends AbstractDevOpsCommand {
     private Iterable<String> getChatRoomNames() {
         Set<String> answer = new TreeSet<>();
         try {
-            LetsChatClient letschat = getLetsChat();
-            if (letschat != null) {
+            if (letsChat != null) {
                 List<RoomDTO> rooms = null;
                 try {
-                    rooms = letschat.getRooms();
+                    rooms = letsChat.getRooms();
                 } catch (Exception e) {
                     LOG.warn("Failed to load chat rooms! " + e, e);
                 }
@@ -182,28 +180,6 @@ public class DevOpsEditOptionalStep extends AbstractDevOpsCommand {
             LOG.warn("Failed to find chat room names: " + e, e);
         }
         return answer;
-    }
-
-    public LetsChatClient getLetsChat() {
-        if (letsChat == null) {
-            letsChat = LetsChatKubernetes.createLetsChat(getKubernetes());
-        }
-        return letsChat;
-    }
-
-    public void setLetsChat(LetsChatClient letsChat) {
-        this.letsChat = letsChat;
-    }
-
-    public TaigaClient getTaiga() {
-        if (taiga == null) {
-            taiga = TaigaKubernetes.createTaiga(getKubernetes(), namespace);
-        }
-        return taiga;
-    }
-
-    public void setTaiga(TaigaClient taiga) {
-        this.taiga = taiga;
     }
 
 }

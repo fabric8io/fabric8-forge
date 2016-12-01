@@ -21,6 +21,11 @@ import java.io.FileInputStream;
 import io.fabric8.forge.addon.utils.StopWatch;
 import io.fabric8.forge.devops.setup.Fabric8SetupStep;
 import io.fabric8.forge.devops.springboot.IOHelper;
+import io.fabric8.kubernetes.api.KubernetesHelper;
+import io.fabric8.letschat.LetsChatClient;
+import io.fabric8.letschat.LetsChatKubernetes;
+import io.fabric8.taiga.TaigaClient;
+import io.fabric8.taiga.TaigaKubernetes;
 import org.jboss.forge.addon.ui.context.UIBuilder;
 import org.jboss.forge.addon.ui.context.UIContext;
 import org.jboss.forge.addon.ui.context.UIExecutionContext;
@@ -35,6 +40,8 @@ import org.jboss.forge.addon.ui.util.Metadata;
 import org.jboss.forge.addon.ui.wizard.UIWizard;
 
 public class DevOpsEditCommand extends AbstractDevOpsCommand implements UIWizard {
+
+    private String namespace = KubernetesHelper.defaultNamespace();
 
     private volatile boolean needFabric8Setup = true;
     private volatile boolean needOptionalStep = false;
@@ -70,7 +77,17 @@ public class DevOpsEditCommand extends AbstractDevOpsCommand implements UIWizard
             }
         }
 
-        // TODO: find out if tagia/letschat is running and then enable optional step
+        // need optional step for chat/issue tracker
+        LetsChatClient letsChatClient = LetsChatKubernetes.createLetsChat(getKubernetes());
+        if (letsChatClient != null) {
+            needOptionalStep = true;
+            builder.getUIContext().getAttributeMap().put("letsChatClient", letsChatClient);
+        }
+        TaigaClient taigaClient = TaigaKubernetes.createTaiga(getKubernetes(), namespace);
+        if (taigaClient != null) {
+            needOptionalStep = true;
+            builder.getUIContext().getAttributeMap().put("taigaClient", taigaClient);
+        }
 
         log.info("Need fabric8 setup? " + needFabric8Setup);
         log.info("Need optional setup? " + needOptionalStep);
