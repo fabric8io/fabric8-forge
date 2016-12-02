@@ -26,7 +26,7 @@
       <includes>
         <include>io.fabric8.forge:fabric8-forge-web</include>
       </includes>
-      <outputDirectory>/deployments</outputDirectory>
+      <outputDirectory>deployments</outputDirectory>
       <outputFileNameMapping>ROOT.war</outputFileNameMapping>
     </dependencySet>
   </dependencySets>
@@ -37,19 +37,19 @@
     </fileSet>
     <fileSet>
       <directory>${basedir}/src/main/resources</directory>
-      <outputDirectory>/deployments</outputDirectory>
+      <outputDirectory>deployments</outputDirectory>
     </fileSet>
     <fileSet>
       <directory>${basedir}/localMavenRepo</directory>
-      <outputDirectory>/opt/jboss/.m2/repository</outputDirectory>
+      <outputDirectory>opt/jboss/.m2/repository</outputDirectory>
     </fileSet>
     <fileSet>
       <directory>${basedir}/src/main/docker/m2</directory>
-      <outputDirectory>/opt/jboss/.m2</outputDirectory>
+      <outputDirectory>opt/jboss/.m2</outputDirectory>
     </fileSet>
     <fileSet>
       <directory>${basedir}/src/main/forge</directory>
-      <outputDirectory>/opt/jboss/.forge</outputDirectory>
+      <outputDirectory>opt/jboss/.forge</outputDirectory>
     </fileSet>
   </fileSets>
 </assembly>
