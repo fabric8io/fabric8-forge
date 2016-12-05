@@ -143,22 +143,31 @@ public class EndpointMojo extends AbstractMojo {
         catalog.setSuggestionStrategy(new LuceneSuggestionStrategy());
         // enable loading other catalog versions dynamically
         catalog.setVersionManager(new MavenVersionManager());
+        // enable caching
+        catalog.enableCache();
 
         if (downloadVersion) {
-            String camelVersion = findCamelVersion(project);
-            if (camelVersion != null && !camelVersion.equals(catalog.getCatalogVersion())) {
+            String catalogVersion = catalog.getCatalogVersion();
+            String version = findCamelVersion(project);
+            if (version != null && !version.equals(catalogVersion)) {
                 // the project uses a different Camel version so attempt to load it
-                getLog().info("Downloading Camel version: " + camelVersion);
-                boolean loaded = catalog.loadVersion(camelVersion);
+                getLog().info("Downloading Camel version: " + version);
+                boolean loaded = catalog.loadVersion(version);
                 if (!loaded) {
-                    getLog().warn("Error downloading Camel version: " + camelVersion);
+                    getLog().warn("Error downloading Camel version: " + version);
                 }
             }
+        }
+
+        // if using the same version as the fabric8-camel-maven-plugin we must still load it
+        if (catalog.getLoadedVersion() == null) {
+            catalog.loadVersion(catalog.getCatalogVersion());
         }
 
         if (catalog.getLoadedVersion() != null) {
             getLog().info("Using Camel version: " + catalog.getLoadedVersion());
         } else {
+            // force load version from the fabric8-camel-maven-plugin
             getLog().info("Using Camel version: " + catalog.getCatalogVersion());
         }
 
