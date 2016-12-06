@@ -31,6 +31,8 @@
   <name>Fabric8 :: Camel Maven Plugin</name>
   <packaging>maven-plugin</packaging>
 
+  <!-- TODO: is donated to Apache Camel which comes OOTB from Camel 2.19 onwards -->
+
   <dependencies>
 
     <!-- fabric8 -->
