@@ -27,6 +27,7 @@ import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import io.fabric8.forge.rest.CommandsResource;
 import io.fabric8.forge.rest.RootResource;
 import io.fabric8.forge.rest.git.RepositoriesResource;
+import org.apache.camel.catalog.rest.CamelCatalogRest;
 
 @ApplicationPath("/")
 public class ForgeRestApplication extends Application {
@@ -56,7 +57,8 @@ public class ForgeRestApplication extends Application {
                         rootResource,
                         commandsResource,
                         repositoriesResource,
-                        new JacksonJsonProvider()
+                        new JacksonJsonProvider(),
+                        new CamelCatalogRest()
 /*
                         new SwaggerFeature(),
                         new EnableJMXFeature(),
