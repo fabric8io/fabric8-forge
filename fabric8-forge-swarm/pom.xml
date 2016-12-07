@@ -35,6 +35,7 @@
     <version.wildfly.swarm>2016.12.0</version.wildfly.swarm>
     <failOnMissingWebXml>false</failOnMissingWebXml>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <addon.repository>${project.build.directory}/addon-repository</addon.repository>
   </properties>
 
   <dependencyManagement>
@@ -75,8 +76,30 @@
     <!-- Wildfly Swarm Fractions -->
     <dependency>
       <groupId>org.wildfly.swarm</groupId>
+      <artifactId>jaxrs</artifactId>
+      <version>${version.wildfly.swarm}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.wildfly.swarm</groupId>
       <artifactId>jaxrs-cdi</artifactId>
       <version>${version.wildfly.swarm}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.wildfly.swarm</groupId>
+      <artifactId>monitor</artifactId>
+      <version>${version.wildfly.swarm}</version>
+    </dependency>
+
+    <!-- forge stuff -->
+    <dependency>
+      <groupId>org.jboss.forge.addon</groupId>
+      <artifactId>ui-api</artifactId>
+    </dependency>
+
+    <!-- git -->
+    <dependency>
+      <groupId>org.eclipse.jgit</groupId>
+      <artifactId>org.eclipse.jgit</artifactId>
     </dependency>
 
     <!-- fabric8-forge -->
