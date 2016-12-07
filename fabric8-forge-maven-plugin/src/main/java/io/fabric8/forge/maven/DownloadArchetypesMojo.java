@@ -128,12 +128,6 @@ public class DownloadArchetypesMojo extends AbstractMojo {
     private void download(File repo, Archetype archetype) throws Exception {
         getLog().info("Downloading... " + archetype);
 
-        // TODO: This is flaky until next release where its fixed
-        if (archetype.getArtifactId().equals("swarm-camel-archetype")) {
-            getLog().warn("Skipping not working archetype: " + archetype);
-            return;
-        }
-
         // skip redhat only as they are not in maven central
         if (archetype.getArtifactId().startsWith("karaf2-")) {
             getLog().warn("Skipping Red Hat JBoss Fuse archetype: " + archetype);
