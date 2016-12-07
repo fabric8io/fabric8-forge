@@ -28,11 +28,11 @@
   </parent>
 
   <artifactId>fabric8-forge-swarm</artifactId>
-  <packaging>war</packaging>
+  <packaging>jar</packaging>
   <name>Fabric8 :: Forge :: WildFly Swarm (deprecated)</name>
 
   <properties>
-    <version.wildfly.swarm>2016.11.0</version.wildfly.swarm>
+    <version.wildfly.swarm>2016.12.0</version.wildfly.swarm>
     <failOnMissingWebXml>false</failOnMissingWebXml>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
@@ -84,6 +84,16 @@
       <groupId>io.fabric8.forge</groupId>
       <artifactId>fabric8-forge-core</artifactId>
       <version>${project.version}</version>
+      <exclusions>
+        <exclusion>
+          <artifactId>cxf-utils</artifactId>
+          <groupId>io.fabric8</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>cxf-rt-rs-client</artifactId>
+          <groupId>org.apache.cxf</groupId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
   </dependencies>
