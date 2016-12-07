@@ -25,8 +25,6 @@ import org.jboss.forge.addon.ui.wizard.UIWizardStep;
 
 public class SpringBootSetupFlow implements UIWizardStep {
 
-
-
     @Override
     public NavigationResult next(UINavigationContext context) throws Exception {
         return NavigationResultBuilder.create().add(SpringBootNewProjectCommand.class).build();
