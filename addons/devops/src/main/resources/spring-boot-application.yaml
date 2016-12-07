@@ -13,14 +13,15 @@ spring:
   jackson:
     serialization:
      write-dates-as-timestamps: false
+  resources:
+    chain:
+      strategy:
+        content:
+          enabled: true
 
 initializr:
   env:
     boms:
-      vaadin-bom:
-        groupId: com.vaadin
-        artifactId: vaadin-bom
-        version: 7.7.3
       cloud-bom:
         groupId: org.springframework.cloud
         artifactId: spring-cloud-dependencies
@@ -28,35 +29,45 @@ initializr:
           - versionRange: "[1.2.3.RELEASE,1.3.0.M1)"
             version: Angel.SR6
           - versionRange: "[1.3.0.M1,1.3.9.BUILD-SNAPSHOT)"
-            version: Brixton.SR6
+            version: Brixton.SR7
           - versionRange: "[1.3.9.BUILD-SNAPSHOT,1.4.0.RELEASE)"
             version: Brixton.BUILD-SNAPSHOT
             repositories: spring-snapshots,spring-milestones
-          - versionRange: "[1.4.0.RELEASE,1.4.2.BUILD-SNAPSHOT)"
-            version: Camden.RELEASE
-          - versionRange: 1.4.2.BUILD-SNAPSHOT
+          - versionRange: "[1.4.0.RELEASE,1.4.3.BUILD-SNAPSHOT)"
+            version: Camden.SR3
+          - versionRange: 1.4.3.BUILD-SNAPSHOT
             version: Camden.BUILD-SNAPSHOT
             repositories: spring-snapshots,spring-milestones
       cloud-dataflow-bom:
         groupId: org.springframework.cloud
         artifactId: spring-cloud-dataflow-dependencies
-        version: 1.0.0.BUILD-SNAPSHOT
         additionalBoms: [cloud-bom]
-        repositories: spring-snapshots,spring-milestones
+        mappings:
+          - versionRange: "[1.3.2.RELEASE,1.4.0.M1)"
+            version: 1.0.1.RELEASE
+          - versionRange: "[1.4.0.M1,1.4.3.BUILD-SNAPSHOT)"
+            version: 1.1.0.RELEASE
+          - versionRange: 1.4.3.BUILD-SNAPSHOT
+            version: 1.1.1.BUILD-SNAPSHOT
+            repositories: spring-snapshots,spring-milestones
+      cloud-services-bom:
+        groupId: io.pivotal.spring.cloud
+        artifactId: spring-cloud-services-dependencies
+        version: 1.3.0.RELEASE
+        additionalBoms: [cloud-bom]
       experimental-reactive-bom:
         groupId: org.springframework.boot.experimental
         artifactId: spring-boot-dependencies-web-reactive
         repositories: spring-snapshots,spring-milestones
         version: 0.1.0.BUILD-SNAPSHOT
-      scs-bom:
-        groupId: io.pivotal.spring.cloud
-        artifactId: spring-cloud-services-dependencies
-        version: 1.2.0.RELEASE
-        additionalBoms: [cloud-bom]
+      vaadin-bom:
+        groupId: com.vaadin
+        artifactId: vaadin-bom
+        version: 7.7.5
     gradle:
       dependency-management-plugin-version: 0.6.0.RELEASE
     kotlin:
-      version: 1.0.3
+      version: 1.0.5-2
   dependencies:
     - name: Core
       content:
@@ -87,8 +98,17 @@ initializr:
           id: devtools
           groupId: org.springframework.boot
           artifactId: spring-boot-devtools
+          scope: runtime
           description: Spring Boot Development Tools
           versionRange: 1.3.0.M1
+          starter: false
+        - name: Configuration Processor
+          id: configuration-processor
+          groupId: org.springframework.boot
+          artifactId: spring-boot-configuration-processor
+          scope: compileOnly
+          description: Generate metadata for your custom configuration keys
+          versionRange: 1.2.0.RELEASE
           starter: false
         - name: Validation
           id: validation
@@ -112,6 +132,7 @@ initializr:
           id: lombok
           groupId: org.projectlombok
           artifactId: lombok
+          scope: compileOnly
           description: Java annotation library which helps to reduce boilerplate code and code faster
           mappings:
             - versionRange: "[1.2.0.RELEASE,1.4.0.M1)"
@@ -156,9 +177,13 @@ initializr:
             - web
           groupId: com.vaadin
           artifactId: vaadin-spring-boot-starter
-          version: 1.0.2
           description: Vaadin java web application framework
           bom: vaadin-bom
+          mappings:
+            - versionRange: "[1.2.0.RELEASE,1.4.0.RELEASE)"
+              version: 1.0.2
+            - versionRange: 1.4.0.RELEASE
+              version: 1.1.1
         - name: Rest Repositories
           id: data-rest
           weight: 10
@@ -283,6 +308,26 @@ initializr:
             - versionRange: "[1.2.0.RELEASE,1.3.0.M1)"
               version: 9.4-1201-jdbc41
           scope: runtime
+          starter: false
+        - name: SQL Server
+          id: sqlserver
+          description: Microsoft SQL Server jdbc driver
+          versionRange: 1.5.0.RC1
+          groupId: com.microsoft.sqlserver
+          artifactId: mssql-jdbc
+          scope: runtime
+          starter: false
+        - name: Flyway
+          id: flyway
+          description: Flyway Database Migrations library
+          groupId: org.flywaydb
+          artifactId: flyway-core
+          starter: false
+        - name: Liquibase
+          id: liquibase
+          description: Liquibase Database Migrations library
+          groupId: org.liquibase
+          artifactId: liquibase-core
           starter: false
     - name: NoSQL
       content:
@@ -449,12 +494,6 @@ initializr:
           description: Circuit breaker metric aggregation using spring-cloud-netflix with Turbine and server-sent events
           groupId: org.springframework.cloud
           artifactId: spring-cloud-starter-turbine
-        - name: Turbine AMQP
-          id: cloud-turbine-amqp
-          description: Circuit breaker metric aggregation using spring-cloud-netflix with Turbine and AMQP
-          versionRange: "[1.2.0.RELEASE,1.3.0.M5]"
-          groupId: org.springframework.cloud
-          artifactId: spring-cloud-starter-turbine-amqp
         - name: Turbine Stream
           id: cloud-turbine-stream
           description: Circuit breaker metric aggregation using spring-cloud-netflix with Turbine and Spring Cloud Stream (choose a specific Stream binder implementation to complement this)
@@ -610,8 +649,8 @@ initializr:
           scope: test
           starter: false
     - name: Pivotal Cloud Foundry
-      bom: scs-bom
-      versionRange: "[1.3.0.RELEASE,1.4.0.M1)"
+      bom: cloud-services-bom
+      versionRange: 1.3.0.RELEASE
       content:
         - name: Config Client (PCF)
           id: scs-config-client
