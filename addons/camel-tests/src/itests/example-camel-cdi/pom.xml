@@ -29,6 +29,7 @@
     <fabric8.iconRef>icons/camel.svg</fabric8.iconRef>
     <version.maven-bundle-plugin>2.3.7</version.maven-bundle-plugin>
     <docker.registryPrefix></docker.registryPrefix>
+    <fabric8.maven.plugin.version>3.2.9</fabric8.maven.plugin.version>
 
     <skipTests>false</skipTests>
     <testExclusionPattern>**/*KubernetesTest.java</testExclusionPattern>
@@ -135,7 +136,7 @@
       <plugin>
         <groupId>io.fabric8</groupId>
         <artifactId>fabric8-maven-plugin</artifactId>
-        <version>${fabric8.version}</version>
+        <version>${fabric8.maven.plugin.version}</version>
         <executions>
           <execution>
             <id>json</id>
