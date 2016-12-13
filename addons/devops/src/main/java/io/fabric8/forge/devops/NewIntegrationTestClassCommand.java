@@ -138,8 +138,6 @@ public class NewIntegrationTestClassCommand extends AbstractDevOpsCommand {
 
         // lets ensure the dependencies are added...
         MavenHelpers.ensureMavenDependencyAdded(project, dependencyInstaller, "io.fabric8", "fabric8-arquillian", "test");
-        MavenHelpers.ensureMavenDependencyAdded(project, dependencyInstaller, "org.jboss.arquillian.junit", "arquillian-junit-container", "test");
-        MavenHelpers.ensureMavenDependencyAdded(project, dependencyInstaller, "org.jboss.shrinkwrap.resolver", "shrinkwrap-resolver-impl-maven", "test");
 
         // lets create a kubernetes integration test profile if one does not exist...
         String profileId = profile.getValue();
