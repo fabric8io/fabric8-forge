@@ -1,19 +1,4 @@
 #!/usr/bin/groovy
-def updateDependencies(source){
-
-  def properties = []
-  properties << ['<fabric8.version>','io/fabric8/kubernetes-api']
-  properties << ['<fabric8.devops.version>','io/fabric8/devops/apps/jenkins']
-  properties << ['<fabric8.archetypes.release.version>','io/fabric8/archetypes/archetypes-catalog']
-  properties << ['<gitective.version>','io/fabric8/gitective-core']
-
-  updatePropertyVersion{
-    updates = properties
-    repository = source
-    project = 'fabric8io/fabric8-forge'
-  }
-}
-
 def stage(){
   return stageProject{
     project = 'fabric8io/fabric8-forge'
