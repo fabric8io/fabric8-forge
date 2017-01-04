@@ -110,7 +110,7 @@ public class CreateQuickstartProjectKT extends ForgeTestSupport {
         LOG.info("Command names: " + commandNames);
     }    
     
-    @Ignore
+    @Test
     public void testQuickstartArchetypeProject() throws Exception {
         List<String> archetypes = getArchetypesFromJar();
         LOG.info("Archetypes names: " + archetypes);
