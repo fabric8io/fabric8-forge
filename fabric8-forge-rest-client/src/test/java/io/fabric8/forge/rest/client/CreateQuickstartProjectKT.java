@@ -69,11 +69,11 @@ public class CreateQuickstartProjectKT extends ForgeTestSupport {
      */
     @Ignore
     public void testNewArchetypeProject() throws Exception {
-    	String projectName = generateProjectName("qs");
+        String projectName = generateProjectName("qs");
         
-    	String commandName = ProjectNew;
+        String commandName = ProjectNew;
 
-    	ValueProvider valueProvider = new ValueProvider() {
+        ValueProvider valueProvider = new ValueProvider() {
             @Override
             public Object getValue(String propertyName, PropertyDTO property, int pageNumber) {
                 switch (pageNumber) {
@@ -99,7 +99,6 @@ public class CreateQuickstartProjectKT extends ForgeTestSupport {
 
             }
         };
-    	
         
         executeWizardCommand(projectName, commandName, valueProvider, 3);
     }
