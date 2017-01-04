@@ -49,7 +49,7 @@ import io.fabric8.utils.Strings;
  */
 public class CreateQuickstartProjectKT extends ForgeTestSupport {
     private static final transient Logger LOG = LoggerFactory.getLogger(CreateQuickstartProjectKT.class);
-    
+
     /**
      * TODO posting the archetype catalog generates:
      * <p>
@@ -70,7 +70,7 @@ public class CreateQuickstartProjectKT extends ForgeTestSupport {
     @Ignore
     public void testNewArchetypeProject() throws Exception {
         String projectName = generateProjectName("qs");
-        
+
         String commandName = ProjectNew;
 
         ValueProvider valueProvider = new ValueProvider() {
@@ -99,7 +99,7 @@ public class CreateQuickstartProjectKT extends ForgeTestSupport {
 
             }
         };
-        
+
         executeWizardCommand(projectName, commandName, valueProvider, 3);
     }
 
