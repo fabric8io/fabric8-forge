@@ -118,7 +118,7 @@ public class CreateQuickstartProjectKT extends ForgeTestSupport {
         assertThat(archetypes).describedAs("Archetypes to create").isNotEmpty();
 
         for (String archetype: archetypes) {
-        	executeWizardCommand(projectName, archetype, valueProvider, 3);
+            executeWizardCommand(projectName, archetype, valueProvider, 3);
         }
         	
     }
