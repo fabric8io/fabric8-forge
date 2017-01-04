@@ -50,35 +50,6 @@ import io.fabric8.utils.Strings;
 public class CreateQuickstartProjectKT extends ForgeTestSupport {
     private static final transient Logger LOG = LoggerFactory.getLogger(CreateQuickstartProjectKT.class);
     
-    private String projectName = generateProjectName("qs");
-    
-    private ValueProvider valueProvider = new ValueProvider() {
-        @Override
-        public Object getValue(String propertyName, PropertyDTO property, int pageNumber) {
-            switch (pageNumber) {
-                case 0:
-                    switch (propertyName) {
-                        case "named":
-                            return projectName;
-                        case "targetLocation":
-                            return null;
-                        case "type":
-                            return assertChooseValue(propertyName, property, pageNumber, FromArchetypeCatalog);
-                    }
-                    break;
-
-                case 1:
-                    switch (propertyName) {
-                        case "catalog":
-                            return assertChooseValue(propertyName, property, pageNumber, Fabric8);
-                    }
-                    break;
-            }
-            return super.getValue(propertyName, property, pageNumber);
-
-        }
-    };
-    
     /**
      * TODO posting the archetype catalog generates:
      * <p>
@@ -98,7 +69,37 @@ public class CreateQuickstartProjectKT extends ForgeTestSupport {
      */
     @Ignore
     public void testNewArchetypeProject() throws Exception {
-        String commandName = ProjectNew;
+    	String projectName = generateProjectName("qs");
+        
+    	String commandName = ProjectNew;
+
+    	ValueProvider valueProvider = new ValueProvider() {
+            @Override
+            public Object getValue(String propertyName, PropertyDTO property, int pageNumber) {
+                switch (pageNumber) {
+                    case 0:
+                        switch (propertyName) {
+                            case "named":
+                                return projectName;
+                            case "targetLocation":
+                                return null;
+                            case "type":
+                                return assertChooseValue(propertyName, property, pageNumber, FromArchetypeCatalog);
+                        }
+                        break;
+
+                    case 1:
+                        switch (propertyName) {
+                            case "catalog":
+                                return assertChooseValue(propertyName, property, pageNumber, Fabric8);
+                        }
+                        break;
+                }
+                return super.getValue(propertyName, property, pageNumber);
+
+            }
+        };
+    	
         
         executeWizardCommand(projectName, commandName, valueProvider, 3);
     }
@@ -112,6 +113,35 @@ public class CreateQuickstartProjectKT extends ForgeTestSupport {
     
     @Test
     public void testQuickstartArchetypeProject() throws Exception {
+    	String projectName = generateProjectName("qs");
+        
+        ValueProvider valueProvider = new ValueProvider() {
+            @Override
+            public Object getValue(String propertyName, PropertyDTO property, int pageNumber) {
+                switch (pageNumber) {
+                    case 0:
+                        switch (propertyName) {
+                            case "named":
+                                return projectName;
+                            case "targetLocation":
+                                return null;
+                            case "type":
+                                return assertChooseValue(propertyName, property, pageNumber, FromArchetypeCatalog);
+                        }
+                        break;
+
+                    case 1:
+                        switch (propertyName) {
+                            case "catalog":
+                                return assertChooseValue(propertyName, property, pageNumber, Fabric8);
+                        }
+                        break;
+                }
+                return super.getValue(propertyName, property, pageNumber);
+
+            }
+        };
+    	
         List<String> archetypes = getArchetypesFromJar();
         LOG.info("Archetypes names: " + archetypes);
     
