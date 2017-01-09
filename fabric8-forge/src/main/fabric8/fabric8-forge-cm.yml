@@ -41,5 +41,5 @@ data:
   jenkins-gogs-password: "RedHat$1"
   jenkins-gogs-user: "gogsadmin"
   jenkinsfile-library-git-repository: "https://github.com/fabric8io/fabric8-jenkinsfile-library.git"
+  jenkinsfile-library-git-version: "${fabric8.devops.version}"
   use-external-git-address: "false"
-
