@@ -56,7 +56,11 @@
       <artifactId>jenkins-client</artifactId>
       <version>${jenkins-client.version}</version>
     </dependency>
-
+    <dependency>
+      <groupId>io.fabric8.archetypes</groupId>
+      <artifactId>archetypes-catalog</artifactId>
+      <version>${fabric8.archetypes.release.version}</version>
+    </dependency>
 
     <!-- testing -->
     <dependency>
