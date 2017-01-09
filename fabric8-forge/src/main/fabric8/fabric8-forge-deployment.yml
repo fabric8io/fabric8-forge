@@ -37,6 +37,11 @@ spec:
             configMapKeyRef:
               key: "jenkinsfile-library-git-repository"
               name: "fabric8-forge"
+        - name: "JENKINSFILE_LIBRARY_GIT_VERSION"
+          valueFrom:
+            configMapKeyRef:
+              key: "jenkinsfile-library-git-version"
+              name: "fabric8-forge"
         - name: "USE_EXTERNAL_GIT_ADDRESS"
           valueFrom:
             configMapKeyRef:
