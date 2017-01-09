@@ -70,8 +70,8 @@ public class SpringBootNewProjectCommand extends AbstractDevOpsCommand implement
     private static final String CATEGORY = "Spring Boot";
 
     // lets use 1.3.x which currently fabric8 works best with
-    private static final String SPRING_BOOT_DEFAULT_VERSION = "1.4.2";
-    private static final String[] SPRING_BOOT_VERSIONS = new String[]{"1.3.8", "1.4.2"};
+    private static final String SPRING_BOOT_DEFAULT_VERSION = "1.4.3";
+    private static final String[] SPRING_BOOT_VERSIONS = new String[]{"1.3.8", "1.4.3"};
 
     private static final String STARTER_URL = "https://start.spring.io/starter.zip";
 
