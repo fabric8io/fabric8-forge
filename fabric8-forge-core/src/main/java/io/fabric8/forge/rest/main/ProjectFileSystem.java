@@ -53,18 +53,22 @@ public class ProjectFileSystem {
     private final String rootProjectFolder;
     private final String remote;
     private final String jenkinsfileLibraryGitUrl;
+    private final String jenkinsfileLibraryGitTag;
     private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(2);
 
     @Inject
     public ProjectFileSystem(RepositoryCache repositoryCache,
                              @ConfigProperty(name = "PROJECT_FOLDER", defaultValue = "/tmp/fabric8-forge") String rootProjectFolder,
                              @ConfigProperty(name = "GIT_REMOTE_BRANCH_NAME", defaultValue = "origin") String remote,
-                             @ConfigProperty(name = "JENKINSFILE_LIBRARY_GIT_REPOSITORY") String jenkinsfileLibraryGitUrl) {
+                             @ConfigProperty(name = "JENKINSFILE_LIBRARY_GIT_REPOSITORY") String jenkinsfileLibraryGitUrl,
+                             @ConfigProperty(name = "JENKINSFILE_LIBRARY_GIT_TAG") String jenkinsfileLibraryGitTag) {
         this.repositoryCache = repositoryCache;
         this.rootProjectFolder = rootProjectFolder;
         this.remote = remote;
         this.jenkinsfileLibraryGitUrl = jenkinsfileLibraryGitUrl;
+        this.jenkinsfileLibraryGitTag = jenkinsfileLibraryGitTag;
         LOG.info("Using jenkins workflow library: " + this.jenkinsfileLibraryGitUrl);
+        LOG.info("Using jenkins workflow library version: " + this.jenkinsfileLibraryGitTag);
     }
 
     public String getRemote() {
@@ -179,7 +183,7 @@ public class ProjectFileSystem {
         CredentialsProvider credentialsProvider = userDetails.createCredentialsProvider();
         if (!Files.isDirectory(gitFolder) || !Files.isDirectory(projectFolder)) {
             // lets clone the git repository!
-            cloneRepo(projectFolder, cloneUrl, credentialsProvider, sshPrivateKey, sshPublicKey, this.remote);
+            cloneRepo(projectFolder, cloneUrl, credentialsProvider, sshPrivateKey, sshPublicKey, this.remote, this.jenkinsfileLibraryGitTag);
         } else {
             doPull(gitFolder, credentialsProvider, userDetails.getBranch(), userDetails.createPersonIdent(), userDetails);
         }
@@ -198,6 +202,10 @@ public class ProjectFileSystem {
     }
 
     public static void cloneRepo(File projectFolder, String cloneUrl, CredentialsProvider credentialsProvider, final File sshPrivateKey, final File sshPublicKey, String remote) {
+        cloneRepo(projectFolder, cloneUrl, credentialsProvider, sshPrivateKey, sshPublicKey, remote, null);
+    }
+
+    public static void cloneRepo(File projectFolder, String cloneUrl, CredentialsProvider credentialsProvider, final File sshPrivateKey, final File sshPublicKey, String remote, String tag) {
         StopWatch watch = new StopWatch();
 
         // clone the repo!
@@ -206,10 +214,13 @@ public class ProjectFileSystem {
         CloneCommand command = Git.cloneRepository();
         GitUtils.configureCommand(command, credentialsProvider, sshPrivateKey, sshPublicKey);
         command = command.setCredentialsProvider(credentialsProvider).
-                        setCloneAllBranches(cloneAll).setURI(cloneUrl).setDirectory(projectFolder).setRemote(remote);
+                setCloneAllBranches(cloneAll).setURI(cloneUrl).setDirectory(projectFolder).setRemote(remote);
 
         try {
             Git git = command.call();
+            if (tag != null){
+                git.checkout().setName(tag).call();
+            }
         } catch (Throwable e) {
             LOG.error("Failed to command remote repo " + cloneUrl + " due: " + e.getMessage(), e);
             throw new RuntimeException("Failed to command remote repo " + cloneUrl + " due: " + e.getMessage());
