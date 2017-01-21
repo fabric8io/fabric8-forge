@@ -77,7 +77,7 @@
 
     <fabric8.version>2.2.192</fabric8.version>
     <fabric8.archetypes.release.version>2.2.195</fabric8.archetypes.release.version>
-    <fabric8.devops.version>2.2.310</fabric8.devops.version>
+    <fabric8.devops.version>2.2.311</fabric8.devops.version>
     <fabric8.django.version>2.3.14</fabric8.django.version>
 
     <furnace.version>2.24.3.Final</furnace.version>
