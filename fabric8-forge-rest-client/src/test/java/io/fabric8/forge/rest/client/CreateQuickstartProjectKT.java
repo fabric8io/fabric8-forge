@@ -110,7 +110,7 @@ public class CreateQuickstartProjectKT extends ForgeTestSupport {
         LOG.info("Command names: " + commandNames);
     }    
     
-    @Test
+    @Ignore
     public void testQuickstartArchetypeProject() throws Exception {
     	String projectName = generateProjectName("qs");
         
