@@ -51,6 +51,13 @@ def updateDownstreamDependencies(stagedProject) {
     ]
     version = stagedProject[1]
   }
+  pushPomPropertyChangePR {
+    propertyName = 'version.fabric8.devops'
+    projects = [
+            'fabric8io/obsidian-addon',
+    ]
+    version = stagedProject[1]
+  }
 }
 
 return this;
