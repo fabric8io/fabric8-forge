@@ -227,7 +227,12 @@ public class DevOpsSave {
         connector.setBranch(getStringAttribute(attributeMap, "gitBranch", "master"));
         connector.setBasedir(basedir);
         connector.setGitUrl(gitUrl);
-        connector.setLocalGitUrl(localGitUrl);
+        //When using external git repo we make sure local and remote git url are same
+        if(Strings.isNotBlank(gitUrl)){
+            connector.setLocalGitUrl(gitUrl);
+        }else {
+            connector.setLocalGitUrl(localGitUrl);
+        }
         connector.setRepoName(named);
 
         connector.setRegisterWebHooks(true);
