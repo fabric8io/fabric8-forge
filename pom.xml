@@ -75,7 +75,7 @@
     <!-- lets disable S2I for our releases -->
     <fabric8.mode>kubernetes</fabric8.mode>
 
-    <fabric8.version>2.2.202</fabric8.version>
+    <fabric8.version>2.2.205</fabric8.version>
     <fabric8.archetypes.release.version>2.2.197</fabric8.archetypes.release.version>
     <fabric8.devops.version>2.2.329</fabric8.devops.version>
     <fabric8.django.version>2.3.14</fabric8.django.version>
