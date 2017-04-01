@@ -32,7 +32,7 @@ import io.fabric8.openshift.client.OpenShiftClient;
 import io.fabric8.project.support.UserDetails;
 import io.fabric8.utils.Strings;
 import io.fabric8.utils.URLUtils;
-import io.fabric8.utils.cxf.JsonHelper;
+import io.fabric8.utils.jaxrs.JsonHelper;
 import io.fabric8.utils.cxf.WebClients;
 import org.apache.cxf.helpers.IOUtils;
 import org.apache.cxf.jaxrs.client.JAXRSClientFactory;

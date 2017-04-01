@@ -18,7 +18,7 @@ package io.fabric8.forge.devops;
 import io.fabric8.forge.devops.BuildConfigs;
 import io.fabric8.openshift.api.model.BuildConfig;
 import io.fabric8.openshift.api.model.ImageStream;
-import io.fabric8.utils.cxf.JsonHelper;
+import io.fabric8.utils.jaxrs.JsonHelper;
 import org.junit.Test;
 
 import java.util.Map;

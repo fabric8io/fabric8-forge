@@ -37,7 +37,7 @@ import javax.inject.Inject;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-import static io.fabric8.utils.cxf.JsonHelper.toJson;
+import static io.fabric8.utils.jaxrs.JsonHelper.toJson;
 
 /**
  * Creates a new build in OpenShift for the current project
