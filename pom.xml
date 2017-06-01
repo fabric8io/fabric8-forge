@@ -82,7 +82,7 @@
 
     <furnace.version>2.26.0.Final</furnace.version>
     <jboss.forge.version>3.6.0.Final</jboss.forge.version>
-    <jboss.roaster.version>2.19.5.Final</jboss.roaster.version>
+    <jboss.roaster.version>2.20.0.Final</jboss.roaster.version>
     <gitective.version>0.9.20</gitective.version>
     <jenkins-client.version>0.3.6</jenkins-client.version>
 
