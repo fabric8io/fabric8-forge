@@ -80,8 +80,8 @@
     <fabric8.devops.version>2.2.331</fabric8.devops.version>
     <fabric8.django.version>2.3.14</fabric8.django.version>
 
-    <furnace.version>2.26.0.Final</furnace.version>
-    <jboss.forge.version>3.6.1.Final</jboss.forge.version>
+    <furnace.version>2.26.1.Final</furnace.version>
+    <jboss.forge.version>3.7.1.Final</jboss.forge.version>
     <jboss.roaster.version>2.20.0.Final</jboss.roaster.version>
     <gitective.version>0.9.22</gitective.version>
     <jenkins-client.version>0.3.6</jenkins-client.version>
